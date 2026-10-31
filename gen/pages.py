@@ -695,7 +695,7 @@ zrn: fix: the store builds from a public git repository: push the app to one fir
 <p class="lead"><b>This page lists what libzrnui does not do yet</b>, as of commit <code>""" + COMMIT + """</code>, so that nobody has to discover it the hard way.</p>
 <h2 id="unproven">Not proven</h2>
 <ul>
-<li><b>Nothing from zrn-sdk has been reported running on a phone</b> by <code>DESIGN.md</code> at this commit. Frame times on the Mali-G72 are inferred, not measured. CPU cost was measured on a 2012 laptop: about 1.35 ms a frame in zrnCoolStyle and 0.78 ms in Metro.</li>
+<li><b>Nothing from zrn-sdk has been reported running on a phone</b> by <code>DESIGN.md</code> at this commit. Frame times on the Mali-G72 are inferred, not measured. CPU cost was measured on a 2012 laptop: about 0.78 ms a frame in Metro at the S9's resolution.</li>
 <li><b>No aarch64 build on a laptop.</b> There is no local cross compiler. The store's CI is meant to build aarch64 on an ARM runner.</li>
 <li><b>The store has not carried a real app end to end.</b></li>
 <li><code>zrn run</code> as a visible window has not been tried: only <code>--headless</code> in <code>kwin_wayland</code>. Weston has not been tried here either.</li>

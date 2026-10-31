@@ -156,7 +156,7 @@ page.field("Name").set_text("Already filled in");''',
          py='''page.field("Search", on_submit=lambda t: print("search:", t))
 page.field("Name").set_text("Already filled in")'''),
 
-    dict(id="section", title="Sections and cards", h=430, api="zui_section, zui_card",
+    dict(id="section", head="Sections and cards", title="Sections", h=430, api="zui_section, zui_card",
          blurb="<code>section</code> adds a heading and returns the card under it, so add rows to what it returns. A bare <code>card</code> is the same group with no heading. Cards are flat in both styles: the rows just sit on black, with no dividers drawn.",
          c='''zui_item(zui_section(page, "A section"), "In its card", NULL, NULL, NULL);
 zui_node *card = zui_card(page);
@@ -175,7 +175,7 @@ card = page.card()
 card.text("A card with no heading can hold anything.")
 card.button("Like this")'''),
 
-    dict(id="layout", title="Rows, columns, space", h=380, api="zui_row, zui_column, zui_space, zui_set_flex",
+    dict(id="layout", head="Rows, columns, space", title="Rows", h=380, api="zui_row, zui_column, zui_space, zui_set_flex",
          blurb="A page is already a column. A <code>row</code> sets things side by side, and <code>set_flex</code> shares out the spare width. <code>space</code> adds fixed points. Do not fake layout with space: use sections.",
          c='''zui_node *row = zui_row(page);
 zui_set_flex(zui_button(row, "1 share", NULL, NULL), 1);
@@ -208,7 +208,7 @@ col = page.column()
 col.text("A column keeps things together")
 col.caption("and can be hidden as one.")'''),
 
-    dict(id="round", title="Round buttons", h=300, api="zui_button, zui_set_icon",
+    dict(id="round", head="Round buttons", title="Round", h=300, api="zui_button, zui_set_icon",
          blurb="A button with an icon becomes a round button with its word under it, as on an app bar. Put them in a row and share the width with flex.",
          c='''zui_node *bar = zui_row(page);
 const char *names[] = { "plus", "search", "send", "more" };
@@ -288,7 +288,7 @@ one.item("Ben", "Thanks");
 tabs.tab("status").item("Nothing yet");
 tabs.tab("starred").item("Nothing yet");'''),
 
-    dict(id="bubble", title="Bubbles and compact titles", h=460, api="zui_bubble, zui_page_set_compact, zui_set_subtitle, zui_set_align",
+    dict(id="bubble", head="Bubbles and compact titles", title="Ada Lane", h=460, api="zui_bubble, zui_page_set_compact, zui_set_subtitle, zui_set_align",
          blurb="A speech bubble is as wide as what is in it, and sits on the end if it is yours. A compact page shows its title as given and smaller, with a line under it, for a person's name. <code>zui_set_align</code> sets text to start (0), end (1) or centre (2).",
          c='''zui_page_set_compact(page, true);
 zui_set_subtitle(page, "Last seen today");

@@ -37,7 +37,7 @@ def elements_html():
         codes = {k: e[k] for k in LANGNAME if k in e}
         if e.get("ctop"):
             codes["c"] = e["ctop"] + "\n\n" + codes["c"]
-        out.append('<h2 id="%s">%s</h2><p>%s</p><p><code>%s</code></p>' % (e["id"], e["title"], e["blurb"], e["api"]))
+        out.append('<h2 id="%s">%s</h2><p>%s</p><p><code>%s</code></p>' % (e["id"], e.get("head", e["title"]), e["blurb"], e["api"]))
         out.append(shots(e["id"]))
         if "rs" not in e:
             out.append('<p class="only"><b>C and C++ only.</b> The Rust and Python bindings have no call for this at this commit.</p>')
