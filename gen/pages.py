@@ -280,6 +280,7 @@ PAGES = {
 "index": ("ztOS SDK wiki", "How to make apps for ztOS: C, C++, Rust and Python, every UI element with real renders, every animation running live, and how to publish.", """
 <h1>Make apps for ztOS</h1>
 <p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. They ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
+<p><b>Requires ztOS BETA-1.1 or later.</b> Apps made with this SDK run on BETA-1.1 and newer; earlier versions of ztOS cannot run them.</p>
 <pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
 cd zrn-sdk && export PATH="$PWD/tools:$PATH"
 zrn doctor
