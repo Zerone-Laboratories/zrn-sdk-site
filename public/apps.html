@@ -23,8 +23,8 @@
 <div class="layout">
 <aside class="sidebar">
 <a class="wordmark" href="/">ztOS <span>SDK</span></a>
-<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
-<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
 <div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
 </aside>
 <main>
@@ -35,13 +35,13 @@
 <tr><th>Way</th><th>Status</th><th>Draws with</th><th>Ships as</th></tr>
 <tr><td>C, <code>zrnui.h</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
 <tr><td>C++, <code>zrnui.hpp</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
+<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
+<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
 <tr><td>Older Python SDK, <code>ztos</code></td><td>Older. Runs on the phone</td><td>Qt, with a GPU layer for motion</td><td>An aarch64 ELF launcher plus a zip</td></tr>
 <tr><td>ZrnMetroCore, <code>ztmetro/core</code></td><td>The ztOS apps themselves. Not an SDK</td><td>Cairo and Pango, GPU quads</td><td>Part of the system</td></tr>
 </table></div>
 <h2 id="same">One library, four languages</h2>
-<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so all four produce the same pixels.</p>
+<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so what they share produces the same pixels. <b>Pictures, long lists, pivots, the footer and bubbles are in C and C++ only at this commit.</b></p>
 <div class="langs" data-langs><div role="tablist" aria-label="Language">
 <button type="button" role="tab" data-l="c" aria-selected="false">C</button>
 <button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
@@ -176,8 +176,8 @@ app.watch(fd, lambda fd: read_it(fd))      # fn(fd) when readable</code></pre>
 <tr><th>Command</th><th>What it does</th></tr>
 <tr><td><code>zrn new NAME --lang c|cpp|python|rust [--id ID] [--dir D]</code></td><td>A project from a template. The default id is <code>io.github.$USER.name</code></td></tr>
 <tr><td><code>zrn build [--arch A]</code></td><td>C and C++ against the system's or the SDK's libzrnui. Rust with cargo. Python is syntax-checked</td></tr>
-<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style cool|metro] [--theme dark|light] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
-<tr><td><code>zrn run [--headless] [--script S] [--style] [--theme] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
+<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style metro|dotmatrix] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
+<tr><td><code>zrn run [--headless] [--script S] [--style] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
 <tr><td><code>zrn pack [--arch] [--out D] [--key K] [--no-sign] [--bundle-zrnui]</code></td><td>Makes <code>dist/&lt;id&gt;-&lt;version&gt;-&lt;arch&gt;.zexec</code> and <code>.minisig</code></td></tr>
 <tr><td><code>zrn verify FILE [--sig S] [--key K]</code></td><td>Exit 0 good, 1 broken, 2 not trusted</td></tr>
 <tr><td><code>zrn install FILE [--key K]</code>, <code>zrn uninstall ID</code></td><td>For this user, on this computer</td></tr>
@@ -222,11 +222,11 @@ class Home(ztos.Page):
         ztos.notify("Notes", "sync on" if on else "sync off")
 
 app.run(Home())</code></pre>
-<p>It has things libzrnui lacks at this commit: <code>Pivot</code>, <code>RoundButton</code>, <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
+<p>It has things libzrnui lacks at this commit: <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
 <h2 id="core">ZrnMetroCore <span class="tag dashed">not an SDK</span></h2>
 <p>The C toolkit behind ztOS's own apps (<code>ztmetro/core</code>). It builds inside the ztOS tree and has no packaging or stable interface for outside apps. It appears here because its <a href="/animations">animations</a> are the reference for Metro's motion. <code>DESIGN.md</code> plans to move those apps to libzrnui one at a time.</p>
 
-<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <code>ea16771</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
 <script src="/assets/site.js"></script>

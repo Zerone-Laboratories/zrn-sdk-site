@@ -71,32 +71,6 @@
 
   // ---- demos: each returns { ms, frame(ms), options? } --------------------
 
-  function coolPage(host, dir) {
-    var s = stage(host, 'cool');
-    var mk = function (title, names) {
-      var rows = [row(s, 8, 48, title, null, 'big')];
-      var y = 66;
-      names.forEach(function (n) { rows.push(row(s, y, 56, n, null, 'card')); y += 62; });
-      return rows;
-    };
-    var a = mk('Settings', ['Wi-Fi', 'Bluetooth', 'Sounds', 'Display', 'Battery']);
-    var b = mk('Wi-Fi', ['Home-5G', 'Cafe', 'Workshop', 'Hidden network']);
-    var from = dir > 0 ? a : b, to = dir > 0 ? b : a, total = 380;
-    return { ms: total, frame: function (ms) {
-      var t = clamp01(ms / total);
-      var e = easeOut(clamp01(t / 0.35));
-      var tx = (dir > 0 ? -W * 0.04 : W * 0.10) * e;
-      from.forEach(function (r) { r.style.transform = 'translateX(' + tx + 'px)'; r.style.opacity = 1 - e; });
-      to.forEach(function (r, i) {
-        var n = i > 8 ? 8 : i, delay = n * 14;
-        var u = clamp01((t * total - delay) / (total - delay));
-        var f = easeEmph(u);
-        r.style.transform = 'translateX(' + ((dir > 0 ? 1 : -1) * W * (dir > 0 ? 0.16 : 0.06) * (1 - f)) + 'px)';
-        r.style.opacity = clamp01((u - 0.18) / 0.42);
-      });
-    } };
-  }
-
   function metroRows(s, title, names) {
     var rows = [row(s, 8, 96, title, null, 'mt')];
     var y = 116;
@@ -276,69 +250,63 @@
     } };
   }
 
-  function toggleKnob(host, style) {
-    var s = stage(host, style, 120), metro = style === 'metro';
+  function toggleKnob(host) {
+    var s = stage(host, 'metro', 120);
     var track = el('div', 'tk', s), fill = el('div', 'tkf', track), knob = el('div', 'kn', track);
     return { ms: 180, frame: function (ms) {
       var k = easeOut(ms / 180);
       fill.style.opacity = k;
-      knob.style.transform = 'translateX(' + (metro ? 1 + k * 40 : 3 + k * 20) + 'px)';
+      knob.style.transform = 'translateX(' + (1 + k * 40) + 'px)';
     } };
   }
 
-  function toast(host, style) {
-    var s = stage(host, style, 300), metro = style === 'metro';
-    el('div', 'rt pad', s, metro ? 'settings' : 'Settings');
-    var t = el('div', metro ? 'tm' : 'tc', s, 'Saved');
+  function toast(host) {
+    var s = stage(host, 'metro', 300);
+    el('div', 'rt pad', s, 'settings');
+    var t = el('div', 'tm', s, 'Saved');
     return { ms: 2600, frame: function (age) {
       var shown = easeOut(age < 200 ? age / 200 : age > 2300 ? (2600 - age) / 300 : 1);
-      if (metro) t.style.transform = 'translateY(' + (-(1 - shown) * 60) + 'px)';
-      else { t.style.opacity = shown; t.style.transform = 'translate(-50%,' + ((1 - shown) * 16) + 'px)'; }
+      t.style.transform = 'translateY(' + (-(1 - shown) * 60) + 'px)';
     } };
   }
 
-  function busy(host, style) {
-    var s = stage(host, style, 160), metro = style === 'metro';
-    el('div', 'rt pad', s, metro ? 'settings' : 'Settings');
-    if (metro) {
-      var dots = [0, 1, 2, 3, 4].map(function () { return el('div', 'dot', s); });
-      return { ms: 2600, loop: true, frame: function (ms) {
-        dots.forEach(function (d, i) {
-          var p = (ms % 2600) / 2000 - i * 0.075;
-          d.style.opacity = p < 0 || p > 1 ? 0 : 1;
-          var c = p - 0.5;
-          d.style.transform = 'translateX(' + (W * (0.5 + 4 * c * c * c) - 2) + 'px)';
-        });
-      } };
-    }
-    var seg = el('div', 'seg', s);
-    seg.style.width = W * 0.3 + 'px';
-    return { ms: 1300, loop: true, frame: function (ms) {
-      var p = (ms % 1300) / 1300;
-      seg.style.transform = 'translateX(' + (-W * 0.3 + (W + W * 0.3) * easeEmph(p)) + 'px)';
+  function busy(host) {
+    var s = stage(host, 'metro', 160);
+    el('div', 'rt pad', s, 'settings');
+    var dots = [0, 1, 2, 3, 4].map(function () { return el('div', 'dot', s); });
+    return { ms: 2600, loop: true, frame: function (ms) {
+      dots.forEach(function (d, i) {
+        var p = (ms % 2600) / 2000 - i * 0.075;
+        d.style.opacity = p < 0 || p > 1 ? 0 : 1;
+        var c = p - 0.5;
+        d.style.transform = 'translateX(' + (W * (0.5 + 4 * c * c * c) - 2) + 'px)';
+      });
     } };
   }
 
-  function indeterminate(host) {
-    var s = stage(host, 'cool', 80);
-    var bar = el('div', 'bar', s), seg = el('div', 'seg in', bar), w = 324;
-    return { ms: 1400, loop: true, frame: function (ms) {
-      var p = (ms % 1400) / 1400, len = w * 0.35, at = -len + (w + len) * easeOut(p);
-      var a = Math.max(at, 0), b = Math.min(at + len, w);
-      seg.style.left = a + 'px';
-      seg.style.width = Math.max(0, b - a) + 'px';
+  // the pivot: extras.c zui_tabs_select, 240 ms on zui_ease_out; style-metro.c tabs
+  function pivot(host) {
+    var s = stage(host, 'metro', 300);
+    el('div', 'cap', s, 'APP');
+    var strip = el('div', 'piv', s), spans = ['chats', 'status', 'starred', 'chats'].map(function (n) {
+      return el('span', '', strip, n);
+    });
+    var body = el('div', 'tabbody', s);
+    row(body, 0, 66, 'Ada', 'See you soon', 'mr');
+    row(body, 66, 66, 'Ben', 'Thanks', 'mr');
+    return { ms: 240, frame: function (ms) {
+      var f = 1 - easeOut(ms / 240);
+      spans[1].className = 'on';
+      var w = spans[0].offsetWidth + 16;
+      strip.style.transform = 'translateX(' + (-w * (1 - f)) + 'px)';
+      body.style.transform = 'translateX(' + (W * f) + 'px)';
     } };
-  }
-
-  function focus(host) {
-    var s = stage(host, 'cool', 100), f = el('div', 'fld', s, 'Search');
-    return { ms: 150, frame: function (ms) { f.style.borderColor = 'rgba(0,80,239,' + easeOut(ms / 150) + ')'; } };
   }
 
   // fling: core.c zui_step. Simulated in 1 ms steps, so the scrubber can go anywhere.
   function fling(host) {
-    var s = stage(host, 'cool'), list = el('div', 'list', s), n = 24, rowH = 62;
-    for (var i = 0; i < n; i++) row(list, i * rowH, 56, 'Row ' + (i + 1), null, 'card');
+    var s = stage(host, 'metro'), list = el('div', 'list', s), n = 24, rowH = 66;
+    for (var i = 0; i < n; i++) row(list, i * rowH, 66, 'Row ' + (i + 1), 'a row', 'mr');
     var max = n * rowH - H + 20, v0 = 3.2;
     var pos = [0], scroll = 0, vel = v0, flinging = true;
     for (var t = 1; t < 6000; t++) {
@@ -363,19 +331,12 @@
   }
 
   var DEMOS = {
-    'cool-forward': function (h) { return coolPage(h, 1); },
-    'cool-back': function (h) { return coolPage(h, -1); },
     'metro-forward': function (h) { return metroPage(h, 1); },
     'metro-back': function (h) { return metroPage(h, -1); },
     'core-forward': function (h) { return corePage(h, 1); },
     'core-back': function (h) { return corePage(h, -1); },
-    board: board, press: press, fling: fling, focus: focus, indeterminate: indeterminate,
-    'knob-cool': function (h) { return toggleKnob(h, 'cool'); },
-    'knob-metro': function (h) { return toggleKnob(h, 'metro'); },
-    'toast-cool': function (h) { return toast(h, 'cool'); },
-    'toast-metro': function (h) { return toast(h, 'metro'); },
-    'busy-cool': function (h) { return busy(h, 'cool'); },
-    'busy-metro': function (h) { return busy(h, 'metro'); }
+    board: board, press: press, fling: fling, pivot: pivot,
+    knob: toggleKnob, toast: toast, busy: busy
   };
   Object.keys(CATALOGUE).forEach(function (k) { DEMOS['n:' + k] = function (h) { return named(h, k); }; });
 

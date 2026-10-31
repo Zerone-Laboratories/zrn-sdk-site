@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <zrnui.h>
 
@@ -25,13 +26,10 @@ static void el_item(zui_app *app, zui_node *page) {
 	zui_node *list = zui_section(page, "Rows");
 	zui_item(list, "Title only", NULL, NULL, NULL);
 	zui_item(list, "With a second line", "Under the title", NULL, NULL);
-	zui_item(list, "Goes somewhere", NULL, row_tapped, NULL);
+	zui_item(list, "Takes a tap", NULL, row_tapped, NULL);
 	zui_node *wifi = zui_item(list, "Wi-Fi", NULL, row_tapped, NULL);
 	zui_set_icon(wifi, "wifi");
 	zui_set_detail(wifi, "Home-5G");
-	zui_node *tinted = zui_item(list, "Tinted icon", "zrnCoolStyle only", NULL, NULL);
-	zui_set_icon(tinted, "music");
-	zui_set_tint(tinted, 0xd9486e);
 }
 
 static void wifi_changed(zui_node *sw, void *data) {
@@ -96,12 +94,91 @@ static void el_layout(zui_app *app, zui_node *page) {
 	zui_caption(col, "and can be hidden as one.");
 }
 
+static void el_round(zui_app *app, zui_node *page) {
+	(void)app;
+	zui_node *bar = zui_row(page);
+	const char *names[] = { "plus", "search", "send", "more" };
+	for (int i = 0; i < 4; i++) {
+		zui_node *b = zui_button(bar, names[i], NULL, NULL);
+		zui_set_icon(b, names[i]);
+		zui_set_flex(b, 1);
+	}
+}
+
+static void el_picture(zui_app *app, zui_node *page) {
+	(void)app;
+	static uint8_t px[64 * 64 * 4];
+	for (int i = 0; i < 64 * 64; i++) {
+		px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
+	}
+	zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  /* or zui_pixmap_load("photo.jpg", 1024) */
+	zui_image(page, pix, 0, 140);                   /* width 0: all there is */
+	zui_node *card = zui_section(page, "Thread rows");
+	zui_node *a = zui_item(card, "Ada", "A picture as the tile", NULL, NULL);
+	zui_set_image(a, pix);
+	zui_set_detail(a, "09:41");
+	zui_node *b = zui_item(card, "Ben", "A monogram, a count, unread", NULL, NULL);
+	zui_set_monogram(b, "B");
+	zui_set_tint(b, 0xd9486e);
+	zui_set_badge(b, "3");
+	zui_set_emphasis(b, true);
+	zui_pixmap_free(pix);
+}
+
+static double row_height(int row, void *data) { return 66; }
+static void row_bind(int row, zui_node *node, void *data) {
+	char title[32];
+	snprintf(title, sizeof(title), "Row %d", row + 1);
+	zui_item(node, title, row % 3 ? "Made when it came near" : "Of 5000", NULL, NULL);
+}
+
+static void el_list(zui_app *app, zui_node *page) {
+	(void)app;
+	zui_list(page, 5000, row_height, row_bind, NULL);
+}
+
+static void el_pivot(zui_app *app, zui_node *page) {
+	(void)app;
+	zui_node *tabs = zui_tabs(page);
+	zui_node *one = zui_tab(tabs, "chats");
+	zui_item(one, "Ada", "See you soon", NULL, NULL);
+	zui_item(one, "Ben", "Thanks", NULL, NULL);
+	zui_item(zui_tab(tabs, "status"), "Nothing yet", NULL, NULL, NULL);
+	zui_item(zui_tab(tabs, "starred"), "Nothing yet", NULL, NULL, NULL);
+}
+
+static void el_bubble(zui_app *app, zui_node *page) {
+	(void)app;
+	zui_page_set_compact(page, true);
+	zui_set_subtitle(page, "Last seen today");
+	zui_node *in = zui_bubble(page, false);
+	zui_text(in, "Are you coming tonight?");
+	zui_caption(in, "18:02");
+	zui_node *me = zui_bubble(page, true);
+	zui_text(me, "Yes, on my way");
+	zui_caption(me, "18:03");
+}
+
+static void el_footer(zui_app *app, zui_node *page) {
+	(void)app;
+	zui_text(page, "The page scrolls under the bar.");
+	zui_node *bar = zui_footer(page);
+	zui_node *field = zui_field(bar, "Type a message", NULL, NULL);
+	zui_set_flex(field, 1);
+	zui_button(bar, "Send", NULL, NULL);
+}
+
 static void el_icons(zui_app *app, zui_node *page) {
 	(void)app;
-	const char *names[] = { "wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone" };
-	zui_node *card = zui_card(page);
-	for (size_t i = 0; i < sizeof(names) / sizeof(*names); i++)
-		zui_set_icon(zui_item(card, names[i], NULL, NULL, NULL), names[i]);
+	const char *names[] = { "wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone", "send" };
+	for (int i = 0; i < 21; i += 4) {
+		zui_node *row = zui_row(page);
+		for (int k = i; k < i + 4 && k < 21; k++) {
+			zui_node *b = zui_button(row, names[k], NULL, NULL);
+			zui_set_icon(b, names[k]);
+			zui_set_flex(b, 1);
+		}
+	}
 }
 
 int main(void) {
@@ -115,6 +192,12 @@ int main(void) {
 	zui_node *p_field = zui_page(app, "Text fields"); el_field(app, p_field);
 	zui_node *p_section = zui_page(app, "Sections and cards"); el_section(app, p_section);
 	zui_node *p_layout = zui_page(app, "Rows, columns, space"); el_layout(app, p_layout);
+	zui_node *p_round = zui_page(app, "Round buttons"); el_round(app, p_round);
+	zui_node *p_picture = zui_page(app, "Pictures"); el_picture(app, p_picture);
+	zui_node *p_list = zui_page(app, "Long lists"); el_list(app, p_list);
+	zui_node *p_pivot = zui_page(app, "Pivots"); el_pivot(app, p_pivot);
+	zui_node *p_bubble = zui_page(app, "Bubbles and compact titles"); el_bubble(app, p_bubble);
+	zui_node *p_footer = zui_page(app, "Footer"); el_footer(app, p_footer);
 	zui_node *p_icons = zui_page(app, "Icons"); el_icons(app, p_icons);
 	return zui_run(app, p_text);
 }

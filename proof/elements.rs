@@ -19,9 +19,8 @@ fn el_item<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {
     let list = page.section("Rows");
     list.item("Title only", None);
     list.item("With a second line", Some("Under the title"));
-    list.item("Goes somewhere", None).on_click(move || app.toast("Tapped"));
+    list.item("Takes a tap", None).on_click(move || app.toast("Tapped"));
     list.item("Wi-Fi", None).on_click(move || app.toast("Tapped")).set_icon("wifi").set_detail("Home-5G");
-    list.item("Tinted icon", Some("zrnCoolStyle only")).set_icon("music").set_tint(0xd9486e);
 }
 
 fn el_switch<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {
@@ -67,10 +66,19 @@ fn el_layout<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {
     col.caption("and can be hidden as one.");
 }
 
+fn el_round<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {
+    let bar = page.row();
+    for name in ["plus", "search", "send", "more"] {
+        bar.button(name).set_icon(name).set_flex(1.0);
+    }
+}
+
 fn el_icons<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {
-    let card = page.card();
-    for name in ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone"] {
-        card.item(name, None).set_icon(name);
+    for names in ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone", "send"].chunks(4) {
+        let row = page.row();
+        for name in names {
+            row.button(name).set_icon(name).set_flex(1.0);
+        }
     }
 }
 
@@ -85,6 +93,7 @@ fn main() {
     let p_field = app.page("Text fields"); el_field(&app, p_field);
     let p_section = app.page("Sections and cards"); el_section(&app, p_section);
     let p_layout = app.page("Rows, columns, space"); el_layout(&app, p_layout);
+    let p_round = app.page("Round buttons"); el_round(&app, p_round);
     let p_icons = app.page("Icons"); el_icons(&app, p_icons);
     std::process::exit(app.run(p_text));
 }

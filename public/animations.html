@@ -23,8 +23,8 @@
 <div class="layout">
 <aside class="sidebar">
 <a class="wordmark" href="/">ztOS <span>SDK</span></a>
-<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations" aria-current="page">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
-<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations" aria-current="page">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations" aria-current="page">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations" aria-current="page">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
 <div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
 </aside>
 <main>
@@ -32,11 +32,11 @@
 <h1>Animations</h1>
 <p class="lead">Every animation here runs from the same formula and the same numbers as the C code, and each one names the file those numbers come from.</p>
 
-<div class="note"><p><b>A zrnui app does not call any of these.</b> libzrnui has <b>no animation API</b> at commit <code>8f6fb14</code>: page changes, presses, switches and toasts animate by themselves, and the style decides how. <b>Swivel, fade and the other named transitions are not in libzrnui.</b> They exist in ZrnMetroCore (ztOS's own apps) and in the older Python SDK's <code>animate()</code>.</p></div>
+<div class="note"><p><b>A zrnui app does not call any of these.</b> libzrnui has <b>no animation API</b> at commit <code>ea16771</code>: page changes, presses, switches and toasts animate by themselves, and the style decides how. <b>Swivel, fade and the other named transitions are not in libzrnui.</b> They exist in ZrnMetroCore (ztOS's own apps) and in the older Python SDK's <code>animate()</code>.</p></div>
 
 <div class="table-wrap"><table>
 <tr><th>Where you are</th><th>What you get</th><th>How</th></tr>
-<tr><td>zrn-sdk, libzrnui</td><td>Page change, press, switch, field focus, toast, busy, progress, fling</td><td>Automatic. No call, no way to change the numbers</td></tr>
+<tr><td>zrn-sdk, libzrnui</td><td>Page change, press, switch, pivot, toast, busy, progress, fling</td><td>Automatic. No call, no way to change the numbers</td></tr>
 <tr><td>Older Python SDK, <code>ztos</code></td><td>Its own turnstile and tilt, plus 13 named transitions</td><td><code>ztos.animate(widget, "swivel-in")</code>. Some values differ: see <a href="#old">below</a></td></tr>
 <tr><td>ZrnMetroCore (<code>ztmetro/core</code>)</td><td>13 named transitions, the Swivel board, <code>zmc_turn</code></td><td><code>zmc_transition()</code>, <code>zmc_board_open()</code>. For apps in the ztOS tree, not an SDK</td></tr>
 </table></div>
@@ -47,9 +47,10 @@
 <div class="gap"><b>Where the web version only approximates</b>
 <ul>
 <li><b>Same:</b> durations, staggers, angles, pivots, opacity, easing formulas and the eye distance (a 34 degree field of view on a 740 pt tall screen, <code>gfx.c</code>, <code>zrnmetrogpu.c</code>). A browser's <code>perspective</code> is the same divide the shader does.</li>
-<li><b>Different:</b> the fonts and row layouts are plain CSS stand-ins, not Inter or Selawik through the SDF renderer. The real look is in the <a href="/elements">renders</a>.</li>
+<li><b>Different:</b> the fonts and row layouts are plain CSS stand-ins, not Segoe UI through the SDF renderer. The real look is in the <a href="/elements">renders</a>.</li>
+<li><b>Different:</b> the demos draw in the Metro look only. DotMatrix runs the same motion through its lattice, as the real frames show.</li>
 <li><b>Different:</b> phones here run at your browser's frame rate, not the S9's, and the C code samples its clock once per compositor frame.</li>
-<li><b>Different:</b> in Metro, libzrnui rotates each row's quads, while these demos rotate a whole row box. Each named-transition demo shows one rectangle in a 300 pt tall stage, while the eye distance stays that of a 740 pt screen.</li>
+<li><b>Different:</b> libzrnui rotates each row's quads, while these demos rotate a whole row box. Each named-transition demo shows one rectangle in a 300 pt tall stage, while the eye distance stays that of a 740 pt screen.</li>
 <li><b>Not compared to the phone:</b> these were compared by eye with frames from the laptop's virtual compositor, not with the S9's display.</li>
 </ul></div>
 
@@ -57,18 +58,13 @@
 <p>Progress over time for each easing. <b>libzrnui</b> has three, in <code>libzrnui/src/core.c</code>: <code>zui_ease_out</code> is <code>1 - (1-t)^3</code>, <code>zui_ease_in</code> is <code>t^3</code>, and <code>zui_ease_emph</code> is a cubic Bezier (0.2, 0.8, 0.2, 1). <b>ZrnMetroCore</b> rebuilds the firmware's named curves in <code>zt_shape</code>, with <code>k = weight / 30</code>: Exp is <code>(e^(k t) - 1) / (e^k - 1)</code> and Log is <code>1 - (e^(k (1-t)) - 1) / (e^k - 1)</code>. The firmware stores names and weights. The formula itself is a reconstruction, as the core's own comment says.</p>
 <div class="curves"><figure><svg viewBox="0 0 100 100" data-curve="out" role="img" aria-label="zui_ease_out" preserveAspectRatio="none"></svg><figcaption>zui_ease_out</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="in" role="img" aria-label="zui_ease_in" preserveAspectRatio="none"></svg><figcaption>zui_ease_in</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="emph" role="img" aria-label="zui_ease_emph" preserveAspectRatio="none"></svg><figcaption>zui_ease_emph</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="l:200" role="img" aria-label="Log 200 (swivel in)" preserveAspectRatio="none"></svg><figcaption>Log 200 (swivel in)</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="e:150" role="img" aria-label="Exp 150 (swivel out)" preserveAspectRatio="none"></svg><figcaption>Exp 150 (swivel out)</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="l:60" role="img" aria-label="Log 60" preserveAspectRatio="none"></svg><figcaption>Log 60</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="e:60" role="img" aria-label="Exp 60" preserveAspectRatio="none"></svg><figcaption>Exp 60</figcaption></figure><figure><svg viewBox="0 0 100 100" data-curve="s:7.5" role="img" aria-label="SCurve 7.5" preserveAspectRatio="none"></svg><figcaption>SCurve 7.5</figcaption></figure></div>
 
-<h2 id="page-cool">Page change: zrnCoolStyle fade through <span class="tag">libzrnui</span></h2>
-<p>Automatic on <code>zui_push</code> and <code>zui_back</code>. Runs <b>380 ms</b>. The old page fades with <code>zui_ease_out</code> in the first 35 % of the time while it drifts 4 % of the width left (or 10 % right, going back). The new page arrives from 16 % right (or 6 % left, going back) on <code>zui_ease_emph</code>, each row 14 ms after the one before, up to row 8. Its opacity runs from 18 % to 60 % of its own time.</p>
-<p>Source: <code>page_xf</code> and <code>.transition_ms</code> in <code>libzrnui/src/style-cool.c</code>.</p>
-<div class="demos"><div class="demo" data-demo="cool-forward"><h4>Forward</h4></div><div class="demo" data-demo="cool-back"><h4>Back</h4></div></div>
-<p>Real frames, from <code>zrn run --headless</code> in a virtual compositor, one run per picture. Frames the compositor delayed past the end are dropped, and the times are not exact: this shows the shape, while the numbers above come from the code.</p>
-<div class="strip" tabindex="0"><img src="img/frames-cool.webp" alt="Real frames of the zrnCoolStyle page change" loading="lazy"></div>
-
-<h2 id="page-metro">Page change: Metro turnstile <span class="tag">libzrnui</span></h2>
-<p>Runs <b>720 ms</b> in all. Rows leave one at a time, 28 ms apart, each over 128 ms, turning 50 degrees about the left edge on <code>zui_ease_in</code> toward the viewer, with opacity <code>1 - u^2</code>. New rows start at 330 ms, also 28 ms apart, each over 180 ms from 80 degrees behind the screen, on <code>zui_ease_out</code>. Going back, both run bottom up and the old rows turn the other way.</p>
+<h2 id="page-metro">Page change: the turnstile <span class="tag">libzrnui</span></h2>
+<p>Automatic on <code>zui_push</code> and <code>zui_back</code>, in both styles, with the same numbers. Runs <b>720 ms</b> in all. Rows leave one at a time, 28 ms apart, each over 128 ms, turning 50 degrees about the left edge on <code>zui_ease_in</code> toward the viewer, with opacity <code>1 - u^2</code>. New rows start at 330 ms, also 28 ms apart, each over 180 ms from 80 degrees behind the screen, on <code>zui_ease_out</code>. Going back, both run bottom up and the old rows turn the other way.</p>
 <p>Source: <code>page_xf</code>, <code>OUT_MS</code>, <code>IN_MS</code>, <code>STAGGER</code>, <code>GAP_AT</code> in <code>libzrnui/src/style-metro.c</code>. The comment above them says 33 ms apart; the code that runs says 28.</p>
 <div class="demos"><div class="demo" data-demo="metro-forward"><h4>Forward</h4></div><div class="demo" data-demo="metro-back"><h4>Back</h4></div></div>
-<div class="strip" tabindex="0"><img src="img/frames-metro.webp" alt="Real frames of the Metro page change" loading="lazy"></div>
+<p>Real frames, from <code>zrn run --headless</code> in a virtual compositor, one run per picture. Frames the compositor delayed past the end are dropped, and the times are not exact: this shows the shape, while the numbers above come from the code. Metro, then DotMatrix.</p>
+<div class="strip" tabindex="0"><img src="/img/frames-metro.webp" alt="Real frames of the page change in Metro" loading="lazy"></div>
+<div class="strip" tabindex="0"><img src="/img/frames-dotmatrix.webp" alt="Real frames of the page change in DotMatrix" loading="lazy"></div>
 
 <h2 id="page-core">Page change: ZrnMetroCore turnstile <span class="tag dashed">ztOS apps only</span></h2>
 <p>The built-in apps' own version, for comparison: rows 33 ms apart, 128 ms out on <code>t^2</code>, a 120 ms black gap, 180 ms in on <code>1 - (1-t)^3</code>. The total depends on the row count. <code>zmc_turn</code> plays this on one page when its content changes. Source: <code>ROW_OUT_MS</code>, <code>ROW_IN_MS</code>, <code>ROW_STAGGER_MS</code>, <code>GAP_MS</code> and <code>TURN_OUT_DEG</code> in <code>ztmetro/core/zrnmetrocore.c</code>. Simplified here: the real one also holds the tapped row until last, and an app's first page arrives by a different curve (<code>zmr_entrance</code>, 28 ms stagger, 190 ms rows, 200 ms title), which is not shown.</p>
@@ -106,22 +102,22 @@
 <div class="demos wide"><div class="demo" data-demo="n:turnstile-in"><h4>turnstile-in</h4></div><div class="demo" data-demo="n:turnstile-out"><h4>turnstile-out</h4></div><div class="demo" data-demo="n:swivel-in"><h4>swivel-in</h4></div><div class="demo" data-demo="n:swivel-out"><h4>swivel-out</h4></div><div class="demo" data-demo="n:continuum-hide"><h4>continuum-hide</h4></div><div class="demo" data-demo="n:continuum-show"><h4>continuum-show</h4></div><div class="demo" data-demo="n:readerboard-in"><h4>readerboard-in</h4></div><div class="demo" data-demo="n:readerboard-out"><h4>readerboard-out</h4></div><div class="demo" data-demo="n:slide-up-fade-in"><h4>slide-up-fade-in</h4></div><div class="demo" data-demo="n:rotate-90"><h4>rotate-90</h4></div><div class="demo" data-demo="n:fade-in"><h4>fade-in</h4></div><div class="demo" data-demo="n:fade-out"><h4>fade-out</h4></div><div class="demo" data-demo="n:tile-flip-notify"><h4>tile-flip-notify</h4></div></div>
 
 <h2 id="press">Press and tilt <span class="tag">libzrnui</span></h2>
-<p>Press a row in this demo: it follows your pointer. In Metro what is under the finger leans toward it by up to <b>14 degrees</b>, but its far edge never lifts more than <b>40 pt</b>, and it sinks <b>4.5 %</b>. Rows tilt. Sliders and fields do not move, and a button fills white instead. In takes <b>90 ms</b>, and the release takes 200 ms in Metro and 220 ms in zrnCoolStyle (160 ms when the press is cancelled by a scroll), all on <code>zui_ease_out</code>.</p>
-<p>zrnCoolStyle does not tilt: a row gets an inset highlight and a button sinks <b>3.5 %</b>. Source: <code>press_xf</code>, <code>TILT_DEG</code>, <code>TILT_LIFT</code>, <code>PRESS_SINK</code> in <code>style-metro.c</code> and <code>style-cool.c</code>, timing in <code>core.c</code>. ZrnMetroCore shares the numbers (<code>ZMC_TILT_*</code>).</p>
-<div class="demos"><div class="demo" data-demo="press"><h4>Metro tilt: press it</h4></div></div>
+<p>Press a row in this demo: it follows your pointer. What is under the finger leans toward it by up to <b>14 degrees</b>, but its far edge never lifts more than <b>40 pt</b>, and it sinks <b>4.5 %</b>. Rows tilt. Sliders and fields do not move, and a button fills instead. In takes <b>90 ms</b>, and the release takes 200 ms (160 ms when the press is cancelled by a scroll), all on <code>zui_ease_out</code>. DotMatrix uses the same <code>press_xf</code>.</p>
+<p>Source: <code>press_xf</code>, <code>TILT_DEG</code>, <code>TILT_LIFT</code>, <code>PRESS_SINK</code> in <code>style-metro.c</code>, timing in <code>core.c</code>. ZrnMetroCore shares the numbers (<code>ZMC_TILT_*</code>).</p>
+<div class="demos"><div class="demo" data-demo="press"><h4>Tilt: press it</h4></div></div>
 
 <h2 id="small">Small things <span class="tag">libzrnui</span></h2>
 <div class="table-wrap"><table>
 <tr><th>What</th><th>Numbers</th><th>Source</th></tr>
-<tr><td>Switch knob</td><td>180 ms, <code>zui_ease_out</code></td><td><code>zui_set_on</code>, <code>core.c</code></td></tr>
-<tr><td>Field focus ring</td><td>150 ms, <code>zui_ease_out</code>. Cool only draws this ring: Metro's box turns white when typed into</td><td><code>core.c</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Toast</td><td>2600 ms: in over 200, out over the last 300. Cool rises 16 pt and fades. Metro's bar drops 60 pt from the top</td><td><code>core.c</code>, <code>toast</code> in each style</td></tr>
-<tr><td>Busy, Cool</td><td>a 30 % piece sweeps every 1300 ms on <code>zui_ease_emph</code></td><td><code>busy</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Busy, Metro</td><td>five 4 pt dots every 2600 ms, each 7.5 % later, on <code>0.5 + 4 (p - 0.5)^3</code> across the width</td><td><code>dots</code>, <code>style-metro.c</code></td></tr>
-<tr><td>Unknown progress, Cool</td><td>a 35 % piece sweeps every 1400 ms on <code>zui_ease_out</code>. Metro uses the dots</td><td><code>progress</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Fling</td><td>speed times <code>0.9972^ms</code>, a further <code>0.8^(ms/16)</code> past an end, stop under 0.02 pt/ms, then back to the end with a 70 ms time constant</td><td><code>zui_step</code>, <code>core.c</code></td></tr>
+<tr><td>Switch block</td><td>180 ms, <code>zui_ease_out</code></td><td><code>zui_set_on</code>, <code>core.c</code></td></tr>
+<tr><td>Pivot</td><td>240 ms from where the finger left it, <code>zui_ease_out</code>. Past a quarter of a screen a swipe goes on to the next tab</td><td><code>zui_tabs_select</code>, <code>extras.c</code>; <code>core.c</code></td></tr>
+<tr><td>Toast</td><td>2600 ms: in over 200, out over the last 300. A bar drops 60 pt from the top</td><td><code>core.c</code>, <code>toast</code> in <code>style-metro.c</code></td></tr>
+<tr><td>Busy, unknown progress</td><td>five 4 pt dots every 2600 ms, each 7.5 % later, on <code>0.5 + 4 (p - 0.5)^3</code> across the width</td><td><code>dots</code>, <code>style-metro.c</code></td></tr>
+<tr><td>Fling</td><td>speed times <code>0.9972^ms</code>, a further <code>0.8^(ms/16)</code> past an end, stop under 0.02 pt/ms, then back to the end with a 70 ms time constant</td><td><code>core.c</code></td></tr>
+<tr><td>Glide to the end of a chat</td><td>a 45 ms time constant, for up to 600 ms</td><td><code>zui_page_scroll_end</code>, <code>core.c</code></td></tr>
 </table></div>
-<div class="demos"><div class="demo" data-demo="knob-cool"><h4>Switch, Cool</h4></div><div class="demo" data-demo="knob-metro"><h4>Switch, Metro</h4></div><div class="demo" data-demo="focus"><h4>Field focus</h4></div><div class="demo" data-demo="toast-cool"><h4>Toast, Cool</h4></div><div class="demo" data-demo="toast-metro"><h4>Toast, Metro</h4></div><div class="demo" data-demo="busy-cool"><h4>Busy, Cool</h4></div><div class="demo" data-demo="busy-metro"><h4>Busy, Metro</h4></div><div class="demo" data-demo="indeterminate"><h4>Unknown progress</h4></div><div class="demo" data-demo="fling"><h4>Fling at 3.2 pt/ms</h4></div></div>
+<p>A field's box turns from grey to white the moment it has focus. That change is not animated.</p>
+<div class="demos"><div class="demo" data-demo="knob"><h4>Switch</h4></div><div class="demo" data-demo="pivot"><h4>Pivot</h4></div><div class="demo" data-demo="toast"><h4>Toast</h4></div><div class="demo" data-demo="busy"><h4>Busy</h4></div><div class="demo" data-demo="fling"><h4>Fling at 3.2 pt/ms</h4></div></div>
 
 <h2 id="old">Older Python SDK: where its numbers differ <span class="tag dashed">older</span></h2>
 <p><code>ztos.animate(widget, name, repeat=False, on_done=None)</code> plays a named transition over any Qt widget. Its table is <code>TRANSITIONS</code> in <code>sdk/runtime/ztos/__init__.py</code>. Most entries match the list above, but <b>its swivel predates the firmware decode now in <code>zrnboard.h</code></b>:</p>
@@ -134,7 +130,7 @@
 </table></div>
 <p>Everything else that moves in that SDK is also scaled by <code>ANIM_SPEED</code>, which comes from a user setting, so its real durations vary.</p>
 
-<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <code>ea16771</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
 <script src="/assets/site.js"></script>

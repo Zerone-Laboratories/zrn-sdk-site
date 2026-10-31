@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdint>
 #include <string>
 #include <zrnui.hpp>
 
@@ -21,9 +22,8 @@ static void el_item([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
 	auto list = page.section("Rows");
 	list.item("Title only");
 	list.item("With a second line", "Under the title");
-	list.item("Goes somewhere", "", [&app] { app.toast("Tapped"); });
+	list.item("Takes a tap", "", [&app] { app.toast("Tapped"); });
 	list.item("Wi-Fi", "", [&app] { app.toast("Tapped"); }).set_icon("wifi").set_detail("Home-5G");
-	list.item("Tinted icon", "zrnCoolStyle only").set_icon("music").set_tint(0xd9486e);
 }
 
 static void el_switch([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
@@ -71,10 +71,66 @@ static void el_layout([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
 	col.caption("and can be hidden as one.");
 }
 
+static void el_round([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	auto bar = page.row();
+	for (const char *name : { "plus", "search", "send", "more" })
+		bar.button(name).set_icon(name).set_flex(1);
+}
+
+static void el_picture([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	static uint8_t px[64 * 64 * 4];
+	for (int i = 0; i < 64 * 64; i++) {
+		px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
+	}
+	zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  // or zui_pixmap_load("photo.jpg", 1024)
+	page.image(pix, 0, 140);
+	auto card = page.section("Thread rows");
+	card.item("Ada", "A picture as the tile").set_image(pix).set_detail("09:41");
+	card.item("Ben", "A monogram, a count, unread").set_monogram("B").set_tint(0xd9486e)
+		.set_badge("3").set_emphasis(true);
+	zui_pixmap_free(pix);
+}
+
+static void el_list([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	page.list(5000, [](int) { return 66.0; }, [](int row, zrn::ui::Node node) {
+		node.item("Row " + std::to_string(row + 1), row % 3 ? "Made when it came near" : "Of 5000");
+	});
+}
+
+static void el_pivot([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	auto tabs = page.tabs();
+	auto one = tabs.tab("chats");
+	one.item("Ada", "See you soon");
+	one.item("Ben", "Thanks");
+	tabs.tab("status").item("Nothing yet");
+	tabs.tab("starred").item("Nothing yet");
+}
+
+static void el_bubble([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	page.set_compact(true);
+	page.set_subtitle("Last seen today");
+	auto in = page.bubble(false);
+	in.text("Are you coming tonight?");
+	in.caption("18:02");
+	auto me = page.bubble(true);
+	me.text("Yes, on my way");
+	me.caption("18:03");
+}
+
+static void el_footer([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
+	page.text("The page scrolls under the bar.");
+	auto bar = page.footer();
+	bar.field("Type a message").set_flex(1);
+	bar.button("Send");
+}
+
 static void el_icons([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {
-	auto card = page.card();
-	for (const char *name : { "wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone" })
-		card.item(name).set_icon(name);
+	const char *names[] = { "wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone", "send" };
+	for (int i = 0; i < 21; i += 4) {
+		auto row = page.row();
+		for (int k = i; k < i + 4 && k < 21; k++)
+			row.button(names[k]).set_icon(names[k]).set_flex(1);
+	}
 }
 
 int main() {
@@ -88,6 +144,12 @@ int main() {
 	auto p_field = app.page("Text fields"); el_field(app, p_field);
 	auto p_section = app.page("Sections and cards"); el_section(app, p_section);
 	auto p_layout = app.page("Rows, columns, space"); el_layout(app, p_layout);
+	auto p_round = app.page("Round buttons"); el_round(app, p_round);
+	auto p_picture = app.page("Pictures"); el_picture(app, p_picture);
+	auto p_list = app.page("Long lists"); el_list(app, p_list);
+	auto p_pivot = app.page("Pivots"); el_pivot(app, p_pivot);
+	auto p_bubble = app.page("Bubbles and compact titles"); el_bubble(app, p_bubble);
+	auto p_footer = app.page("Footer"); el_footer(app, p_footer);
 	auto p_icons = app.page("Icons"); el_icons(app, p_icons);
 	return app.run(p_text);
 }

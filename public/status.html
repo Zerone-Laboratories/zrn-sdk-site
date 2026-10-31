@@ -23,14 +23,14 @@
 <div class="layout">
 <aside class="sidebar">
 <a class="wordmark" href="/">ztOS <span>SDK</span></a>
-<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status" aria-current="page">Status and gaps</a></li></ul></nav>
-<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status" aria-current="page">Status and gaps</a></li></ul></nav></details>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status" aria-current="page">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status" aria-current="page">Status and gaps</a></li></ul></nav></details>
 <div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
 </aside>
 <main>
 
 <h1>Status and gaps</h1>
-<p class="lead"><b>libzrnui is a laptop-proven first round.</b> This page lists what is missing, as of commit <code>8f6fb14</code>, so that nobody has to discover it the hard way.</p>
+<p class="lead"><b>This page lists what libzrnui does not do yet</b>, as of commit <code>ea16771</code>, so that nobody has to discover it the hard way.</p>
 <h2 id="unproven">Not proven</h2>
 <ul>
 <li><b>Nothing from zrn-sdk has been reported running on a phone</b> by <code>DESIGN.md</code> at this commit. Frame times on the Mali-G72 are inferred, not measured. CPU cost was measured on a 2012 laptop: about 1.35 ms a frame in zrnCoolStyle and 0.78 ms in Metro.</li>
@@ -41,12 +41,13 @@
 </ul>
 <h2 id="missing">Missing from libzrnui</h2>
 <ul>
-<li>Pictures, avatars, tabs and pivots, long virtualised lists, dialogs, menus, pickers, date and time, pull to refresh.</li>
-<li>Any app-level animation call, custom drawing, or custom style.</li>
-<li>Password or multi-line fields, and your own icons on a row.</li>
+<li>Dialogs, menus, pickers, date and time, pull to refresh.</li>
+<li><b>Pictures, long lists, pivots, the footer and bubbles in Rust and Python.</b> Those bindings have no call for them yet, though C and C++ do.</li>
+<li>Any app-level animation call or custom drawing. An app cannot pick or add a style.</li>
+<li>Password or multi-line fields, and your own icon files.</li>
 <li>Bidirectional text, screen reader names and other accessibility.</li>
 <li>Notifications, stored settings, and the battery and performance calls that the older SDK has.</li>
-<li>DotMatrix: such a session falls back to Metro.</li>
+<li>In DotMatrix: the shell's ghost field and glow, and any script other than Latin.</li>
 </ul>
 <h2 id="platform">Missing from the platform</h2>
 <ul>
@@ -55,16 +56,14 @@
 <li>libzrnui and <code>zrn-exec</code> are not in the system image. Until they are, use <code>--bundle-zrnui</code>, though <code>zrn-exec</code> itself still has to be present.</li>
 <li>Only GitHub is accepted as a source host.</li>
 </ul>
-<h2 id="coming">In progress, not on this site yet</h2>
-<p>Work on pictures, tabs, long lists and input is in the SDK's working tree but is not merged, so it is not documented here. These pages will gain it once it lands.</p>
 <h2 id="site">About this site</h2>
 <ul>
-<li>The element pictures came from <code>zrn render</code> on a laptop's GPU, and busy, toast and the page-change frames from <code>kwin_wayland</code>'s virtual backend. None came from a phone.</li>
+<li>The element pictures came from <code>zrn render</code> on a laptop's GPU with the phone's fonts from the ztOS tree, and busy, toast and the page-change frames from <code>kwin_wayland</code>'s virtual backend. None came from a phone.</li>
 <li>The older Python SDK and ZrnMetroCore were read from source, and were not run for this site.</li>
 <li>The animation demos are web ports of the formulas. <a href="/animations#how">The differences are listed there</a>.</li>
 </ul>
 
-<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <code>ea16771</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
 <script src="/assets/site.js"></script>

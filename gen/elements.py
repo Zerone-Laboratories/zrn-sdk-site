@@ -9,10 +9,10 @@ Each snippet is the body of a function that has `app` and `page`.
 
 ICONS = ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery",
          "info", "search", "plus", "check", "close", "more", "back", "chevron",
-         "music", "person", "gear", "phone"]
+         "music", "person", "gear", "phone", "send"]
 
 ELEMENTS = [
-    dict(id="text", title="Text", h=300, api="zui_text, zui_heading, zui_caption",
+    dict(id="text", title="Text", h=360, api="zui_text, zui_heading, zui_caption",
          blurb="Three sizes of words. Long text wraps by itself. Change it later with <code>set_text</code>.",
          c='''zui_heading(page, "A heading");
 zui_text(page, "Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.");
@@ -28,7 +28,7 @@ page.text("Body text. It wraps at the page's width, and HarfBuzz shapes it, so S
 page.caption("A caption: small and quiet.")'''),
 
     dict(id="button", title="Buttons", h=480, api="zui_button, zui_set_variant, zui_set_enabled",
-         blurb="Four variants: primary (the default), tonal, plain and danger. Use one primary button a page at most. A disabled node draws at 40 % opacity and takes no touch.",
+         blurb="Four variants: primary (the default, filled with the accent), tonal and plain (outlined), and danger (a red edge in Metro). Use one primary button a page at most. A disabled node draws at 40 % opacity and takes no touch.",
          c='''zui_button(page, "Primary", NULL, NULL);
 zui_set_variant(zui_button(page, "Tonal", NULL, NULL), ZUI_TONAL);
 zui_set_variant(zui_button(page, "Plain", NULL, NULL), ZUI_PLAIN);
@@ -52,40 +52,34 @@ page.button("Plain", variant=zrnui.PLAIN)
 page.button("Danger", variant=zrnui.DANGER)
 page.button("Disabled").enabled = False'''),
 
-    dict(id="item", title="List rows", h=480, api="zui_item, zui_set_detail, zui_set_icon, zui_set_tint",
-         blurb="An item is a title, an optional line under it, an optional value on the right and an optional icon. It gets an arrow only when it has a tap handler. Inside a card, dividers come by themselves.",
+    dict(id="item", title="List rows", h=400, api="zui_item, zui_set_detail, zui_set_icon",
+         blurb="An item is a title, an optional line under it, an optional value and an optional icon. In these styles the value is the accent-coloured second line, as ztMETRO's choices are. There is no arrow on a row: a handler makes it tappable, and it tilts under the finger.",
          ctop='static void row_tapped(zui_node *row, void *data) { zui_toast(zui_node_app(row), "Tapped"); }',
          c='''zui_node *list = zui_section(page, "Rows");
 zui_item(list, "Title only", NULL, NULL, NULL);
 zui_item(list, "With a second line", "Under the title", NULL, NULL);
-zui_item(list, "Goes somewhere", NULL, row_tapped, NULL);
+zui_item(list, "Takes a tap", NULL, row_tapped, NULL);
 zui_node *wifi = zui_item(list, "Wi-Fi", NULL, row_tapped, NULL);
 zui_set_icon(wifi, "wifi");
-zui_set_detail(wifi, "Home-5G");
-zui_node *tinted = zui_item(list, "Tinted icon", "zrnCoolStyle only", NULL, NULL);
-zui_set_icon(tinted, "music");
-zui_set_tint(tinted, 0xd9486e);''',
+zui_set_detail(wifi, "Home-5G");''',
          cpp='''auto list = page.section("Rows");
 list.item("Title only");
 list.item("With a second line", "Under the title");
-list.item("Goes somewhere", "", [&app] { app.toast("Tapped"); });
-list.item("Wi-Fi", "", [&app] { app.toast("Tapped"); }).set_icon("wifi").set_detail("Home-5G");
-list.item("Tinted icon", "zrnCoolStyle only").set_icon("music").set_tint(0xd9486e);''',
+list.item("Takes a tap", "", [&app] { app.toast("Tapped"); });
+list.item("Wi-Fi", "", [&app] { app.toast("Tapped"); }).set_icon("wifi").set_detail("Home-5G");''',
          rs='''let list = page.section("Rows");
 list.item("Title only", None);
 list.item("With a second line", Some("Under the title"));
-list.item("Goes somewhere", None).on_click(move || app.toast("Tapped"));
-list.item("Wi-Fi", None).on_click(move || app.toast("Tapped")).set_icon("wifi").set_detail("Home-5G");
-list.item("Tinted icon", Some("zrnCoolStyle only")).set_icon("music").set_tint(0xd9486e);''',
+list.item("Takes a tap", None).on_click(move || app.toast("Tapped"));
+list.item("Wi-Fi", None).on_click(move || app.toast("Tapped")).set_icon("wifi").set_detail("Home-5G");''',
          py='''rows = page.section("Rows")
 rows.item("Title only")
 rows.item("With a second line", "Under the title")
-rows.item("Goes somewhere", on_click=lambda: app.toast("Tapped"))
-rows.item("Wi-Fi", on_click=lambda: app.toast("Tapped"), icon="wifi", detail="Home-5G")
-rows.item("Tinted icon", "zrnCoolStyle only", icon="music", tint=0xd9486e)'''),
+rows.item("Takes a tap", on_click=lambda: app.toast("Tapped"))
+rows.item("Wi-Fi", on_click=lambda: app.toast("Tapped"), icon="wifi", detail="Home-5G")'''),
 
-    dict(id="switch", title="Switches", h=330, api="zui_switch, zui_get_on, zui_set_on, zui_set_detail",
-         blurb="A row with an on/off control. In C the handler reads <code>zui_get_on</code>; the other languages pass the new state. The knob slides over 180 ms. On a switch, <code>set_detail</code> sets its second line. C++ calls it <code>toggle</code> because <code>switch</code> is a keyword.",
+    dict(id="switch", title="Switches", h=340, api="zui_switch, zui_get_on, zui_set_on, zui_set_detail",
+         blurb="A row with an on/off control, and On or Off as its second line unless you set one. In C the handler reads <code>zui_get_on</code>; the other languages pass the new state. The block slides over 180 ms. <code>set_detail</code> sets the second line. C++ calls it <code>toggle</code> because <code>switch</code> is a keyword.",
          ctop='''static void wifi_changed(zui_node *sw, void *data) {
 	zui_set_detail(sw, zui_get_on(sw) ? "Connected" : "Off");
 }''',
@@ -128,7 +122,7 @@ card.slider("Brightness", 0.6, on_release=lambda v: print("saved %.2f" % v))
 page.slider("Outside a card", 0.25)'''),
 
     dict(id="progress", title="Progress", h=270, api="zui_progress, zui_set_value",
-         blurb="Give it 0 to 1, or a value below 0 when you cannot say how long it will take. The indeterminate bar moves by itself, and the picture is one instant of it.",
+         blurb="Give it 0 to 1, or a value below 0 when you cannot say how long it will take. Below 0 it shows the dots crossing by themselves, and the picture is one instant of them.",
          c='''zui_text(page, "Copying 7 of 10");
 zui_progress(page, 0.7);
 zui_text(page, "No idea how long");
@@ -147,7 +141,7 @@ page.text("No idea how long")
 page.progress(-1)''', animated=True),
 
     dict(id="field", title="Text fields", h=300, api="zui_field, zui_get_text, zui_set_text",
-         blurb="A box to type into. Tapping it asks the shell for the on-screen keyboard. <code>CHANGE</code> fires per edit and <code>SUBMIT</code> on Enter. There is no password mode or multi-line field in this commit.",
+         blurb="A box to type into. Tapping it asks the shell for the on-screen keyboard. The placeholder is the caption above the box; inside a footer it is a hint in the box. <code>CHANGE</code> fires per edit and <code>SUBMIT</code> on Enter. There is no password mode or multi-line field in this commit.",
          ctop='''static void search_typed(zui_node *f, void *data) {
 	if (zui_event(f) == ZUI_EVENT_SUBMIT) printf("search: %s\\n", zui_get_text(f));
 }''',
@@ -163,7 +157,7 @@ page.field("Name").set_text("Already filled in");''',
 page.field("Name").set_text("Already filled in")'''),
 
     dict(id="section", title="Sections and cards", h=430, api="zui_section, zui_card",
-         blurb="<code>section</code> adds a heading and returns the card under it, so add rows to what it returns. A bare <code>card</code> is the same group with no heading. In Metro cards are flat: the rows just sit on black.",
+         blurb="<code>section</code> adds a heading and returns the card under it, so add rows to what it returns. A bare <code>card</code> is the same group with no heading. Cards are flat in both styles: the rows just sit on black, with no dividers drawn.",
          c='''zui_item(zui_section(page, "A section"), "In its card", NULL, NULL, NULL);
 zui_node *card = zui_card(page);
 zui_text(card, "A card with no heading can hold anything.");
@@ -214,22 +208,147 @@ col = page.column()
 col.text("A column keeps things together")
 col.caption("and can be hidden as one.")'''),
 
-    dict(id="icons", title="Icons", h=1270, api="zui_set_icon", tall=True,
-         blurb="Twenty line icons, drawn as strokes, named in <code>libzrnui/src/icons.c</code>. An unknown name draws nothing. Metro draws no icons at all: its rows are words only, as the renders show. There is no call in this commit to supply your own picture on a row.",
+    dict(id="round", title="Round buttons", h=300, api="zui_button, zui_set_icon",
+         blurb="A button with an icon becomes a round button with its word under it, as on an app bar. Put them in a row and share the width with flex.",
+         c='''zui_node *bar = zui_row(page);
+const char *names[] = { "plus", "search", "send", "more" };
+for (int i = 0; i < 4; i++) {
+	zui_node *b = zui_button(bar, names[i], NULL, NULL);
+	zui_set_icon(b, names[i]);
+	zui_set_flex(b, 1);
+}''',
+         cpp='''auto bar = page.row();
+for (const char *name : { "plus", "search", "send", "more" })
+	bar.button(name).set_icon(name).set_flex(1);''',
+         rs='''let bar = page.row();
+for name in ["plus", "search", "send", "more"] {
+    bar.button(name).set_icon(name).set_flex(1.0);
+}''',
+         py='''bar = page.row()
+for name in ["plus", "search", "send", "more"]:
+    b = bar.button(name)
+    b.icon = name
+    b.flex = 1'''),
+
+    dict(id="picture", title="Pictures", h=560, api="zui_pixmap_load, zui_pixmap_decode, zui_pixmap_rgba, zui_image, zui_set_image, zui_set_monogram, zui_set_badge, zui_set_emphasis, zui_set_radius, zui_set_image_sharp",
+         blurb="Decode a JPEG or PNG on any thread with <code>zui_pixmap_load</code> or <code>zui_pixmap_decode</code>, then show it on the UI thread. Nodes keep their own reference, so you may free yours. An item with a picture or a monogram becomes a thread row: a tile, a title, a line, a time and a count. Under DotMatrix a picture is dots of the palette's main colour. The picture here is made in code.",
+         c='''static uint8_t px[64 * 64 * 4];
+for (int i = 0; i < 64 * 64; i++) {
+	px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
+}
+zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  /* or zui_pixmap_load("photo.jpg", 1024) */
+zui_image(page, pix, 0, 140);                   /* width 0: all there is */
+zui_node *card = zui_section(page, "Thread rows");
+zui_node *a = zui_item(card, "Ada", "A picture as the tile", NULL, NULL);
+zui_set_image(a, pix);
+zui_set_detail(a, "09:41");
+zui_node *b = zui_item(card, "Ben", "A monogram, a count, unread", NULL, NULL);
+zui_set_monogram(b, "B");
+zui_set_tint(b, 0xd9486e);
+zui_set_badge(b, "3");
+zui_set_emphasis(b, true);
+zui_pixmap_free(pix);''',
+         cpp='''static uint8_t px[64 * 64 * 4];
+for (int i = 0; i < 64 * 64; i++) {
+	px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
+}
+zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  // or zui_pixmap_load("photo.jpg", 1024)
+page.image(pix, 0, 140);
+auto card = page.section("Thread rows");
+card.item("Ada", "A picture as the tile").set_image(pix).set_detail("09:41");
+card.item("Ben", "A monogram, a count, unread").set_monogram("B").set_tint(0xd9486e)
+	.set_badge("3").set_emphasis(true);
+zui_pixmap_free(pix);'''),
+
+    dict(id="list", title="Long lists", h=560, api="zui_list, zui_list_append, zui_list_prepend, zui_list_refresh, zui_list_set_count, zui_page_scroll_end, zui_page_at_end",
+         blurb="Thousands of rows of differing heights. <code>bind</code> fills a row when it comes near the screen, and <code>height</code> is only a guess, corrected once the row is made. The list must be the last thing in its page or tab. Its handler gets <code>CHANGE</code> near the start, which is your chance to <code>zui_list_prepend</code> older rows and then <code>zui_list_allow_more</code>. <code>zui_page_scroll_end</code> keeps a chat at its end as it grows.",
+         ctop='''static double row_height(int row, void *data) { return 66; }
+static void row_bind(int row, zui_node *node, void *data) {
+	char title[32];
+	snprintf(title, sizeof(title), "Row %d", row + 1);
+	zui_item(node, title, row % 3 ? "Made when it came near" : "Of 5000", NULL, NULL);
+}''',
+         c='''zui_list(page, 5000, row_height, row_bind, NULL);''',
+         cpp='''page.list(5000, [](int) { return 66.0; }, [](int row, zrn::ui::Node node) {
+	node.item("Row " + std::to_string(row + 1), row % 3 ? "Made when it came near" : "Of 5000");
+});'''),
+
+    dict(id="pivot", title="Pivots", h=520, api="zui_tabs, zui_tab, zui_tabs_select, zui_tabs_current",
+         blurb="Tabs under the app's name that swipe. The tab in front has its title white and the next ones run grey off the edge. Each tab is a column with its own scroll place, and the handler of the tabs gets <code>CHANGE</code> when the tab changes.",
+         c='''zui_node *tabs = zui_tabs(page);
+zui_node *one = zui_tab(tabs, "chats");
+zui_item(one, "Ada", "See you soon", NULL, NULL);
+zui_item(one, "Ben", "Thanks", NULL, NULL);
+zui_item(zui_tab(tabs, "status"), "Nothing yet", NULL, NULL, NULL);
+zui_item(zui_tab(tabs, "starred"), "Nothing yet", NULL, NULL, NULL);''',
+         cpp='''auto tabs = page.tabs();
+auto one = tabs.tab("chats");
+one.item("Ada", "See you soon");
+one.item("Ben", "Thanks");
+tabs.tab("status").item("Nothing yet");
+tabs.tab("starred").item("Nothing yet");'''),
+
+    dict(id="bubble", title="Bubbles and compact titles", h=460, api="zui_bubble, zui_page_set_compact, zui_set_subtitle, zui_set_align",
+         blurb="A speech bubble is as wide as what is in it, and sits on the end if it is yours. A compact page shows its title as given and smaller, with a line under it, for a person's name. <code>zui_set_align</code> sets text to start (0), end (1) or centre (2).",
+         c='''zui_page_set_compact(page, true);
+zui_set_subtitle(page, "Last seen today");
+zui_node *in = zui_bubble(page, false);
+zui_text(in, "Are you coming tonight?");
+zui_caption(in, "18:02");
+zui_node *me = zui_bubble(page, true);
+zui_text(me, "Yes, on my way");
+zui_caption(me, "18:03");''',
+         cpp='''page.set_compact(true);
+page.set_subtitle("Last seen today");
+auto in = page.bubble(false);
+in.text("Are you coming tonight?");
+in.caption("18:02");
+auto me = page.bubble(true);
+me.text("Yes, on my way");
+me.caption("18:03");'''),
+
+    dict(id="footer", title="Footer", h=500, api="zui_footer",
+         blurb="A row fixed at the bottom of a page, over its list. A field in it shows its hint inside the box, and asks the shell to lift the window with the keyboard.",
+         c='''zui_text(page, "The page scrolls under the bar.");
+zui_node *bar = zui_footer(page);
+zui_node *field = zui_field(bar, "Type a message", NULL, NULL);
+zui_set_flex(field, 1);
+zui_button(bar, "Send", NULL, NULL);''',
+         cpp='''page.text("The page scrolls under the bar.");
+auto bar = page.footer();
+bar.field("Type a message").set_flex(1);
+bar.button("Send");'''),
+
+    dict(id="icons", title="Icons", h=700, api="zui_set_icon", grid=True, scale=3,
+         blurb="Twenty-one icons by name. <b>In Metro these are Segoe MDL2 Assets glyphs from the system's font</b>, the same font the phone has; the site does not host it. Under DotMatrix, or on a system without the font, libzrnui draws its own strokes instead, which land on the lattice as dots. An unknown name draws nothing. You cannot supply your own icon file: use a picture.",
          c='''const char *names[] = { %s };
-zui_node *card = zui_card(page);
-for (size_t i = 0; i < sizeof(names) / sizeof(*names); i++)
-	zui_set_icon(zui_item(card, names[i], NULL, NULL, NULL), names[i]);''' % ", ".join('"%s"' % n for n in ICONS),
-         cpp='''auto card = page.card();
-for (const char *name : { %s })
-	card.item(name).set_icon(name);''' % ", ".join('"%s"' % n for n in ICONS),
-         rs='''let card = page.card();
-for name in [%s] {
-    card.item(name, None).set_icon(name);
+for (int i = 0; i < 21; i += 4) {
+	zui_node *row = zui_row(page);
+	for (int k = i; k < i + 4 && k < 21; k++) {
+		zui_node *b = zui_button(row, names[k], NULL, NULL);
+		zui_set_icon(b, names[k]);
+		zui_set_flex(b, 1);
+	}
 }''' % ", ".join('"%s"' % n for n in ICONS),
-         py='''card = page.card()
-for name in [%s]:
-    card.item(name, icon=name)''' % ", ".join('"%s"' % n for n in ICONS)),
+         cpp='''const char *names[] = { %s };
+for (int i = 0; i < 21; i += 4) {
+	auto row = page.row();
+	for (int k = i; k < i + 4 && k < 21; k++)
+		row.button(names[k]).set_icon(names[k]).set_flex(1);
+}''' % ", ".join('"%s"' % n for n in ICONS),
+         rs='''for names in [%s].chunks(4) {
+    let row = page.row();
+    for name in names {
+        row.button(name).set_icon(name).set_flex(1.0);
+    }
+}''' % ", ".join('"%s"' % n for n in ICONS),
+         py='''names = [%s]
+for i in range(0, 21, 4):
+    row = page.row()
+    for name in names[i:i + 4]:
+        b = row.button(name)
+        b.icon = name
+        b.flex = 1''' % ", ".join('"%s"' % n for n in ICONS)),
 ]
 
 LANGS = {
@@ -238,7 +357,7 @@ LANGS = {
 
 
 def program_c(els):
-    out = ['#include <stdio.h>', '#include <stddef.h>', '#include <zrnui.h>', '']
+    out = ['#include <stdio.h>', '#include <stdint.h>', '#include <stddef.h>', '#include <zrnui.h>', '']
     for e in els:
         if e.get("ctop"):
             out += [e["ctop"], '']
@@ -255,7 +374,7 @@ def program_c(els):
 
 
 def program_cpp(els):
-    out = ['#include <cstdio>', '#include <string>', '#include <zrnui.hpp>', '']
+    out = ['#include <cstdio>', '#include <cstdint>', '#include <string>', '#include <zrnui.hpp>', '']
     for e in els:
         body = "\n".join("\t" + l for l in e["cpp"].splitlines())
         out += ['static void el_%s([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {' % e["id"], body, '}', '']
@@ -270,6 +389,7 @@ def program_cpp(els):
 
 
 def program_rs(els):
+    els = [e for e in els if "rs" in e]
     out = ['#![allow(unused_variables)]', '']
     for e in els:
         body = "\n".join("    " + l for l in e["rs"].splitlines())
@@ -285,6 +405,7 @@ def program_rs(els):
 
 
 def program_py(els):
+    els = [e for e in els if "py" in e]
     out = ['import zrnui', '']
     for e in els:
         body = "\n".join("    " + l for l in e["py"].splitlines())

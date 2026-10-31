@@ -1,5 +1,5 @@
 """The wiki's words. Everything here was checked against zrn-sdk at COMMIT."""
-COMMIT = "8f6fb14"
+COMMIT = "ea16771"
 
 SHELL = """<!DOCTYPE html>
 <html lang="en-AU">
@@ -145,18 +145,11 @@ app.busy(True)
 app.post(lambda: app.busy(False))          # from any thread
 app.watch(fd, lambda fd: read_it(fd))      # fn(fd) when readable''',
     },
-    "theme": {
-        "c": '''zui_app_set_style(app, "metro");     /* a preference: the user's choice wins */
-zui_app_set_theme(app, "light");     /* zrnCoolStyle only: Metro is always dark */
-zui_app_set_accent(app, 0x0050ef);   /* the style rules say leave this to the system */''',
-        "cpp": '''app.set_style("metro");
-app.set_theme("light");
-app.set_accent(0x0050ef);''',
-        "rs": '''app.set_style("metro");
-app.set_theme("light");
-app.set_accent(0x0050ef);''',
-        "py": '''app = zrnui.App("io.github.you.notes", "Notes", style="metro", theme="light", accent=0x0050ef)
-app.set_theme("dark")                # later; Python has no set_style or set_accent after creation''',
+    "accent": {
+        "c": '''zui_app_set_accent(app, 0x0050ef);   /* DotMatrix ignores this; the style rules say leave it */''',
+        "cpp": '''app.set_accent(0x0050ef);''',
+        "rs": '''app.set_accent(0x0050ef);''',
+        "py": '''app = zrnui.App("io.github.you.notes", "Notes", accent=0x0050ef)''',
     },
 }
 
@@ -190,7 +183,7 @@ ANIMATIONS = """
 
 <div class="table-wrap"><table>
 <tr><th>Where you are</th><th>What you get</th><th>How</th></tr>
-<tr><td>zrn-sdk, libzrnui</td><td>Page change, press, switch, field focus, toast, busy, progress, fling</td><td>Automatic. No call, no way to change the numbers</td></tr>
+<tr><td>zrn-sdk, libzrnui</td><td>Page change, press, switch, pivot, toast, busy, progress, fling</td><td>Automatic. No call, no way to change the numbers</td></tr>
 <tr><td>Older Python SDK, <code>ztos</code></td><td>Its own turnstile and tilt, plus 13 named transitions</td><td><code>ztos.animate(widget, "swivel-in")</code>. Some values differ: see <a href="#old">below</a></td></tr>
 <tr><td>ZrnMetroCore (<code>ztmetro/core</code>)</td><td>13 named transitions, the Swivel board, <code>zmc_turn</code></td><td><code>zmc_transition()</code>, <code>zmc_board_open()</code>. For apps in the ztOS tree, not an SDK</td></tr>
 </table></div>
@@ -201,9 +194,10 @@ ANIMATIONS = """
 <div class="gap"><b>Where the web version only approximates</b>
 <ul>
 <li><b>Same:</b> durations, staggers, angles, pivots, opacity, easing formulas and the eye distance (a 34 degree field of view on a 740 pt tall screen, <code>gfx.c</code>, <code>zrnmetrogpu.c</code>). A browser's <code>perspective</code> is the same divide the shader does.</li>
-<li><b>Different:</b> the fonts and row layouts are plain CSS stand-ins, not Inter or Selawik through the SDF renderer. The real look is in the <a href="/elements">renders</a>.</li>
+<li><b>Different:</b> the fonts and row layouts are plain CSS stand-ins, not Segoe UI through the SDF renderer. The real look is in the <a href="/elements">renders</a>.</li>
+<li><b>Different:</b> the demos draw in the Metro look only. DotMatrix runs the same motion through its lattice, as the real frames show.</li>
 <li><b>Different:</b> phones here run at your browser's frame rate, not the S9's, and the C code samples its clock once per compositor frame.</li>
-<li><b>Different:</b> in Metro, libzrnui rotates each row's quads, while these demos rotate a whole row box. Each named-transition demo shows one rectangle in a 300 pt tall stage, while the eye distance stays that of a 740 pt screen.</li>
+<li><b>Different:</b> libzrnui rotates each row's quads, while these demos rotate a whole row box. Each named-transition demo shows one rectangle in a 300 pt tall stage, while the eye distance stays that of a 740 pt screen.</li>
 <li><b>Not compared to the phone:</b> these were compared by eye with frames from the laptop's virtual compositor, not with the S9's display.</li>
 </ul></div>
 
@@ -211,18 +205,13 @@ ANIMATIONS = """
 <p>Progress over time for each easing. <b>libzrnui</b> has three, in <code>libzrnui/src/core.c</code>: <code>zui_ease_out</code> is <code>1 - (1-t)^3</code>, <code>zui_ease_in</code> is <code>t^3</code>, and <code>zui_ease_emph</code> is a cubic Bezier (0.2, 0.8, 0.2, 1). <b>ZrnMetroCore</b> rebuilds the firmware's named curves in <code>zt_shape</code>, with <code>k = weight / 30</code>: Exp is <code>(e^(k t) - 1) / (e^k - 1)</code> and Log is <code>1 - (e^(k (1-t)) - 1) / (e^k - 1)</code>. The firmware stores names and weights. The formula itself is a reconstruction, as the core's own comment says.</p>
 <div class="curves">""" + curve("out", "zui_ease_out") + curve("in", "zui_ease_in") + curve("emph", "zui_ease_emph") + curve("l:200", "Log 200 (swivel in)") + curve("e:150", "Exp 150 (swivel out)") + curve("l:60", "Log 60") + curve("e:60", "Exp 60") + curve("s:7.5", "SCurve 7.5") + """</div>
 
-<h2 id="page-cool">Page change: zrnCoolStyle fade through <span class="tag">libzrnui</span></h2>
-<p>Automatic on <code>zui_push</code> and <code>zui_back</code>. Runs <b>380 ms</b>. The old page fades with <code>zui_ease_out</code> in the first 35 % of the time while it drifts 4 % of the width left (or 10 % right, going back). The new page arrives from 16 % right (or 6 % left, going back) on <code>zui_ease_emph</code>, each row 14 ms after the one before, up to row 8. Its opacity runs from 18 % to 60 % of its own time.</p>
-<p>Source: <code>page_xf</code> and <code>.transition_ms</code> in <code>libzrnui/src/style-cool.c</code>.</p>
-<div class="demos">""" + demo("cool-forward", "Forward") + demo("cool-back", "Back") + """</div>
-<p>Real frames, from <code>zrn run --headless</code> in a virtual compositor, one run per picture. Frames the compositor delayed past the end are dropped, and the times are not exact: this shows the shape, while the numbers above come from the code.</p>
-<div class="strip" tabindex="0"><img src="img/frames-cool.webp" alt="Real frames of the zrnCoolStyle page change" loading="lazy"></div>
-
-<h2 id="page-metro">Page change: Metro turnstile <span class="tag">libzrnui</span></h2>
-<p>Runs <b>720 ms</b> in all. Rows leave one at a time, 28 ms apart, each over 128 ms, turning 50 degrees about the left edge on <code>zui_ease_in</code> toward the viewer, with opacity <code>1 - u^2</code>. New rows start at 330 ms, also 28 ms apart, each over 180 ms from 80 degrees behind the screen, on <code>zui_ease_out</code>. Going back, both run bottom up and the old rows turn the other way.</p>
+<h2 id="page-metro">Page change: the turnstile <span class="tag">libzrnui</span></h2>
+<p>Automatic on <code>zui_push</code> and <code>zui_back</code>, in both styles, with the same numbers. Runs <b>720 ms</b> in all. Rows leave one at a time, 28 ms apart, each over 128 ms, turning 50 degrees about the left edge on <code>zui_ease_in</code> toward the viewer, with opacity <code>1 - u^2</code>. New rows start at 330 ms, also 28 ms apart, each over 180 ms from 80 degrees behind the screen, on <code>zui_ease_out</code>. Going back, both run bottom up and the old rows turn the other way.</p>
 <p>Source: <code>page_xf</code>, <code>OUT_MS</code>, <code>IN_MS</code>, <code>STAGGER</code>, <code>GAP_AT</code> in <code>libzrnui/src/style-metro.c</code>. The comment above them says 33 ms apart; the code that runs says 28.</p>
 <div class="demos">""" + demo("metro-forward", "Forward") + demo("metro-back", "Back") + """</div>
-<div class="strip" tabindex="0"><img src="img/frames-metro.webp" alt="Real frames of the Metro page change" loading="lazy"></div>
+<p>Real frames, from <code>zrn run --headless</code> in a virtual compositor, one run per picture. Frames the compositor delayed past the end are dropped, and the times are not exact: this shows the shape, while the numbers above come from the code. Metro, then DotMatrix.</p>
+<div class="strip" tabindex="0"><img src="/img/frames-metro.webp" alt="Real frames of the page change in Metro" loading="lazy"></div>
+<div class="strip" tabindex="0"><img src="/img/frames-dotmatrix.webp" alt="Real frames of the page change in DotMatrix" loading="lazy"></div>
 
 <h2 id="page-core">Page change: ZrnMetroCore turnstile <span class="tag dashed">ztOS apps only</span></h2>
 <p>The built-in apps' own version, for comparison: rows 33 ms apart, 128 ms out on <code>t^2</code>, a 120 ms black gap, 180 ms in on <code>1 - (1-t)^3</code>. The total depends on the row count. <code>zmc_turn</code> plays this on one page when its content changes. Source: <code>ROW_OUT_MS</code>, <code>ROW_IN_MS</code>, <code>ROW_STAGGER_MS</code>, <code>GAP_MS</code> and <code>TURN_OUT_DEG</code> in <code>ztmetro/core/zrnmetrocore.c</code>. Simplified here: the real one also holds the tapped row until last, and an app's first page arrives by a different curve (<code>zmr_entrance</code>, 28 ms stagger, 190 ms rows, 200 ms title), which is not shown.</p>
@@ -247,22 +236,22 @@ ANIMATIONS = """
 <div class="demos wide">""" + "".join(demo("n:" + r[0], r[0]) for r in CATALOGUE_ROWS) + """</div>
 
 <h2 id="press">Press and tilt <span class="tag">libzrnui</span></h2>
-<p>Press a row in this demo: it follows your pointer. In Metro what is under the finger leans toward it by up to <b>14 degrees</b>, but its far edge never lifts more than <b>40 pt</b>, and it sinks <b>4.5 %</b>. Rows tilt. Sliders and fields do not move, and a button fills white instead. In takes <b>90 ms</b>, and the release takes 200 ms in Metro and 220 ms in zrnCoolStyle (160 ms when the press is cancelled by a scroll), all on <code>zui_ease_out</code>.</p>
-<p>zrnCoolStyle does not tilt: a row gets an inset highlight and a button sinks <b>3.5 %</b>. Source: <code>press_xf</code>, <code>TILT_DEG</code>, <code>TILT_LIFT</code>, <code>PRESS_SINK</code> in <code>style-metro.c</code> and <code>style-cool.c</code>, timing in <code>core.c</code>. ZrnMetroCore shares the numbers (<code>ZMC_TILT_*</code>).</p>
-<div class="demos">""" + demo("press", "Metro tilt: press it") + """</div>
+<p>Press a row in this demo: it follows your pointer. What is under the finger leans toward it by up to <b>14 degrees</b>, but its far edge never lifts more than <b>40 pt</b>, and it sinks <b>4.5 %</b>. Rows tilt. Sliders and fields do not move, and a button fills instead. In takes <b>90 ms</b>, and the release takes 200 ms (160 ms when the press is cancelled by a scroll), all on <code>zui_ease_out</code>. DotMatrix uses the same <code>press_xf</code>.</p>
+<p>Source: <code>press_xf</code>, <code>TILT_DEG</code>, <code>TILT_LIFT</code>, <code>PRESS_SINK</code> in <code>style-metro.c</code>, timing in <code>core.c</code>. ZrnMetroCore shares the numbers (<code>ZMC_TILT_*</code>).</p>
+<div class="demos">""" + demo("press", "Tilt: press it") + """</div>
 
 <h2 id="small">Small things <span class="tag">libzrnui</span></h2>
 <div class="table-wrap"><table>
 <tr><th>What</th><th>Numbers</th><th>Source</th></tr>
-<tr><td>Switch knob</td><td>180 ms, <code>zui_ease_out</code></td><td><code>zui_set_on</code>, <code>core.c</code></td></tr>
-<tr><td>Field focus ring</td><td>150 ms, <code>zui_ease_out</code>. Cool only draws this ring: Metro's box turns white when typed into</td><td><code>core.c</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Toast</td><td>2600 ms: in over 200, out over the last 300. Cool rises 16 pt and fades. Metro's bar drops 60 pt from the top</td><td><code>core.c</code>, <code>toast</code> in each style</td></tr>
-<tr><td>Busy, Cool</td><td>a 30 % piece sweeps every 1300 ms on <code>zui_ease_emph</code></td><td><code>busy</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Busy, Metro</td><td>five 4 pt dots every 2600 ms, each 7.5 % later, on <code>0.5 + 4 (p - 0.5)^3</code> across the width</td><td><code>dots</code>, <code>style-metro.c</code></td></tr>
-<tr><td>Unknown progress, Cool</td><td>a 35 % piece sweeps every 1400 ms on <code>zui_ease_out</code>. Metro uses the dots</td><td><code>progress</code>, <code>style-cool.c</code></td></tr>
-<tr><td>Fling</td><td>speed times <code>0.9972^ms</code>, a further <code>0.8^(ms/16)</code> past an end, stop under 0.02 pt/ms, then back to the end with a 70 ms time constant</td><td><code>zui_step</code>, <code>core.c</code></td></tr>
+<tr><td>Switch block</td><td>180 ms, <code>zui_ease_out</code></td><td><code>zui_set_on</code>, <code>core.c</code></td></tr>
+<tr><td>Pivot</td><td>240 ms from where the finger left it, <code>zui_ease_out</code>. Past a quarter of a screen a swipe goes on to the next tab</td><td><code>zui_tabs_select</code>, <code>extras.c</code>; <code>core.c</code></td></tr>
+<tr><td>Toast</td><td>2600 ms: in over 200, out over the last 300. A bar drops 60 pt from the top</td><td><code>core.c</code>, <code>toast</code> in <code>style-metro.c</code></td></tr>
+<tr><td>Busy, unknown progress</td><td>five 4 pt dots every 2600 ms, each 7.5 % later, on <code>0.5 + 4 (p - 0.5)^3</code> across the width</td><td><code>dots</code>, <code>style-metro.c</code></td></tr>
+<tr><td>Fling</td><td>speed times <code>0.9972^ms</code>, a further <code>0.8^(ms/16)</code> past an end, stop under 0.02 pt/ms, then back to the end with a 70 ms time constant</td><td><code>core.c</code></td></tr>
+<tr><td>Glide to the end of a chat</td><td>a 45 ms time constant, for up to 600 ms</td><td><code>zui_page_scroll_end</code>, <code>core.c</code></td></tr>
 </table></div>
-<div class="demos">""" + demo("knob-cool", "Switch, Cool") + demo("knob-metro", "Switch, Metro") + demo("focus", "Field focus") + demo("toast-cool", "Toast, Cool") + demo("toast-metro", "Toast, Metro") + demo("busy-cool", "Busy, Cool") + demo("busy-metro", "Busy, Metro") + demo("indeterminate", "Unknown progress") + demo("fling", "Fling at 3.2 pt/ms") + """</div>
+<p>A field's box turns from grey to white the moment it has focus. That change is not animated.</p>
+<div class="demos">""" + demo("knob", "Switch") + demo("pivot", "Pivot") + demo("toast", "Toast") + demo("busy", "Busy") + demo("fling", "Fling at 3.2 pt/ms") + """</div>
 
 <h2 id="old">Older Python SDK: where its numbers differ <span class="tag dashed">older</span></h2>
 <p><code>ztos.animate(widget, name, repeat=False, on_done=None)</code> plays a named transition over any Qt widget. Its table is <code>TRANSITIONS</code> in <code>sdk/runtime/ztos/__init__.py</code>. Most entries match the list above, but <b>its swivel predates the firmware decode now in <code>zrnboard.h</code></b>:</p>
@@ -279,27 +268,27 @@ ANIMATIONS = """
 PAGES = {
 "index": ("ztOS SDK wiki", "How to make apps for ztOS: C, C++, Rust and Python, every UI element with real renders, every animation running live, and how to publish.", """
 <h1>Make apps for ztOS</h1>
-<p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. They ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
+<p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. <b>ztCoolStyle</b> is the name of that UI system. It draws in <b>Metro</b> or <b>DotMatrix</b>, whichever the system is set to. Apps ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
 <p><b>Requires ztOS BETA-1.1 or later.</b> Apps made with this SDK run on BETA-1.1 and newer; earlier versions of ztOS cannot run them.</p>
 <pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
 cd zrn-sdk && export PATH="$PWD/tools:$PATH"
 zrn doctor
 zrn new "Notes" --lang c
 cd notes && zrn build && zrn render out.png</code></pre>
-<div class="shots"><figure><img src="img/item-cool-dark.webp" alt="List rows in zrnCoolStyle, dark"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/item-cool-light.webp" alt="List rows in zrnCoolStyle, light"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/item-metro.webp" alt="List rows in Metro"><figcaption>The same code in Metro</figcaption></figure></div>
+{{SHOTS:item}}
 <div class="cards">
 <a href="/start"><b>Getting started</b><span>Install, first app, first picture</span></a>
 <a href="/apps"><b>Ways to make an app</b><span>Each language, the CLI, the older SDK</span></a>
 <a href="/project"><b>Project and permissions</b><span>zrnapp.toml, ids, the manifest</span></a>
-<a href="/elements"><b>UI elements</b><span>Each one, rendered, in four languages</span></a>
-<a href="/layout"><b>Layout, themes, styles</b><span>How pages fit, who picks the look</span></a>
+<a href="/elements"><b>UI elements</b><span>Each one, rendered, with its code</span></a>
+<a href="/layout"><b>Layout and styles</b><span>How pages fit, Metro and DotMatrix</span></a>
 <a href="/animations"><b>Animations</b><span>Swivel, turnstile, fade, tilt, running live</span></a>
 <a href="/shipping"><b>Package and publish</b><span>Test, sign, submit, update, revoke</span></a>
 <a href="/troubleshooting"><b>Troubleshooting</b><span>Real errors and their fixes</span></a>
 <a href="/status"><b>Status and gaps</b><span>What is missing or unproven</span></a>
 </div>
 <h2>How the code on this site was checked</h2>
-<p>Each element's snippet is <b>compiled in all four languages</b> and rendered with <code>zrn render</code>. The renders are then compared pixel by pixel across languages. They match exactly, except the progress page, whose moving bar is caught at a different instant each time. The generator and report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>. Animation numbers are read out of the C source and each one names its file.</p>
+<p>Each element's snippet is <b>compiled in every language that has it</b> and rendered with <code>zrn render</code>, using the phone's own fonts from the ztOS tree. The renders are then compared pixel by pixel across languages. They match exactly, except the progress page, whose moving dots are caught at a different instant each time. The generator and report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>. Animation numbers are read out of the C source and each one names its file.</p>
 """),
 
 "start": ("Getting started: ztOS SDK", "Install the zrn CLI and libzrnui's build dependencies, make a first app, and see it without a phone.", """
@@ -345,12 +334,11 @@ zrn render out.png                                  <span class="c"># no phone, 
 <pre><code>zrn render out.png                          <span class="c"># first page, 360x740 points at scale 2</span>
 zrn render --page 1 out.png                 <span class="c"># by creation order</span>
 zrn render --page "Wi-Fi" --scroll 300 out.png
-zrn render --style metro --theme light out.png
+zrn render --style dotmatrix out.png
 zrn render --scale 4 out.png                <span class="c"># the S9's 1440x2960</span>
 zrn run                                     <span class="c"># a phone-sized window</span>
 zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; quit"</code></pre>
-<p><code>zrn render</code> draws through the same GLES2 path as a running app, using Mesa's surfaceless EGL. <code>--page</code> counts pages in the order your code <b>creates</b> them, which is not the order they open.</p>
-<div class="note"><p>A page that is not the first one you run gets a back button in the render, because the render treats it as pushed. You will see that in the pictures on this site.</p></div>
+<p>The style flag is only for looking. An app cannot pick its style: the system does. <code>zrn render</code> draws through the same GLES2 path as a running app, using Mesa's surfaceless EGL. <code>--page</code> counts pages in the order your code <b>creates</b> them, which is not the order they open.</p>
 <h2 id="next">Next</h2>
 <p><a href="/elements">UI elements</a> shows what you can put on a page. <a href="/shipping">Package and publish</a> shows how it reaches people.</p>
 """),
@@ -362,13 +350,13 @@ zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; qu
 <tr><th>Way</th><th>Status</th><th>Draws with</th><th>Ships as</th></tr>
 <tr><td>C, <code>zrnui.h</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
 <tr><td>C++, <code>zrnui.hpp</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
+<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
+<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
 <tr><td>Older Python SDK, <code>ztos</code></td><td>Older. Runs on the phone</td><td>Qt, with a GPU layer for motion</td><td>An aarch64 ELF launcher plus a zip</td></tr>
 <tr><td>ZrnMetroCore, <code>ztmetro/core</code></td><td>The ztOS apps themselves. Not an SDK</td><td>Cairo and Pango, GPU quads</td><td>Part of the system</td></tr>
 </table></div>
 <h2 id="same">One library, four languages</h2>
-<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so all four produce the same pixels.</p>
+<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so what they share produces the same pixels. <b>Pictures, long lists, pivots, the footer and bubbles are in C and C++ only at this commit.</b></p>
 {{TAB:hello}}
 <div class="table-wrap"><table>
 <tr><th>Language</th><th>Memory and callbacks</th><th>Differences to know</th></tr>
@@ -388,8 +376,8 @@ zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; qu
 <tr><th>Command</th><th>What it does</th></tr>
 <tr><td><code>zrn new NAME --lang c|cpp|python|rust [--id ID] [--dir D]</code></td><td>A project from a template. The default id is <code>io.github.$USER.name</code></td></tr>
 <tr><td><code>zrn build [--arch A]</code></td><td>C and C++ against the system's or the SDK's libzrnui. Rust with cargo. Python is syntax-checked</td></tr>
-<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style cool|metro] [--theme dark|light] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
-<tr><td><code>zrn run [--headless] [--script S] [--style] [--theme] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
+<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style metro|dotmatrix] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
+<tr><td><code>zrn run [--headless] [--script S] [--style] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
 <tr><td><code>zrn pack [--arch] [--out D] [--key K] [--no-sign] [--bundle-zrnui]</code></td><td>Makes <code>dist/&lt;id&gt;-&lt;version&gt;-&lt;arch&gt;.zexec</code> and <code>.minisig</code></td></tr>
 <tr><td><code>zrn verify FILE [--sig S] [--key K]</code></td><td>Exit 0 good, 1 broken, 2 not trusted</td></tr>
 <tr><td><code>zrn install FILE [--key K]</code>, <code>zrn uninstall ID</code></td><td>For this user, on this computer</td></tr>
@@ -434,7 +422,7 @@ class Home(ztos.Page):
         ztos.notify("Notes", "sync on" if on else "sync off")
 
 app.run(Home())</code></pre>
-<p>It has things libzrnui lacks at this commit: <code>Pivot</code>, <code>RoundButton</code>, <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
+<p>It has things libzrnui lacks at this commit: <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
 <h2 id="core">ZrnMetroCore <span class="tag dashed">not an SDK</span></h2>
 <p>The C toolkit behind ztOS's own apps (<code>ztmetro/core</code>). It builds inside the ztOS tree and has no packaging or stable interface for outside apps. It appears here because its <a href="/animations">animations</a> are the reference for Metro's motion. <code>DESIGN.md</code> plans to move those apps to libzrnui one at a time.</p>
 """),
@@ -504,24 +492,24 @@ zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-n
         207  icon.svg</code></pre>
 <p>The store's CI adds <code>source</code>, which holds the repo and commit. <code>bundles</code> is set when libzrnui is inside. <code>arch</code> is <code>aarch64</code>, <code>x86_64</code> or <code>any</code>.</p>
 <h2 id="licence">Licences</h2>
-<p>libzrnui and the bindings are <b>LGPL-2.1-or-later</b>, so an app under any licence can link them. The <code>zrn</code> tools are GPL-2.0-or-later. Examples and templates are MIT, so what <code>zrn new</code> gives you is yours. The bundled fonts, Inter and Selawik, are SIL OFL 1.1.</p>
+<p>libzrnui and the bindings are <b>LGPL-2.1-or-later</b>, so an app under any licence can link them. The <code>zrn</code> tools are GPL-2.0-or-later. Examples and templates are MIT, so what <code>zrn new</code> gives you is yours. The bundled fallback font, Selawik, is SIL OFL 1.1. Segoe UI and Segoe MDL2 Assets come from the system and are not in the SDK or on this site.</p>
 """),
 
-"elements": ("UI elements: ztOS SDK", "Every libzrnui element, rendered in zrnCoolStyle dark and light and in Metro, with code in C, C++, Rust and Python.", """
+"elements": ("UI elements: ztOS SDK", "Every libzrnui element, rendered in Metro and DotMatrix, with code in C, C++, Rust and Python where each has it.", """
 <h1>UI elements</h1>
 <p class="lead">Every element libzrnui has at commit <code>""" + COMMIT + """</code>, rendered by <code>zrn render</code> from the code beside it.</p>
-<p>The language tab you pick is remembered. Each snippet is the body of a function that has <code>app</code> and <code>page</code>. All four compiled, and their renders match pixel for pixel.</p>
+<p>The language tab you pick is remembered. Each snippet is the body of a function that has <code>app</code> and <code>page</code>, and every language shown compiled and rendered the same pixels, except that the moving progress dots differ. Pictures use the phone's Segoe fonts.</p>
 <div class="gap"><b>Not in this commit</b>
-<p>Pictures, avatars, tabs and pivots, long virtualised lists, dialogs, menus and pickers are not in this commit. Work on some of them is under way, and they will be added here once they are merged. Until then: <a href="/status">Status and gaps</a>.</p></div>
+<p>Dialogs, menus and pickers. <a href="/status">Status and gaps</a> has the full list.</p></div>
 <div class="cards">
-<a href="#text"><b>Text</b></a><a href="#button"><b>Buttons</b></a><a href="#item"><b>List rows</b></a><a href="#switch"><b>Switches</b></a><a href="#slider"><b>Sliders</b></a><a href="#progress"><b>Progress</b></a><a href="#field"><b>Text fields</b></a><a href="#section"><b>Sections and cards</b></a><a href="#layout"><b>Rows, columns, space</b></a><a href="#icons"><b>Icons</b></a><a href="#busy"><b>Busy</b></a><a href="#toast"><b>Toast</b></a><a href="#changing"><b>Changing things</b></a>
+<a href="#text"><b>Text</b></a><a href="#button"><b>Buttons</b></a><a href="#item"><b>List rows</b></a><a href="#switch"><b>Switches</b></a><a href="#slider"><b>Sliders</b></a><a href="#progress"><b>Progress</b></a><a href="#field"><b>Text fields</b></a><a href="#section"><b>Sections and cards</b></a><a href="#layout"><b>Rows, columns, space</b></a><a href="#round"><b>Round buttons</b></a><a href="#picture"><b>Pictures</b></a><a href="#list"><b>Long lists</b></a><a href="#pivot"><b>Pivots</b></a><a href="#bubble"><b>Bubbles</b></a><a href="#footer"><b>Footer</b></a><a href="#icons"><b>Icons</b></a><a href="#busy"><b>Busy</b></a><a href="#toast"><b>Toast</b></a><a href="#changing"><b>Changing things</b></a>
 </div>
 {{ELEMENTS}}
 <h2 id="busy">Busy</h2>
-<p><code>zui_busy(app, true)</code>, or <code>app.busy(True)</code> in Python, shows that something is loading: a sweep under the top bar in zrnCoolStyle, dots across the top in Metro. These pictures come from a running app in a virtual compositor, one instant of the movement. <a href="/animations#small">See it move</a>.</p>
+<p><code>zui_busy(app, true)</code>, or <code>app.busy(True)</code> in Python, shows that something is loading: dots crossing the top of the screen. These pictures come from a running app in a virtual compositor, one instant of the movement. <a href="/animations#small">See it move</a>.</p>
 {{SHOTS:busy}}
 <h2 id="toast">Toast</h2>
-<p><code>zui_toast(app, "Saved")</code>, or <code>app.toast("Saved")</code> in the other languages, shows a short message for 2.6 seconds: a pill at the bottom in zrnCoolStyle, an accent bar from the top in Metro.</p>
+<p><code>zui_toast(app, "Saved")</code>, or <code>app.toast("Saved")</code> in the other languages, shows a short message for 2.6 seconds, on an accent bar from the top.</p>
 {{SHOTS:toast}}
 <h2 id="changing">Changing things after they are made</h2>
 <p>The tree stays. Keep the node and change it: the app redraws only when something changed.</p>
@@ -538,64 +526,66 @@ zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-n
 </table></div>
 """),
 
-"layout": ("Layout, themes and styles: ztOS SDK", "How libzrnui lays out pages, the zrnCoolStyle and Metro numbers, themes, accent colours and who chooses the style.", """
-<h1>Layout, themes and styles</h1>
-<p class="lead"><b>You say what is on a page; the style decides how it looks.</b> Everything is in points on a 360 point wide phone, and the same code draws in either style.</p>
+"layout": ("Layout and styles: ztOS SDK", "How libzrnui lays out pages, ztCoolStyle's two styles Metro and DotMatrix, palettes, fonts and accent colours.", """
+<h1>Layout and styles</h1>
+<p class="lead"><b>You say what is on a page; the system decides how it looks.</b> Everything is in points on a 360 point wide phone, and the same code draws in either style.</p>
 <h2 id="layout">How a page is laid out</h2>
 <ul>
 <li>A page is a column. Things appear in the order you add them.</li>
-<li><code>section</code> and <code>card</code> group things, and items in a card get dividers. Prefer these to manual spacing.</li>
+<li><code>section</code> and <code>card</code> group things. Prefer these to manual spacing.</li>
 <li><code>row</code> sets things side by side. <code>set_flex</code> shares spare width by proportion.</li>
 <li>Pages scroll by themselves when they outgrow the screen. A hidden node takes no room.</li>
+<li>A <code>list</code> goes last in its page or tab. A <code>footer</code> stays at the bottom over the list.</li>
 <li>Scale: <code>ZUI_SCALE</code>, else the shell's <code>ZTMETRO_SCALE</code> (4 on the S9, so 1440x2960 pixels is 360x740 points), else the compositor's.</li>
 </ul>
-<h2 id="pick">Who picks the style</h2>
-<p><b>The user wins over the app.</b> From first choice to last (<code>pick_style</code> in <code>core.c</code>):</p>
+<h2 id="pick">ztCoolStyle and who picks the style</h2>
+<p><b>ztCoolStyle</b> is the name of this UI system. Its only styles are <b>Metro</b> and <b>DotMatrix</b>. <b>An app cannot pick one</b>, so it never differs from what is around it, and the two never mix. In order (<code>pick_style</code> in <code>core.c</code>):</p>
 <ol>
-<li><code>ZUI_STYLE</code> in the environment.</li>
-<li>A <code>ZTRF_SHELL_STYLE=dotmatrix</code> session falls back to Metro, since DotMatrix has not been ported to libzrnui.</li>
-<li><code>zrnui_style = cool|metro|follow</code> in <code>~/.config/ztmetro/config</code>. <code>follow</code> gives Metro.</li>
-<li>What the app asked for.</li>
-<li>zrnCoolStyle.</li>
+<li><code>ZUI_STYLE</code> in the environment, for renders and tests only. This is what <code>--style</code> sets.</li>
+<li>The session's <code>ZTRF_SHELL_STYLE</code>.</li>
+<li><code>style =</code> in <code>~/.config/ztmetro/config</code>.</li>
+<li>Metro.</li>
 </ol>
-{{TAB:theme}}
-<p>Theme: <code>ZUI_THEME</code> beats the app, and <code>zrnui_theme</code> in the same config file sets the default. Metro is always dark. Accent: <code>ZUI_ACCENT</code>, else <code>accent =</code> in that file (a ztmetro colour name or <code>#rrggbb</code>), else cobalt <code>#0050EF</code>.</p>
-<h2 id="both">The same code in both styles</h2>
+<p><code>zui_app_set_style</code> and <code>zui_app_set_theme</code> are kept for the ABI and change nothing for a user: both styles are black, and there is no light theme.</p>
 {{SHOTS:section}}
+<h2 id="metro">Metro</h2>
+<p>The same widgets as ZrnMetroCore draws them: black, white Segoe UI, the app's name in capitals over a 48 pt lowercase title fixed at the top, pivots whose next titles run grey off the edge, rectangular toggles, outlined buttons that fill when pressed, round buttons with a word under them, Messaging's thread rows and bubbles, the tilt on press and the turnstile between pages.</p>
+<h2 id="dotmatrix">DotMatrix</h2>
+<p>The same widgets in the same places. Everything filled is drawn by one fragment shader as dots 2.3 pt apart on one lattice, lit where the shape covers the cell's centre. Text is a 3x5 dot type drawn for this library, in upper case with no shaping, so <b>scripts other than Latin come out as <code>?</code></b>, as in ztMETRO. Pictures are dots of the palette's main colour at their brightness. Compared with the shell's own DotMatrix it lacks the ghost field and the glow.</p>
+<p><code>dotmatrix_palette =</code> in the same config file picks one of six palettes, by number or by name: Mono, Amber, Green, Ice, White, Red. The accent is the palette's, so <code>set_accent</code> is ignored.</p>
+<div class="strip" tabindex="0"><img src="/img/palettes.webp" alt="The same page in DotMatrix's six palettes" loading="lazy"></div>
 <h2 id="numbers">The numbers</h2>
-<p>From <code>.m</code> in <code>style-cool.c</code> and <code>style-metro.c</code>, in points.</p>
+<p>From <code>.m</code> in <code>style-metro.c</code>, in points, the same for both styles.</p>
 <div class="table-wrap"><table>
-<tr><th></th><th>zrnCoolStyle</th><th>Metro</th></tr>
-<tr><td>Font</td><td>Inter</td><td>Selawik (open metric twin of Segoe UI)</td></tr>
-<tr><td>Page margin, gap</td><td>18, 16</td><td>16, 12</td></tr>
-<tr><td>Title</td><td>32, scrolls with the page, 56 pt bar</td><td>48, fixed, 108 pt header</td></tr>
-<tr><td>Body, heading, caption</td><td>16, 21, 13.5</td><td>16, 25.5, 13</td></tr>
-<tr><td>Row height, with subtitle</td><td>56, 68</td><td>52, 66</td></tr>
-<tr><td>Row title, subtitle</td><td>16, 13.5</td><td>21, 13</td></tr>
-<tr><td>Button height, radius</td><td>52, 26 (a pill)</td><td>40, 0</td></tr>
-<tr><td>Field height, radius</td><td>52, 14</td><td>38, 0</td></tr>
-<tr><td>Card radius, inner padding</td><td>20, 16</td><td>0, 0 (flat)</td></tr>
-<tr><td>Icon tile</td><td>32</td><td>none: Metro draws no icons</td></tr>
-<tr><td>Line spacing</td><td>1.36</td><td>1.25</td></tr>
+<tr><th>What</th><th>Value</th></tr>
+<tr><td>Page margin, gap</td><td>16, 12</td></tr>
+<tr><td>Title, header</td><td>48, fixed, in a 108 pt header</td></tr>
+<tr><td>Body, heading, caption</td><td>16, 25.5, 13</td></tr>
+<tr><td>Row height, with a second line</td><td>52, 66</td></tr>
+<tr><td>Row title, second line</td><td>21, 13</td></tr>
+<tr><td>Button height</td><td>40, or 72 round with its word</td></tr>
+<tr><td>Field height</td><td>44, plus a 22 pt caption outside a footer</td></tr>
+<tr><td>Corners, card padding</td><td>0</td></tr>
+<tr><td>Line spacing</td><td>1.25</td></tr>
 </table></div>
-<h2 id="colours">zrnCoolStyle colours</h2>
-<div class="table-wrap"><table>
-<tr><th></th><th>Dark</th><th>Light</th></tr>
-<tr><td>Page</td><td><code>#0E0F12</code></td><td><code>#F3F4F7</code></td></tr>
-<tr><td>Card</td><td><code>#1A1C21</code>, no shadow</td><td><code>#FFFFFF</code>, 10 pt soft shadow</td></tr>
-<tr><td>Text, secondary, tertiary</td><td><code>#F2F3F5</code>, <code>#9AA1AC</code>, <code>#666C77</code></td><td><code>#14161B</code>, <code>#5D6470</code>, <code>#9AA0AA</code></td></tr>
-</table></div>
-<p>Metro is black with white text, grey <code>#999999</code> secondary text and the accent for what is on.</p>
+<h2 id="fonts">Fonts and colour</h2>
+<ul>
+<li><b>Text:</b> Segoe UI from the system. Selawik, its open metric twin, is bundled and used only where Segoe is absent.</li>
+<li><b>Icons:</b> Segoe MDL2 Assets from the system. Strokes under DotMatrix or without the font.</li>
+<li><b>Metro colours:</b> black <code>#000000</code>, white text, grey <code>#999999</code> second lines, red <code>#E51400</code> for danger, the accent for what is on.</li>
+<li><b>Accent:</b> <code>ZUI_ACCENT</code>, else <code>accent =</code> in the config (a ztmetro colour name or <code>#rrggbb</code>), else cobalt <code>#0050EF</code>. Leave it to the system.</li>
+</ul>
+{{TAB:accent}}
 <h2 id="rules">Style rules</h2>
 <ul>
 <li>One primary button a page at most. Others tonal or plain, and danger for what destroys.</li>
-<li>Short noun titles. Sentence case.</li>
-<li>Leave the accent to the system. Tint icons sparingly.</li>
-<li>Check both styles before you publish: <code>zrn render --style metro</code>.</li>
+<li>Short noun titles. Metro shows them in lower case.</li>
+<li>Leave the accent to the system.</li>
+<li>Check both styles before you publish: <code>zrn render --style dotmatrix</code>.</li>
 <li>Do not imitate system UI. Moderators reject it.</li>
 </ul>
 <h2 id="scripts">Other scripts</h2>
-<p>HarfBuzz shapes Sinhala, Tamil, Greek and Cyrillic, and CJK comes from fontconfig fallback. <b>Bidirectional text is not reordered</b>, so Arabic and Hebrew will not read correctly yet.</p>
+<p>In Metro, HarfBuzz shapes Sinhala, Tamil, Greek and Cyrillic, and CJK comes from fontconfig fallback. <b>Bidirectional text is not reordered</b>, so Arabic and Hebrew will not read correctly yet. DotMatrix shows Latin only.</p>
 """),
 
 "animations": ("Animations: ztOS SDK", "Swivel with its domino stagger, turnstile, fade, tilt and every other ztOS animation, running live with the real durations, curves and angles.", ANIMATIONS),
@@ -684,12 +674,12 @@ zrn: fix: the store builds from a public git repository: push the app to one fir
 <p><code>zrn new --lang rust</code> writes an absolute path to your SDK copy in <code>Cargo.toml</code>. <b>If you move the SDK or share the project, change that path.</b> How the store's CI handles it is decided by its build tooling, so test a clean checkout.</p>
 <h2 id="render">The render looks different from the window</h2>
 <ul>
-<li><code>ZUI_STYLE</code>, <code>ZUI_THEME</code>, <code>ZUI_ACCENT</code> and your <code>~/.config/ztmetro/config</code> all override your code. <code>--style</code> and <code>--theme</code> override those for a run.</li>
-<li>A moving bar is drawn at whichever instant the render happens, so two renders of it differ.</li>
-<li>A page rendered by number that is not the first page you run gets a back button.</li>
+<li><code>ZUI_STYLE</code>, <code>ZTRF_SHELL_STYLE</code> and <code>style =</code> in your <code>~/.config/ztmetro/config</code> decide the style, whatever your code does. <code>--style</code> overrides them for a run.</li>
+<li>Moving dots are drawn at whichever instant the render happens, so two renders of them differ.</li>
+<li>Without Segoe UI on your computer, renders use Selawik. Without Segoe MDL2 Assets, icons are the stroke versions.</li>
 </ul>
 <h2 id="icon">My icon does not appear</h2>
-<p>Metro draws no icons on rows. In zrnCoolStyle, check the name against the <a href="/elements#icons">twenty that exist</a>: an unknown name draws nothing.</p>
+<p>Check the name against the <a href="/elements#icons">twenty-one that exist</a>: an unknown name draws nothing. If an icon looks like thin lines in Metro, your system lacks Segoe MDL2 Assets.</p>
 <h2 id="slow">A callback did nothing, or the app froze</h2>
 <ul>
 <li>Everything runs on one thread. Do long work on another and come back through <code>post</code>.</li>
@@ -702,7 +692,7 @@ zrn: fix: the store builds from a public git repository: push the app to one fir
 
 "status": ("Status and gaps: ztOS SDK", "What the ztOS SDK does not do yet, and what has not been proven.", """
 <h1>Status and gaps</h1>
-<p class="lead"><b>libzrnui is a laptop-proven first round.</b> This page lists what is missing, as of commit <code>""" + COMMIT + """</code>, so that nobody has to discover it the hard way.</p>
+<p class="lead"><b>This page lists what libzrnui does not do yet</b>, as of commit <code>""" + COMMIT + """</code>, so that nobody has to discover it the hard way.</p>
 <h2 id="unproven">Not proven</h2>
 <ul>
 <li><b>Nothing from zrn-sdk has been reported running on a phone</b> by <code>DESIGN.md</code> at this commit. Frame times on the Mali-G72 are inferred, not measured. CPU cost was measured on a 2012 laptop: about 1.35 ms a frame in zrnCoolStyle and 0.78 ms in Metro.</li>
@@ -713,12 +703,13 @@ zrn: fix: the store builds from a public git repository: push the app to one fir
 </ul>
 <h2 id="missing">Missing from libzrnui</h2>
 <ul>
-<li>Pictures, avatars, tabs and pivots, long virtualised lists, dialogs, menus, pickers, date and time, pull to refresh.</li>
-<li>Any app-level animation call, custom drawing, or custom style.</li>
-<li>Password or multi-line fields, and your own icons on a row.</li>
+<li>Dialogs, menus, pickers, date and time, pull to refresh.</li>
+<li><b>Pictures, long lists, pivots, the footer and bubbles in Rust and Python.</b> Those bindings have no call for them yet, though C and C++ do.</li>
+<li>Any app-level animation call or custom drawing. An app cannot pick or add a style.</li>
+<li>Password or multi-line fields, and your own icon files.</li>
 <li>Bidirectional text, screen reader names and other accessibility.</li>
 <li>Notifications, stored settings, and the battery and performance calls that the older SDK has.</li>
-<li>DotMatrix: such a session falls back to Metro.</li>
+<li>In DotMatrix: the shell's ghost field and glow, and any script other than Latin.</li>
 </ul>
 <h2 id="platform">Missing from the platform</h2>
 <ul>
@@ -727,11 +718,9 @@ zrn: fix: the store builds from a public git repository: push the app to one fir
 <li>libzrnui and <code>zrn-exec</code> are not in the system image. Until they are, use <code>--bundle-zrnui</code>, though <code>zrn-exec</code> itself still has to be present.</li>
 <li>Only GitHub is accepted as a source host.</li>
 </ul>
-<h2 id="coming">In progress, not on this site yet</h2>
-<p>Work on pictures, tabs, long lists and input is in the SDK's working tree but is not merged, so it is not documented here. These pages will gain it once it lands.</p>
 <h2 id="site">About this site</h2>
 <ul>
-<li>The element pictures came from <code>zrn render</code> on a laptop's GPU, and busy, toast and the page-change frames from <code>kwin_wayland</code>'s virtual backend. None came from a phone.</li>
+<li>The element pictures came from <code>zrn render</code> on a laptop's GPU with the phone's fonts from the ztOS tree, and busy, toast and the page-change frames from <code>kwin_wayland</code>'s virtual backend. None came from a phone.</li>
 <li>The older Python SDK and ZrnMetroCore were read from source, and were not run for this site.</li>
 <li>The animation demos are web ports of the formulas. <a href="/animations#how">The differences are listed there</a>.</li>
 </ul>

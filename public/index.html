@@ -23,36 +23,36 @@
 <div class="layout">
 <aside class="sidebar">
 <a class="wordmark" href="/">ztOS <span>SDK</span></a>
-<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/" aria-current="page">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
-<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/" aria-current="page">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/" aria-current="page">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/" aria-current="page">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
 <div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
 </aside>
 <main>
 
 <h1>Make apps for ztOS</h1>
-<p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. They ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
+<p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. <b>ztCoolStyle</b> is the name of that UI system. It draws in <b>Metro</b> or <b>DotMatrix</b>, whichever the system is set to. Apps ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
 <p><b>Requires ztOS BETA-1.1 or later.</b> Apps made with this SDK run on BETA-1.1 and newer; earlier versions of ztOS cannot run them.</p>
 <pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
 cd zrn-sdk && export PATH="$PWD/tools:$PATH"
 zrn doctor
 zrn new "Notes" --lang c
 cd notes && zrn build && zrn render out.png</code></pre>
-<div class="shots"><figure><img src="img/item-cool-dark.webp" alt="List rows in zrnCoolStyle, dark"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/item-cool-light.webp" alt="List rows in zrnCoolStyle, light"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/item-metro.webp" alt="List rows in Metro"><figcaption>The same code in Metro</figcaption></figure></div>
+<div class="shots"><figure><img src="/img/item-metro.webp" alt="item rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure><figure><img src="/img/item-dotmatrix.webp" alt="item rendered in DotMatrix" loading="lazy"><figcaption>DotMatrix</figcaption></figure></div>
 <div class="cards">
 <a href="/start"><b>Getting started</b><span>Install, first app, first picture</span></a>
 <a href="/apps"><b>Ways to make an app</b><span>Each language, the CLI, the older SDK</span></a>
 <a href="/project"><b>Project and permissions</b><span>zrnapp.toml, ids, the manifest</span></a>
-<a href="/elements"><b>UI elements</b><span>Each one, rendered, in four languages</span></a>
-<a href="/layout"><b>Layout, themes, styles</b><span>How pages fit, who picks the look</span></a>
+<a href="/elements"><b>UI elements</b><span>Each one, rendered, with its code</span></a>
+<a href="/layout"><b>Layout and styles</b><span>How pages fit, Metro and DotMatrix</span></a>
 <a href="/animations"><b>Animations</b><span>Swivel, turnstile, fade, tilt, running live</span></a>
 <a href="/shipping"><b>Package and publish</b><span>Test, sign, submit, update, revoke</span></a>
 <a href="/troubleshooting"><b>Troubleshooting</b><span>Real errors and their fixes</span></a>
 <a href="/status"><b>Status and gaps</b><span>What is missing or unproven</span></a>
 </div>
 <h2>How the code on this site was checked</h2>
-<p>Each element's snippet is <b>compiled in all four languages</b> and rendered with <code>zrn render</code>. The renders are then compared pixel by pixel across languages. They match exactly, except the progress page, whose moving bar is caught at a different instant each time. The generator and report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>. Animation numbers are read out of the C source and each one names its file.</p>
+<p>Each element's snippet is <b>compiled in every language that has it</b> and rendered with <code>zrn render</code>, using the phone's own fonts from the ztOS tree. The renders are then compared pixel by pixel across languages. They match exactly, except the progress page, whose moving dots are caught at a different instant each time. The generator and report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>. Animation numbers are read out of the C source and each one names its file.</p>
 
-<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <code>ea16771</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
 <script src="/assets/site.js"></script>

@@ -18,9 +18,8 @@ def el_item(app, page):
     rows = page.section("Rows")
     rows.item("Title only")
     rows.item("With a second line", "Under the title")
-    rows.item("Goes somewhere", on_click=lambda: app.toast("Tapped"))
+    rows.item("Takes a tap", on_click=lambda: app.toast("Tapped"))
     rows.item("Wi-Fi", on_click=lambda: app.toast("Tapped"), icon="wifi", detail="Home-5G")
-    rows.item("Tinted icon", "zrnCoolStyle only", icon="music", tint=0xd9486e)
 
 
 def el_switch(app, page):
@@ -66,10 +65,22 @@ def el_layout(app, page):
     col.caption("and can be hidden as one.")
 
 
+def el_round(app, page):
+    bar = page.row()
+    for name in ["plus", "search", "send", "more"]:
+        b = bar.button(name)
+        b.icon = name
+        b.flex = 1
+
+
 def el_icons(app, page):
-    card = page.card()
-    for name in ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone"]:
-        card.item(name, icon=name)
+    names = ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone", "send"]
+    for i in range(0, 21, 4):
+        row = page.row()
+        for name in names[i:i + 4]:
+            b = row.button(name)
+            b.icon = name
+            b.flex = 1
 
 
 app = zrnui.App("zrn-sdk-site-proof", "SDK")
@@ -82,5 +93,6 @@ p_progress = app.page("Progress"); el_progress(app, p_progress)
 p_field = app.page("Text fields"); el_field(app, p_field)
 p_section = app.page("Sections and cards"); el_section(app, p_section)
 p_layout = app.page("Rows, columns, space"); el_layout(app, p_layout)
+p_round = app.page("Round buttons"); el_round(app, p_round)
 p_icons = app.page("Icons"); el_icons(app, p_icons)
 app.run(p_text)

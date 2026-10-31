@@ -8,7 +8,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public"
 LANGNAME = {"c": "C", "cpp": "C++", "rs": "Rust", "py": "Python"}
 NAV = [("index", "Overview"), ("start", "Getting started"), ("apps", "Ways to make an app"),
-       ("project", "Project and permissions"), ("elements", "UI elements"), ("layout", "Layout, themes, styles"),
+       ("project", "Project and permissions"), ("elements", "UI elements"), ("layout", "Layout and styles"),
        ("animations", "Animations"), ("shipping", "Package and publish"), ("troubleshooting", "Troubleshooting"),
        ("status", "Status and gaps")]
 
@@ -26,22 +26,21 @@ def tabs(codes):
 
 def shots(name, tall=False):
     fig = []
-    for tag, cap in (("cool-dark", "zrnCoolStyle, dark"), ("cool-light", "zrnCoolStyle, light"), ("metro", "Metro")):
-        img = '<img src="img/%s-%s.webp" alt="%s rendered in %s" loading="lazy">' % (name, tag, name, cap)
-        if tall:
-            img = '<div class="tall" tabindex="0">%s</div>' % img
-        fig.append('<figure>%s<figcaption>%s</figcaption></figure>' % (img, cap))
+    for tag, cap in (("metro", "Metro"), ("dotmatrix", "DotMatrix")):
+        fig.append('<figure><img src="/img/%s-%s.webp" alt="%s rendered in %s" loading="lazy"><figcaption>%s</figcaption></figure>' % (name, tag, name, cap, cap))
     return '<div class="shots">%s</div>' % "".join(fig)
 
 
 def elements_html():
     out = []
     for e in E.ELEMENTS:
-        codes = {k: e[k] for k in LANGNAME}
+        codes = {k: e[k] for k in LANGNAME if k in e}
         if e.get("ctop"):
             codes["c"] = e["ctop"] + "\n\n" + codes["c"]
         out.append('<h2 id="%s">%s</h2><p>%s</p><p><code>%s</code></p>' % (e["id"], e["title"], e["blurb"], e["api"]))
-        out.append(shots(e["id"], e.get("tall")))
+        out.append(shots(e["id"]))
+        if "rs" not in e:
+            out.append('<p class="only"><b>C and C++ only.</b> The Rust and Python bindings have no call for this at this commit.</p>')
         out.append(tabs(codes))
     return "\n".join(out)
 
