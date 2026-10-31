@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Getting started: ztOS SDK</title>
+<meta name="description" content="Install the zrn CLI and libzrnui&#x27;s build dependencies, make a first app, and see it without a phone.">
+<link rel="canonical" href="https://sdk.ztos.online/start">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Getting started: ztOS SDK">
+<meta property="og:description" content="Install the zrn CLI and libzrnui&#x27;s build dependencies, make a first app, and see it without a phone.">
+<meta property="og:url" content="https://sdk.ztos.online/start">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start" aria-current="page">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start" aria-current="page">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Getting started</h1>
+<p class="lead">You can write an app and see it without a phone. This takes a few minutes on a Linux computer.</p>
+<div class="gap"><b>What you cannot do yet</b><p>Install on a phone from here with one command. <code>zrn install</code> installs for the user on the computer it runs on. Every build made on a laptop so far is x86_64 (or <code>any</code> for Python). See <a href="/status">Status and gaps</a>.</p></div>
+<h2 id="need">What you need</h2>
+<ul>
+<li>Python 3.11 or newer, a C compiler, <code>make</code>, <code>pkg-config</code>.</li>
+<li>Development files for Wayland, Mesa (EGL, GLES2, GBM), FreeType, HarfBuzz, fontconfig, libpng and xkbcommon. <code>libzrnui/Makefile</code> asks pkg-config for <code>wayland-client wayland-egl egl glesv2 freetype2 harfbuzz fontconfig libpng xkbcommon gbm</code>.</li>
+<li>A C++ compiler for C++ apps, <code>cargo</code> for Rust apps.</li>
+<li>For <code>zrn run</code> with no Wayland session: <code>kwin_wayland</code> or <code>weston</code>. Only <code>kwin_wayland</code> has been tried for this site.</li>
+</ul>
+<h2 id="install">Install</h2>
+<pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
+cd zrn-sdk
+export PATH="$PWD/tools:$PATH"     <span class="c"># zrn and zrn-exec</span>
+zrn doctor                         <span class="c"># what is missing, and the command that fixes it</span></code></pre>
+<p>A healthy <code>zrn doctor</code>, from the machine that built this site:</p>
+<pre><code>ok   python               3.14
+ok   cc                   /usr/sbin/cc
+ok   pkg-config           /usr/sbin/pkg-config
+ok   make                 /usr/sbin/make
+ok   c++                  /usr/sbin/c++
+ok   cargo                /usr/sbin/cargo
+ok   libraries            all present
+ok   libzrnui             .../libzrnui/build
+ok   fonts                .../libzrnui/fonts
+ok   crypto               python-cryptography
+opt  dev key              ~/.config/zrn/keys/dev.key
+     fix: zrn keygen (zrn pack also makes one)
+ok   headless compositor  kwin_wayland
+ok   offscreen GPU        /dev/dri/renderD*</code></pre>
+<p><code>zrn build</code> builds libzrnui from the tree the first time if it is not installed. To install it for the whole system: <code>make -C libzrnui &amp;&amp; sudo make -C libzrnui install PREFIX=/usr</code>.</p>
+<h2 id="first">Your first app</h2>
+<pre><code>zrn new "Notes" --lang c --id io.github.you.notes   <span class="c"># or cpp, python, rust</span>
+cd notes
+zrn build
+zrn render out.png                                  <span class="c"># no phone, no display</span></code></pre>
+<p>It writes <code>zrnapp.toml</code>, <code>icon.svg</code>, <code>main.c</code>, <code>AGENTS.md</code> and <code>.gitignore</code>. A cut-down version of what each template holds:</p>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>#include &lt;zrnui.h&gt;
+
+static zui_node *status;
+
+static void tapped(zui_node *button, void *data) {
+	zui_set_text(status, &quot;Tapped&quot;);
+	zui_toast(zui_node_app(button), &quot;Hello from Notes&quot;);
+}
+
+int main(void) {
+	zui_app *app = zui_app_new(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+	zui_node *page = zui_page(app, &quot;Notes&quot;);
+	zui_node *card = zui_section(page, &quot;Status&quot;);
+	status = zui_heading(card, &quot;Not tapped yet&quot;);
+	zui_button(page, &quot;Tap me&quot;, tapped, NULL);
+	return zui_run(app, page);
+}</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>#include &lt;zrnui.hpp&gt;
+
+int main() {
+	zrn::ui::App app(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+	auto page = app.page(&quot;Notes&quot;);
+	auto status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;);
+	page.button(&quot;Tap me&quot;, [&amp;]() {
+		status.set_text(&quot;Tapped&quot;);
+		app.toast(&quot;Hello from Notes&quot;);
+	});
+	return app.run(page);
+}</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>fn main() {
+    let app = zrnui::App::new(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+    let page = app.page(&quot;Notes&quot;);
+    let status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;);
+    let app_ref = &amp;app;
+    page.button(&quot;Tap me&quot;).on_click(move || {
+        status.set_text(&quot;Tapped&quot;);
+        app_ref.toast(&quot;Hello from Notes&quot;);
+    });
+    std::process::exit(app.run(page));
+}</code></pre>
+<pre data-l="py" aria-label="Python"><code>import zrnui
+
+app = zrnui.App(&quot;io.github.you.notes&quot;, &quot;Notes&quot;)
+page = app.page(&quot;Notes&quot;)
+status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;)
+
+
+def tapped():
+    status.set_text(&quot;Tapped&quot;)
+    app.toast(&quot;Hello from Notes&quot;)
+
+
+page.button(&quot;Tap me&quot;, tapped)
+app.run(page)</code></pre>
+</div>
+<h2 id="see">Look at it</h2>
+<pre><code>zrn render out.png                          <span class="c"># first page, 360x740 points at scale 2</span>
+zrn render --page 1 out.png                 <span class="c"># by creation order</span>
+zrn render --page "Wi-Fi" --scroll 300 out.png
+zrn render --style metro --theme light out.png
+zrn render --scale 4 out.png                <span class="c"># the S9's 1440x2960</span>
+zrn run                                     <span class="c"># a phone-sized window</span>
+zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; quit"</code></pre>
+<p><code>zrn render</code> draws through the same GLES2 path as a running app, using Mesa's surfaceless EGL. <code>--page</code> counts pages in the order your code <b>creates</b> them, which is not the order they open.</p>
+<div class="note"><p>A page that is not the first one you run gets a back button in the render, because the render treats it as pushed. You will see that in the pictures on this site.</p></div>
+<h2 id="next">Next</h2>
+<p><a href="/elements">UI elements</a> shows what you can put on a page. <a href="/shipping">Package and publish</a> shows how it reaches people.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

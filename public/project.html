@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project file and permissions: ztOS SDK</title>
+<meta name="description" content="zrnapp.toml field by field, id rules, permissions, and the .zexec manifest.">
+<link rel="canonical" href="https://sdk.ztos.online/project">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Project file and permissions: ztOS SDK">
+<meta property="og:description" content="zrnapp.toml field by field, id rules, permissions, and the .zexec manifest.">
+<meta property="og:url" content="https://sdk.ztos.online/project">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Project file and permissions</h1>
+<p class="lead"><code>zrnapp.toml</code> says who the app is and how to build it. <b>Permissions are declarations only for now: nothing enforces them.</b></p>
+<h2 id="toml">zrnapp.toml</h2>
+<p>This is what <code>zrn new "Notes" --lang python</code> writes:</p>
+<pre><code>[app]
+id = "io.github.you.notes"
+name = "Notes"
+version = "0.1.0"
+summary = "Notes for ztOS"
+author = ""
+licence = "MIT"
+icon = "icon.svg"
+categories = ["Utility"]
+permissions = []
+
+[build]
+lang = "python"
+entry = "main.py"
+include = ["*.py"]</code></pre>
+<p>For C and C++ <code>[build]</code> has <code>lang</code> and <code>sources = ["main.c"]</code>. Rust has <code>lang = "rust"</code> and its <code>Cargo.toml</code>, whose <code>zrnui</code> dependency is a path into your copy of the SDK.</p>
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Rule</th></tr>
+<tr><td><code>id</code></td><td>Reverse-DNS with three or more parts, lower case. Never changes. Also the Wayland app_id and desktop id. Pass the same id to <code>App</code> in your code</td></tr>
+<tr><td><code>version</code></td><td>Semantic. Higher than any version already in the store</td></tr>
+<tr><td><code>name</code>, <code>summary</code>, <code>author</code>, <code>licence</code>, <code>icon</code></td><td>All needed by the store. Licence is an SPDX id</td></tr>
+<tr><td><code>homepage</code>, <code>categories</code></td><td>Shown in the app list and the store</td></tr>
+<tr><td><code>permissions</code></td><td>See below</td></tr>
+</table></div>
+<p>A bad id stops the build and tells you the fix:</p>
+<pre><code>zrn: error: .../zrnapp.toml: id 'badid' is not valid
+zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-name for Zerone Laboratories' apps</code></pre>
+<h2 id="perms">Permissions</h2>
+<div class="gap"><b>Gap: declared, not enforced</b><p>An app can do what its user can do, whatever this list says. Moderators read the list and ask about each one. Enforcing it with bubblewrap or Landlock is planned in <code>DESIGN.md</code>'s Round 2. Declare honestly now, because that is what gets reviewed.</p></div>
+<div class="table-wrap"><table>
+<tr><th>Name</th><th>Means</th></tr>
+<tr><td><code>network</code>, <code>audio</code>, <code>camera</code>, <code>location</code>, <code>bluetooth</code></td><td>The hardware or network</td></tr>
+<tr><td><code>notifications</code>, <code>background</code></td><td>Showing notifications, running when not in front</td></tr>
+<tr><td><code>phone</code>, <code>contacts</code>, <code>messages</code></td><td>Personal data and calls</td></tr>
+<tr><td><code>files.music</code>, <code>files.pictures</code>, <code>files.documents</code>, <code>files.downloads</code></td><td>Those folders</td></tr>
+</table></div>
+<h2 id="manifest">What goes in the package</h2>
+<p><code>zrn pack</code> turns the project into a manifest, <code>zexec.json</code>. From <code>zrn info</code> on the app above:</p>
+<pre><code>{
+ "arch": "any",
+ "built": { "by": "zrn 0.1.0", "lang": "python" },
+ "categories": [ "Utility" ],
+ "entry": "app/main.py",
+ "icon": "icon.svg",
+ "id": "io.github.you.notes",
+ "licence": "MIT",
+ "min_ztos": "0.1",
+ "name": "Notes",
+ "permissions": [],
+ "runtime": "python3",
+ "summary": "Notes for ztOS",
+ "version": "0.1.0",
+ "zexec": 1,
+ "zrnui": "0.1"
+}
+        417  zexec.json
+        345  app/main.py
+        207  icon.svg</code></pre>
+<p>The store's CI adds <code>source</code>, which holds the repo and commit. <code>bundles</code> is set when libzrnui is inside. <code>arch</code> is <code>aarch64</code>, <code>x86_64</code> or <code>any</code>.</p>
+<h2 id="licence">Licences</h2>
+<p>libzrnui and the bindings are <b>LGPL-2.1-or-later</b>, so an app under any licence can link them. The <code>zrn</code> tools are GPL-2.0-or-later. Examples and templates are MIT, so what <code>zrn new</code> gives you is yours. The bundled fonts, Inter and Selawik, are SIL OFL 1.1.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

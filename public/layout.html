@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Layout, themes and styles: ztOS SDK</title>
+<meta name="description" content="How libzrnui lays out pages, the zrnCoolStyle and Metro numbers, themes, accent colours and who chooses the style.">
+<link rel="canonical" href="https://sdk.ztos.online/layout">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Layout, themes and styles: ztOS SDK">
+<meta property="og:description" content="How libzrnui lays out pages, the zrnCoolStyle and Metro numbers, themes, accent colours and who chooses the style.">
+<meta property="og:url" content="https://sdk.ztos.online/layout">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout" aria-current="page">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout" aria-current="page">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Layout, themes and styles</h1>
+<p class="lead"><b>You say what is on a page; the style decides how it looks.</b> Everything is in points on a 360 point wide phone, and the same code draws in either style.</p>
+<h2 id="layout">How a page is laid out</h2>
+<ul>
+<li>A page is a column. Things appear in the order you add them.</li>
+<li><code>section</code> and <code>card</code> group things, and items in a card get dividers. Prefer these to manual spacing.</li>
+<li><code>row</code> sets things side by side. <code>set_flex</code> shares spare width by proportion.</li>
+<li>Pages scroll by themselves when they outgrow the screen. A hidden node takes no room.</li>
+<li>Scale: <code>ZUI_SCALE</code>, else the shell's <code>ZTMETRO_SCALE</code> (4 on the S9, so 1440x2960 pixels is 360x740 points), else the compositor's.</li>
+</ul>
+<h2 id="pick">Who picks the style</h2>
+<p><b>The user wins over the app.</b> From first choice to last (<code>pick_style</code> in <code>core.c</code>):</p>
+<ol>
+<li><code>ZUI_STYLE</code> in the environment.</li>
+<li>A <code>ZTRF_SHELL_STYLE=dotmatrix</code> session falls back to Metro, since DotMatrix has not been ported to libzrnui.</li>
+<li><code>zrnui_style = cool|metro|follow</code> in <code>~/.config/ztmetro/config</code>. <code>follow</code> gives Metro.</li>
+<li>What the app asked for.</li>
+<li>zrnCoolStyle.</li>
+</ol>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_app_set_style(app, &quot;metro&quot;);     /* a preference: the user&#x27;s choice wins */
+zui_app_set_theme(app, &quot;light&quot;);     /* zrnCoolStyle only: Metro is always dark */
+zui_app_set_accent(app, 0x0050ef);   /* the style rules say leave this to the system */</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>app.set_style(&quot;metro&quot;);
+app.set_theme(&quot;light&quot;);
+app.set_accent(0x0050ef);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>app.set_style(&quot;metro&quot;);
+app.set_theme(&quot;light&quot;);
+app.set_accent(0x0050ef);</code></pre>
+<pre data-l="py" aria-label="Python"><code>app = zrnui.App(&quot;io.github.you.notes&quot;, &quot;Notes&quot;, style=&quot;metro&quot;, theme=&quot;light&quot;, accent=0x0050ef)
+app.set_theme(&quot;dark&quot;)                # later; Python has no set_style or set_accent after creation</code></pre>
+</div>
+<p>Theme: <code>ZUI_THEME</code> beats the app, and <code>zrnui_theme</code> in the same config file sets the default. Metro is always dark. Accent: <code>ZUI_ACCENT</code>, else <code>accent =</code> in that file (a ztmetro colour name or <code>#rrggbb</code>), else cobalt <code>#0050EF</code>.</p>
+<h2 id="both">The same code in both styles</h2>
+<div class="shots"><figure><img src="img/section-cool-dark.webp" alt="section rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/section-cool-light.webp" alt="section rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/section-metro.webp" alt="section rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<h2 id="numbers">The numbers</h2>
+<p>From <code>.m</code> in <code>style-cool.c</code> and <code>style-metro.c</code>, in points.</p>
+<div class="table-wrap"><table>
+<tr><th></th><th>zrnCoolStyle</th><th>Metro</th></tr>
+<tr><td>Font</td><td>Inter</td><td>Selawik (open metric twin of Segoe UI)</td></tr>
+<tr><td>Page margin, gap</td><td>18, 16</td><td>16, 12</td></tr>
+<tr><td>Title</td><td>32, scrolls with the page, 56 pt bar</td><td>48, fixed, 108 pt header</td></tr>
+<tr><td>Body, heading, caption</td><td>16, 21, 13.5</td><td>16, 25.5, 13</td></tr>
+<tr><td>Row height, with subtitle</td><td>56, 68</td><td>52, 66</td></tr>
+<tr><td>Row title, subtitle</td><td>16, 13.5</td><td>21, 13</td></tr>
+<tr><td>Button height, radius</td><td>52, 26 (a pill)</td><td>40, 0</td></tr>
+<tr><td>Field height, radius</td><td>52, 14</td><td>38, 0</td></tr>
+<tr><td>Card radius, inner padding</td><td>20, 16</td><td>0, 0 (flat)</td></tr>
+<tr><td>Icon tile</td><td>32</td><td>none: Metro draws no icons</td></tr>
+<tr><td>Line spacing</td><td>1.36</td><td>1.25</td></tr>
+</table></div>
+<h2 id="colours">zrnCoolStyle colours</h2>
+<div class="table-wrap"><table>
+<tr><th></th><th>Dark</th><th>Light</th></tr>
+<tr><td>Page</td><td><code>#0E0F12</code></td><td><code>#F3F4F7</code></td></tr>
+<tr><td>Card</td><td><code>#1A1C21</code>, no shadow</td><td><code>#FFFFFF</code>, 10 pt soft shadow</td></tr>
+<tr><td>Text, secondary, tertiary</td><td><code>#F2F3F5</code>, <code>#9AA1AC</code>, <code>#666C77</code></td><td><code>#14161B</code>, <code>#5D6470</code>, <code>#9AA0AA</code></td></tr>
+</table></div>
+<p>Metro is black with white text, grey <code>#999999</code> secondary text and the accent for what is on.</p>
+<h2 id="rules">Style rules</h2>
+<ul>
+<li>One primary button a page at most. Others tonal or plain, and danger for what destroys.</li>
+<li>Short noun titles. Sentence case.</li>
+<li>Leave the accent to the system. Tint icons sparingly.</li>
+<li>Check both styles before you publish: <code>zrn render --style metro</code>.</li>
+<li>Do not imitate system UI. Moderators reject it.</li>
+</ul>
+<h2 id="scripts">Other scripts</h2>
+<p>HarfBuzz shapes Sinhala, Tamil, Greek and Cyrillic, and CJK comes from fontconfig fallback. <b>Bidirectional text is not reordered</b>, so Arabic and Hebrew will not read correctly yet.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

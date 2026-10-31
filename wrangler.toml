@@ -1,0 +1,14 @@
+# sdk.ztos.online: static files only, served the way devices.ztos.online is.
+name = "ztos-sdk-site"
+compatibility_date = "2026-09-01"
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "./public"
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"
+
+[[routes]]
+pattern = "sdk.ztos.online"
+custom_domain = true

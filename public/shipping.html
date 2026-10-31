@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Package and publish: ztOS SDK</title>
+<meta name="description" content="Testing without a phone, packing a signed .zexec, submitting to the ztOS store, updates and revocation.">
+<link rel="canonical" href="https://sdk.ztos.online/shipping">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Package and publish: ztOS SDK">
+<meta property="og:description" content="Testing without a phone, packing a signed .zexec, submitting to the ztOS store, updates and revocation.">
+<meta property="og:url" content="https://sdk.ztos.online/shipping">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping" aria-current="page">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping" aria-current="page">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Package and publish</h1>
+<p class="lead">Test with pictures, pack a signed <code>.zexec</code>, push your source, and the store builds that exact commit. <b>You never upload a binary.</b></p>
+<div class="gap"><b>Warning: this path is not proven end to end</b>
+<p>The submission Worker, bot and publishing workflow are deployed, and the publish run produced an empty signed index. <b>No real app has yet gone from submit through Accept to a listed build.</b> The phone's store app cannot show these apps yet. Expect rough edges, and tell the moderators on Discord what you hit.</p></div>
+<h2 id="test">Test</h2>
+<pre><code>zrn render out.png
+zrn render --style metro out.png
+zrn run --headless --script "wait 500; tap 180 170; type hi; wait 600; snap after.png; back; quit"
+make check          <span class="c"># in the SDK: C, tool and Rust tests</span></code></pre>
+<p>Script steps are <code>wait MS</code>, <code>tap X Y</code>, <code>drag X Y POINTS</code> (a finger moving that far up over 200 ms), <code>type TEXT</code>, <code>snap FILE</code>, <code>back</code> and <code>quit</code>, separated by semicolons. A snapshot takes a while, so use one per run when timing matters.</p>
+<p>In C tests, <code>zui_layout</code>, <code>zui_inject_touch</code> and <code>zui_inject_text</code> work with no display. Python has <code>app.layout()</code> and <code>app.tap()</code>, and <code>Node.frame()</code> says where something landed. <code>ZUI_PERFLOG=1</code> prints what each frame costs the CPU.</p>
+<h2 id="pack">Pack</h2>
+<pre><code>$ zrn pack
+zrn: made signing key A90978EBF45FDFE2 (~/.config/zrn/keys/dev.key); this user now trusts it
+packed dist/io.github.you.notes-0.1.0-any.zexec (1120 bytes, sha256 ef4693336d58fd18...), signed by A90978EBF45FDFE2
+$ zrn verify dist/io.github.you.notes-0.1.0-any.zexec
+good: io.github.you.notes 0.1.0 (any), signed by A90978EBF45FDFE2
+$ zrn install dist/io.github.you.notes-0.1.0-any.zexec
+installed io.github.you.notes 0.1.0 -> ~/.local/share/zrn/apps/io.github.you.notes/io.github.you.notes.zexec
+  app list: ~/.local/share/applications/io.github.you.notes.desktop</code></pre>
+<p>Output above is real, with paths shortened. A native package holds a program for one CPU, so one built on a laptop runs only on x86_64. Python packages are <code>any</code>. Until libzrnui ships in the system image, <code>zrn pack --bundle-zrnui</code> puts it inside the package.</p>
+<h3>What a .zexec is</h3>
+<pre><code>#!/usr/bin/env zrn-exec\n      <span class="c"># chmod +x and run it</span>
+&lt;zip archive&gt;
+  zexec.json                    <span class="c"># the manifest, first</span>
+  icon.svg | icon.png
+  bin/&lt;id&gt;                      <span class="c"># native: the program</span>
+  lib/  share/                  <span class="c"># optional libraries and data</span>
+  app/                          <span class="c"># python3: the sources</span>
+&lt;file&gt;.zexec.minisig            <span class="c"># detached minisign-format signature</span></code></pre>
+<p><code>zrn-exec</code> checks structure and signature before anything inside runs, unpacks once to <code>~/.cache/zrn/apps/&lt;id&gt;/&lt;sha256&gt;</code>, and logs what the app prints to <code>~/.local/state/zrn/&lt;id&gt;.log</code>. Packing is reproducible: the same commit gives the same bytes. Trusted keys live in <code>/etc/zrn/trusted-keys</code>, <code>/usr/share/zrn/trusted-keys</code> and <code>~/.config/zrn/trusted-keys</code>. The format has not been cross-checked against the real <code>minisign</code> program.</p>
+<h2 id="submit">Submit to the store</h2>
+<ol>
+<li>Your app builds from a clean checkout. Rust crates are the only downloads allowed in a build.</li>
+<li><code>zrnapp.toml</code> is complete, and the id is one you control.</li>
+<li>Push to a <b>public GitHub repository</b>. Other hosts are planned.</li>
+<li><code>zrn submit</code> shows the entry for HEAD, which must be clean. <code>zrn submit --send</code> sends it.</li>
+</ol>
+<p>Or on the ztOS Mobile Discord: <code>/submit-app repo:https://github.com/you/notes commit:&lt;40-digit SHA&gt; [subdir:app]</code>.</p>
+<h3>What happens next</h3>
+<ol>
+<li>The Worker checks the commit exists and reads <code>zrnapp.toml</code> at that commit.</li>
+<li>The bot opens a post in <b>#ztos-app-submissions</b> with the manifest, the permissions, and a link to the exact tree.</li>
+<li>A moderator reads the source and presses <b>Accept</b> or <b>Reject</b>, with a reason.</li>
+<li>Accept records the release in <code>ledger/&lt;id&gt;.toml</code>: the commit, who approved it and when.</li>
+<li>CI builds that commit with no secrets and no token, for aarch64 (Python once, for any CPU). A separate job signs it without running anything from the package, then publishes it to the signed index.</li>
+</ol>
+<h3>What gets you rejected</h3>
+<ul>
+<li>Doing what the permissions do not say, or asking for permissions the app does not use.</li>
+<li>Obfuscated code, code that downloads and runs code, or an app that is not what its name says.</li>
+<li>A build that fails from a clean checkout.</li>
+<li>Unreadable text or fake system UI.</li>
+</ul>
+<h2 id="update">Updates</h2>
+<p>An update is a new submission: raise <code>version</code>, commit, push, <code>zrn submit --send</code>. Moderators see a compare link from your last approved commit. The store never follows a branch, so changing or force-pushing your repository does nothing to what is listed. If that removes the commit, the build fails rather than changes.</p>
+<h2 id="revoke">Revocation</h2>
+<p>A moderator can revoke a release for a security problem, abuse or a licence problem, with <b>Revoke</b> on the post or <code>/revoke-app id version reason</code>. The ledger records who, when and why, and the release leaves the index. The design says phones then disable it and show the reason, <b>but the phone client for this does not exist yet</b>. To recover, fix it and submit a new version.</p>
+<p>Full rules: <a href="https://github.com/Zerone-Laboratories/ztOS-apprepo/blob/main/CONTRIBUTING.md">the store's CONTRIBUTING.md</a>. Threat model: <a href="https://github.com/Zerone-Laboratories/zrn-sdk/blob/main/DESIGN.md#threat-model">DESIGN.md</a>.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

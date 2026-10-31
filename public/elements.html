@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UI elements: ztOS SDK</title>
+<meta name="description" content="Every libzrnui element, rendered in zrnCoolStyle dark and light and in Metro, with code in C, C++, Rust and Python.">
+<link rel="canonical" href="https://sdk.ztos.online/elements">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="UI elements: ztOS SDK">
+<meta property="og:description" content="Every libzrnui element, rendered in zrnCoolStyle dark and light and in Metro, with code in C, C++, Rust and Python.">
+<meta property="og:url" content="https://sdk.ztos.online/elements">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements" aria-current="page">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements" aria-current="page">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>UI elements</h1>
+<p class="lead">Every element libzrnui has at commit <code>8f6fb14</code>, rendered by <code>zrn render</code> from the code beside it.</p>
+<p>The language tab you pick is remembered. Each snippet is the body of a function that has <code>app</code> and <code>page</code>. All four compiled, and their renders match pixel for pixel.</p>
+<div class="gap"><b>Not in this commit</b>
+<p>Pictures, avatars, tabs and pivots, long virtualised lists, dialogs, menus and pickers are not in this commit. Work on some of them is under way, and they will be added here once they are merged. Until then: <a href="/status">Status and gaps</a>.</p></div>
+<div class="cards">
+<a href="#text"><b>Text</b></a><a href="#button"><b>Buttons</b></a><a href="#item"><b>List rows</b></a><a href="#switch"><b>Switches</b></a><a href="#slider"><b>Sliders</b></a><a href="#progress"><b>Progress</b></a><a href="#field"><b>Text fields</b></a><a href="#section"><b>Sections and cards</b></a><a href="#layout"><b>Rows, columns, space</b></a><a href="#icons"><b>Icons</b></a><a href="#busy"><b>Busy</b></a><a href="#toast"><b>Toast</b></a><a href="#changing"><b>Changing things</b></a>
+</div>
+<h2 id="text">Text</h2><p>Three sizes of words. Long text wraps by itself. Change it later with <code>set_text</code>.</p><p><code>zui_text, zui_heading, zui_caption</code></p>
+<div class="shots"><figure><img src="img/text-cool-dark.webp" alt="text rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/text-cool-light.webp" alt="text rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/text-metro.webp" alt="text rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_heading(page, &quot;A heading&quot;);
+zui_text(page, &quot;Body text. It wraps at the page&#x27;s width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.&quot;);
+zui_caption(page, &quot;A caption: small and quiet.&quot;);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>page.heading(&quot;A heading&quot;);
+page.text(&quot;Body text. It wraps at the page&#x27;s width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.&quot;);
+page.caption(&quot;A caption: small and quiet.&quot;);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>page.heading(&quot;A heading&quot;);
+page.text(&quot;Body text. It wraps at the page&#x27;s width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.&quot;);
+page.caption(&quot;A caption: small and quiet.&quot;);</code></pre>
+<pre data-l="py" aria-label="Python"><code>page.heading(&quot;A heading&quot;)
+page.text(&quot;Body text. It wraps at the page&#x27;s width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.&quot;)
+page.caption(&quot;A caption: small and quiet.&quot;)</code></pre>
+</div>
+<h2 id="button">Buttons</h2><p>Four variants: primary (the default), tonal, plain and danger. Use one primary button a page at most. A disabled node draws at 40 % opacity and takes no touch.</p><p><code>zui_button, zui_set_variant, zui_set_enabled</code></p>
+<div class="shots"><figure><img src="img/button-cool-dark.webp" alt="button rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/button-cool-light.webp" alt="button rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/button-metro.webp" alt="button rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_button(page, &quot;Primary&quot;, NULL, NULL);
+zui_set_variant(zui_button(page, &quot;Tonal&quot;, NULL, NULL), ZUI_TONAL);
+zui_set_variant(zui_button(page, &quot;Plain&quot;, NULL, NULL), ZUI_PLAIN);
+zui_set_variant(zui_button(page, &quot;Danger&quot;, NULL, NULL), ZUI_DANGER);
+zui_set_enabled(zui_button(page, &quot;Disabled&quot;, NULL, NULL), false);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>using zrn::ui::Variant;
+page.button(&quot;Primary&quot;);
+page.button(&quot;Tonal&quot;).set_variant(Variant::Tonal);
+page.button(&quot;Plain&quot;).set_variant(Variant::Plain);
+page.button(&quot;Danger&quot;).set_variant(Variant::Danger);
+page.button(&quot;Disabled&quot;).set_enabled(false);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>use zrnui::Variant;
+page.button(&quot;Primary&quot;);
+page.button(&quot;Tonal&quot;).set_variant(Variant::Tonal);
+page.button(&quot;Plain&quot;).set_variant(Variant::Plain);
+page.button(&quot;Danger&quot;).set_variant(Variant::Danger);
+page.button(&quot;Disabled&quot;).set_enabled(false);</code></pre>
+<pre data-l="py" aria-label="Python"><code>page.button(&quot;Primary&quot;)
+page.button(&quot;Tonal&quot;, variant=zrnui.TONAL)
+page.button(&quot;Plain&quot;, variant=zrnui.PLAIN)
+page.button(&quot;Danger&quot;, variant=zrnui.DANGER)
+page.button(&quot;Disabled&quot;).enabled = False</code></pre>
+</div>
+<h2 id="item">List rows</h2><p>An item is a title, an optional line under it, an optional value on the right and an optional icon. It gets an arrow only when it has a tap handler. Inside a card, dividers come by themselves.</p><p><code>zui_item, zui_set_detail, zui_set_icon, zui_set_tint</code></p>
+<div class="shots"><figure><img src="img/item-cool-dark.webp" alt="item rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/item-cool-light.webp" alt="item rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/item-metro.webp" alt="item rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void row_tapped(zui_node *row, void *data) { zui_toast(zui_node_app(row), &quot;Tapped&quot;); }
+
+zui_node *list = zui_section(page, &quot;Rows&quot;);
+zui_item(list, &quot;Title only&quot;, NULL, NULL, NULL);
+zui_item(list, &quot;With a second line&quot;, &quot;Under the title&quot;, NULL, NULL);
+zui_item(list, &quot;Goes somewhere&quot;, NULL, row_tapped, NULL);
+zui_node *wifi = zui_item(list, &quot;Wi-Fi&quot;, NULL, row_tapped, NULL);
+zui_set_icon(wifi, &quot;wifi&quot;);
+zui_set_detail(wifi, &quot;Home-5G&quot;);
+zui_node *tinted = zui_item(list, &quot;Tinted icon&quot;, &quot;zrnCoolStyle only&quot;, NULL, NULL);
+zui_set_icon(tinted, &quot;music&quot;);
+zui_set_tint(tinted, 0xd9486e);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto list = page.section(&quot;Rows&quot;);
+list.item(&quot;Title only&quot;);
+list.item(&quot;With a second line&quot;, &quot;Under the title&quot;);
+list.item(&quot;Goes somewhere&quot;, &quot;&quot;, [&amp;app] { app.toast(&quot;Tapped&quot;); });
+list.item(&quot;Wi-Fi&quot;, &quot;&quot;, [&amp;app] { app.toast(&quot;Tapped&quot;); }).set_icon(&quot;wifi&quot;).set_detail(&quot;Home-5G&quot;);
+list.item(&quot;Tinted icon&quot;, &quot;zrnCoolStyle only&quot;).set_icon(&quot;music&quot;).set_tint(0xd9486e);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let list = page.section(&quot;Rows&quot;);
+list.item(&quot;Title only&quot;, None);
+list.item(&quot;With a second line&quot;, Some(&quot;Under the title&quot;));
+list.item(&quot;Goes somewhere&quot;, None).on_click(move || app.toast(&quot;Tapped&quot;));
+list.item(&quot;Wi-Fi&quot;, None).on_click(move || app.toast(&quot;Tapped&quot;)).set_icon(&quot;wifi&quot;).set_detail(&quot;Home-5G&quot;);
+list.item(&quot;Tinted icon&quot;, Some(&quot;zrnCoolStyle only&quot;)).set_icon(&quot;music&quot;).set_tint(0xd9486e);</code></pre>
+<pre data-l="py" aria-label="Python"><code>rows = page.section(&quot;Rows&quot;)
+rows.item(&quot;Title only&quot;)
+rows.item(&quot;With a second line&quot;, &quot;Under the title&quot;)
+rows.item(&quot;Goes somewhere&quot;, on_click=lambda: app.toast(&quot;Tapped&quot;))
+rows.item(&quot;Wi-Fi&quot;, on_click=lambda: app.toast(&quot;Tapped&quot;), icon=&quot;wifi&quot;, detail=&quot;Home-5G&quot;)
+rows.item(&quot;Tinted icon&quot;, &quot;zrnCoolStyle only&quot;, icon=&quot;music&quot;, tint=0xd9486e)</code></pre>
+</div>
+<h2 id="switch">Switches</h2><p>A row with an on/off control. In C the handler reads <code>zui_get_on</code>; the other languages pass the new state. The knob slides over 180 ms. On a switch, <code>set_detail</code> sets its second line. C++ calls it <code>toggle</code> because <code>switch</code> is a keyword.</p><p><code>zui_switch, zui_get_on, zui_set_on, zui_set_detail</code></p>
+<div class="shots"><figure><img src="img/switch-cool-dark.webp" alt="switch rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/switch-cool-light.webp" alt="switch rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/switch-metro.webp" alt="switch rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void wifi_changed(zui_node *sw, void *data) {
+	zui_set_detail(sw, zui_get_on(sw) ? &quot;Connected&quot; : &quot;Off&quot;);
+}
+
+zui_node *card = zui_section(page, &quot;Connections&quot;);
+zui_switch(card, &quot;Wi-Fi&quot;, true, wifi_changed, NULL);
+zui_switch(card, &quot;Bluetooth&quot;, false, NULL, NULL);
+zui_set_enabled(zui_switch(card, &quot;Roaming&quot;, false, NULL, NULL), false);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto card = page.section(&quot;Connections&quot;);
+auto wifi = card.toggle(&quot;Wi-Fi&quot;, true);
+wifi.on([](zrn::ui::Node sw, int) { sw.set_detail(sw.is_on() ? &quot;Connected&quot; : &quot;Off&quot;); });
+card.toggle(&quot;Bluetooth&quot;, false);
+card.toggle(&quot;Roaming&quot;, false).set_enabled(false);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let card = page.section(&quot;Connections&quot;);
+let wifi = card.switch(&quot;Wi-Fi&quot;, true);
+wifi.on_change(move |on| { wifi.set_detail(if on { &quot;Connected&quot; } else { &quot;Off&quot; }); });
+card.switch(&quot;Bluetooth&quot;, false);
+card.switch(&quot;Roaming&quot;, false).set_enabled(false);</code></pre>
+<pre data-l="py" aria-label="Python"><code>card = page.section(&quot;Connections&quot;)
+wifi = card.switch(&quot;Wi-Fi&quot;, True)
+wifi.on_event(lambda sw, event: setattr(wifi, &quot;detail&quot;, &quot;Connected&quot; if wifi.on else &quot;Off&quot;))
+card.switch(&quot;Bluetooth&quot;, False)
+card.switch(&quot;Roaming&quot;, False).enabled = False</code></pre>
+</div>
+<h2 id="slider">Sliders</h2><p>A value from 0 to 1. <code>CHANGE</code> fires while the finger moves and <code>SUBMIT</code> when it lifts, so save on submit.</p><p><code>zui_slider, zui_get_value, zui_event</code></p>
+<div class="shots"><figure><img src="img/slider-cool-dark.webp" alt="slider rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/slider-cool-light.webp" alt="slider rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/slider-metro.webp" alt="slider rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void level_moved(zui_node *s, void *data) {
+	if (zui_event(s) == ZUI_EVENT_SUBMIT) printf(&quot;saved %.2f\n&quot;, zui_get_value(s));
+}
+
+zui_node *card = zui_section(page, &quot;Display&quot;);
+zui_slider(card, &quot;Brightness&quot;, 0.6, level_moved, NULL);
+zui_slider(page, &quot;Outside a card&quot;, 0.25, NULL, NULL);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto card = page.section(&quot;Display&quot;);
+card.slider(&quot;Brightness&quot;, 0.6, [](double v, bool done) { if (done) printf(&quot;saved %.2f\n&quot;, v); });
+page.slider(&quot;Outside a card&quot;, 0.25);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let card = page.section(&quot;Display&quot;);
+card.slider(&quot;Brightness&quot;, 0.6).on_slide(|v, done| { if done { println!(&quot;saved {v:.2}&quot;); } });
+page.slider(&quot;Outside a card&quot;, 0.25);</code></pre>
+<pre data-l="py" aria-label="Python"><code>card = page.section(&quot;Display&quot;)
+card.slider(&quot;Brightness&quot;, 0.6, on_release=lambda v: print(&quot;saved %.2f&quot; % v))
+page.slider(&quot;Outside a card&quot;, 0.25)</code></pre>
+</div>
+<h2 id="progress">Progress</h2><p>Give it 0 to 1, or a value below 0 when you cannot say how long it will take. The indeterminate bar moves by itself, and the picture is one instant of it.</p><p><code>zui_progress, zui_set_value</code></p>
+<div class="shots"><figure><img src="img/progress-cool-dark.webp" alt="progress rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/progress-cool-light.webp" alt="progress rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/progress-metro.webp" alt="progress rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_text(page, &quot;Copying 7 of 10&quot;);
+zui_progress(page, 0.7);
+zui_text(page, &quot;No idea how long&quot;);
+zui_progress(page, -1);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>page.text(&quot;Copying 7 of 10&quot;);
+page.progress(0.7);
+page.text(&quot;No idea how long&quot;);
+page.progress(-1);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>page.text(&quot;Copying 7 of 10&quot;);
+page.progress(0.7);
+page.text(&quot;No idea how long&quot;);
+page.progress(-1.0);</code></pre>
+<pre data-l="py" aria-label="Python"><code>page.text(&quot;Copying 7 of 10&quot;)
+page.progress(0.7)
+page.text(&quot;No idea how long&quot;)
+page.progress(-1)</code></pre>
+</div>
+<h2 id="field">Text fields</h2><p>A box to type into. Tapping it asks the shell for the on-screen keyboard. <code>CHANGE</code> fires per edit and <code>SUBMIT</code> on Enter. There is no password mode or multi-line field in this commit.</p><p><code>zui_field, zui_get_text, zui_set_text</code></p>
+<div class="shots"><figure><img src="img/field-cool-dark.webp" alt="field rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/field-cool-light.webp" alt="field rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/field-metro.webp" alt="field rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void search_typed(zui_node *f, void *data) {
+	if (zui_event(f) == ZUI_EVENT_SUBMIT) printf(&quot;search: %s\n&quot;, zui_get_text(f));
+}
+
+zui_field(page, &quot;Search&quot;, search_typed, NULL);
+zui_set_text(zui_field(page, &quot;Name&quot;, NULL, NULL), &quot;Already filled in&quot;);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>page.field(&quot;Search&quot;, [](const std::string &amp;t, bool submitted) {
+	if (submitted) printf(&quot;search: %s\n&quot;, t.c_str());
+});
+page.field(&quot;Name&quot;).set_text(&quot;Already filled in&quot;);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>page.field(&quot;Search&quot;).on_edit(|t, submitted| { if submitted { println!(&quot;search: {t}&quot;); } });
+page.field(&quot;Name&quot;).set_text(&quot;Already filled in&quot;);</code></pre>
+<pre data-l="py" aria-label="Python"><code>page.field(&quot;Search&quot;, on_submit=lambda t: print(&quot;search:&quot;, t))
+page.field(&quot;Name&quot;).set_text(&quot;Already filled in&quot;)</code></pre>
+</div>
+<h2 id="section">Sections and cards</h2><p><code>section</code> adds a heading and returns the card under it, so add rows to what it returns. A bare <code>card</code> is the same group with no heading. In Metro cards are flat: the rows just sit on black.</p><p><code>zui_section, zui_card</code></p>
+<div class="shots"><figure><img src="img/section-cool-dark.webp" alt="section rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/section-cool-light.webp" alt="section rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/section-metro.webp" alt="section rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_item(zui_section(page, &quot;A section&quot;), &quot;In its card&quot;, NULL, NULL, NULL);
+zui_node *card = zui_card(page);
+zui_text(card, &quot;A card with no heading can hold anything.&quot;);
+zui_button(card, &quot;Like this&quot;, NULL, NULL);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>page.section(&quot;A section&quot;).item(&quot;In its card&quot;);
+auto card = page.card();
+card.text(&quot;A card with no heading can hold anything.&quot;);
+card.button(&quot;Like this&quot;);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>page.section(&quot;A section&quot;).item(&quot;In its card&quot;, None);
+let card = page.card();
+card.text(&quot;A card with no heading can hold anything.&quot;);
+card.button(&quot;Like this&quot;);</code></pre>
+<pre data-l="py" aria-label="Python"><code>page.section(&quot;A section&quot;).item(&quot;In its card&quot;)
+card = page.card()
+card.text(&quot;A card with no heading can hold anything.&quot;)
+card.button(&quot;Like this&quot;)</code></pre>
+</div>
+<h2 id="layout">Rows, columns, space</h2><p>A page is already a column. A <code>row</code> sets things side by side, and <code>set_flex</code> shares out the spare width. <code>space</code> adds fixed points. Do not fake layout with space: use sections.</p><p><code>zui_row, zui_column, zui_space, zui_set_flex</code></p>
+<div class="shots"><figure><img src="img/layout-cool-dark.webp" alt="layout rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/layout-cool-light.webp" alt="layout rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/layout-metro.webp" alt="layout rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>zui_node *row = zui_row(page);
+zui_set_flex(zui_button(row, &quot;1 share&quot;, NULL, NULL), 1);
+zui_node *wide = zui_button(row, &quot;2 shares&quot;, NULL, NULL);
+zui_set_variant(wide, ZUI_TONAL);
+zui_set_flex(wide, 2);
+zui_space(page, 40);
+zui_node *col = zui_column(page);
+zui_text(col, &quot;A column keeps things together&quot;);
+zui_caption(col, &quot;and can be hidden as one.&quot;);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto row = page.row();
+row.button(&quot;1 share&quot;).set_flex(1);
+row.button(&quot;2 shares&quot;).set_variant(zrn::ui::Variant::Tonal).set_flex(2);
+page.space(40);
+auto col = page.column();
+col.text(&quot;A column keeps things together&quot;);
+col.caption(&quot;and can be hidden as one.&quot;);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let row = page.row();
+row.button(&quot;1 share&quot;).set_flex(1.0);
+row.button(&quot;2 shares&quot;).set_variant(zrnui::Variant::Tonal).set_flex(2.0);
+page.space(40.0);
+let col = page.column();
+col.text(&quot;A column keeps things together&quot;);
+col.caption(&quot;and can be hidden as one.&quot;);</code></pre>
+<pre data-l="py" aria-label="Python"><code>row = page.row()
+row.button(&quot;1 share&quot;).flex = 1
+row.button(&quot;2 shares&quot;, variant=zrnui.TONAL).flex = 2
+page.space(40)
+col = page.column()
+col.text(&quot;A column keeps things together&quot;)
+col.caption(&quot;and can be hidden as one.&quot;)</code></pre>
+</div>
+<h2 id="icons">Icons</h2><p>Twenty line icons, drawn as strokes, named in <code>libzrnui/src/icons.c</code>. An unknown name draws nothing. Metro draws no icons at all: its rows are words only, as the renders show. There is no call in this commit to supply your own picture on a row.</p><p><code>zui_set_icon</code></p>
+<div class="shots"><figure><div class="tall" tabindex="0"><img src="img/icons-cool-dark.webp" alt="icons rendered in zrnCoolStyle, dark" loading="lazy"></div><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><div class="tall" tabindex="0"><img src="img/icons-cool-light.webp" alt="icons rendered in zrnCoolStyle, light" loading="lazy"></div><figcaption>zrnCoolStyle, light</figcaption></figure><figure><div class="tall" tabindex="0"><img src="img/icons-metro.webp" alt="icons rendered in Metro" loading="lazy"></div><figcaption>Metro</figcaption></figure></div>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>const char *names[] = { &quot;wifi&quot;, &quot;bluetooth&quot;, &quot;bell&quot;, &quot;moon&quot;, &quot;sun&quot;, &quot;lock&quot;, &quot;volume&quot;, &quot;battery&quot;, &quot;info&quot;, &quot;search&quot;, &quot;plus&quot;, &quot;check&quot;, &quot;close&quot;, &quot;more&quot;, &quot;back&quot;, &quot;chevron&quot;, &quot;music&quot;, &quot;person&quot;, &quot;gear&quot;, &quot;phone&quot; };
+zui_node *card = zui_card(page);
+for (size_t i = 0; i &lt; sizeof(names) / sizeof(*names); i++)
+	zui_set_icon(zui_item(card, names[i], NULL, NULL, NULL), names[i]);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto card = page.card();
+for (const char *name : { &quot;wifi&quot;, &quot;bluetooth&quot;, &quot;bell&quot;, &quot;moon&quot;, &quot;sun&quot;, &quot;lock&quot;, &quot;volume&quot;, &quot;battery&quot;, &quot;info&quot;, &quot;search&quot;, &quot;plus&quot;, &quot;check&quot;, &quot;close&quot;, &quot;more&quot;, &quot;back&quot;, &quot;chevron&quot;, &quot;music&quot;, &quot;person&quot;, &quot;gear&quot;, &quot;phone&quot; })
+	card.item(name).set_icon(name);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let card = page.card();
+for name in [&quot;wifi&quot;, &quot;bluetooth&quot;, &quot;bell&quot;, &quot;moon&quot;, &quot;sun&quot;, &quot;lock&quot;, &quot;volume&quot;, &quot;battery&quot;, &quot;info&quot;, &quot;search&quot;, &quot;plus&quot;, &quot;check&quot;, &quot;close&quot;, &quot;more&quot;, &quot;back&quot;, &quot;chevron&quot;, &quot;music&quot;, &quot;person&quot;, &quot;gear&quot;, &quot;phone&quot;] {
+    card.item(name, None).set_icon(name);
+}</code></pre>
+<pre data-l="py" aria-label="Python"><code>card = page.card()
+for name in [&quot;wifi&quot;, &quot;bluetooth&quot;, &quot;bell&quot;, &quot;moon&quot;, &quot;sun&quot;, &quot;lock&quot;, &quot;volume&quot;, &quot;battery&quot;, &quot;info&quot;, &quot;search&quot;, &quot;plus&quot;, &quot;check&quot;, &quot;close&quot;, &quot;more&quot;, &quot;back&quot;, &quot;chevron&quot;, &quot;music&quot;, &quot;person&quot;, &quot;gear&quot;, &quot;phone&quot;]:
+    card.item(name, icon=name)</code></pre>
+</div>
+<h2 id="busy">Busy</h2>
+<p><code>zui_busy(app, true)</code>, or <code>app.busy(True)</code> in Python, shows that something is loading: a sweep under the top bar in zrnCoolStyle, dots across the top in Metro. These pictures come from a running app in a virtual compositor, one instant of the movement. <a href="/animations#small">See it move</a>.</p>
+<div class="shots"><figure><img src="img/busy-cool-dark.webp" alt="busy rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/busy-cool-light.webp" alt="busy rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/busy-metro.webp" alt="busy rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<h2 id="toast">Toast</h2>
+<p><code>zui_toast(app, "Saved")</code>, or <code>app.toast("Saved")</code> in the other languages, shows a short message for 2.6 seconds: a pill at the bottom in zrnCoolStyle, an accent bar from the top in Metro.</p>
+<div class="shots"><figure><img src="img/toast-cool-dark.webp" alt="toast rendered in zrnCoolStyle, dark" loading="lazy"><figcaption>zrnCoolStyle, dark</figcaption></figure><figure><img src="img/toast-cool-light.webp" alt="toast rendered in zrnCoolStyle, light" loading="lazy"><figcaption>zrnCoolStyle, light</figcaption></figure><figure><img src="img/toast-metro.webp" alt="toast rendered in Metro" loading="lazy"><figcaption>Metro</figcaption></figure></div>
+<h2 id="changing">Changing things after they are made</h2>
+<p>The tree stays. Keep the node and change it: the app redraws only when something changed.</p>
+<div class="table-wrap"><table>
+<tr><th>C</th><th>C++, Rust</th><th>Python</th><th>Does</th></tr>
+<tr><td><code>zui_set_text</code>, <code>zui_get_text</code></td><td><code>set_text</code>, C++ <code>text_value</code>, Rust <code>get_text</code></td><td><code>set_text()</code>, <code>.text_value</code></td><td>Label, title or field text</td></tr>
+<tr><td><code>zui_set_detail</code></td><td><code>set_detail</code></td><td><code>.detail=</code></td><td>An item's value on the right; a switch's second line</td></tr>
+<tr><td><code>zui_set_subtitle</code></td><td><code>set_subtitle</code></td><td><code>.subtitle=</code></td><td>The line under a title</td></tr>
+<tr><td><code>zui_set_value</code>, <code>zui_get_value</code></td><td><code>set_value</code>, <code>value</code></td><td><code>.value</code></td><td>Slider or progress, 0 to 1</td></tr>
+<tr><td><code>zui_set_on</code>, <code>zui_get_on</code></td><td><code>set_on</code>, <code>is_on</code></td><td><code>.on</code></td><td>A switch</td></tr>
+<tr><td><code>zui_set_enabled</code></td><td><code>set_enabled</code></td><td><code>.enabled=</code></td><td>40 % opacity, no touch</td></tr>
+<tr><td><code>zui_set_visible</code></td><td><code>set_visible</code></td><td><code>.visible=</code></td><td>Hidden nodes take no room</td></tr>
+<tr><td><code>zui_clear</code>, <code>zui_destroy</code></td><td><code>clear</code>, C++ <code>destroy</code></td><td><code>clear()</code>, <code>destroy()</code></td><td>Remove what is in it, or it. Do not use old handles after</td></tr>
+</table></div>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

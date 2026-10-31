@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ways to make an app: ztOS SDK</title>
+<meta name="description" content="Every way to make a ztOS app: C, C++, Rust, Python with libzrnui, the zrn commands, coding agents, and the older Python and Qt SDK.">
+<link rel="canonical" href="https://sdk.ztos.online/apps">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Ways to make an app: ztOS SDK">
+<meta property="og:description" content="Every way to make a ztOS app: C, C++, Rust, Python with libzrnui, the zrn commands, coding agents, and the older Python and Qt SDK.">
+<meta property="og:url" content="https://sdk.ztos.online/apps">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps" aria-current="page">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Ways to make an app</h1>
+<p class="lead"><b>Use libzrnui</b>, in whichever of its four languages you like. The older Python and Qt SDK is what the current phone image can already run, so it stays documented, but new work belongs on libzrnui.</p>
+<div class="table-wrap"><table>
+<tr><th>Way</th><th>Status</th><th>Draws with</th><th>Ships as</th></tr>
+<tr><td>C, <code>zrnui.h</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
+<tr><td>C++, <code>zrnui.hpp</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
+<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
+<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
+<tr><td>Older Python SDK, <code>ztos</code></td><td>Older. Runs on the phone</td><td>Qt, with a GPU layer for motion</td><td>An aarch64 ELF launcher plus a zip</td></tr>
+<tr><td>ZrnMetroCore, <code>ztmetro/core</code></td><td>The ztOS apps themselves. Not an SDK</td><td>Cairo and Pango, GPU quads</td><td>Part of the system</td></tr>
+</table></div>
+<h2 id="same">One library, four languages</h2>
+<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so all four produce the same pixels.</p>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>#include &lt;zrnui.h&gt;
+
+static zui_node *status;
+
+static void tapped(zui_node *button, void *data) {
+	zui_set_text(status, &quot;Tapped&quot;);
+	zui_toast(zui_node_app(button), &quot;Hello from Notes&quot;);
+}
+
+int main(void) {
+	zui_app *app = zui_app_new(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+	zui_node *page = zui_page(app, &quot;Notes&quot;);
+	zui_node *card = zui_section(page, &quot;Status&quot;);
+	status = zui_heading(card, &quot;Not tapped yet&quot;);
+	zui_button(page, &quot;Tap me&quot;, tapped, NULL);
+	return zui_run(app, page);
+}</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>#include &lt;zrnui.hpp&gt;
+
+int main() {
+	zrn::ui::App app(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+	auto page = app.page(&quot;Notes&quot;);
+	auto status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;);
+	page.button(&quot;Tap me&quot;, [&amp;]() {
+		status.set_text(&quot;Tapped&quot;);
+		app.toast(&quot;Hello from Notes&quot;);
+	});
+	return app.run(page);
+}</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>fn main() {
+    let app = zrnui::App::new(&quot;io.github.you.notes&quot;, &quot;Notes&quot;);
+    let page = app.page(&quot;Notes&quot;);
+    let status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;);
+    let app_ref = &amp;app;
+    page.button(&quot;Tap me&quot;).on_click(move || {
+        status.set_text(&quot;Tapped&quot;);
+        app_ref.toast(&quot;Hello from Notes&quot;);
+    });
+    std::process::exit(app.run(page));
+}</code></pre>
+<pre data-l="py" aria-label="Python"><code>import zrnui
+
+app = zrnui.App(&quot;io.github.you.notes&quot;, &quot;Notes&quot;)
+page = app.page(&quot;Notes&quot;)
+status = page.section(&quot;Status&quot;).heading(&quot;Not tapped yet&quot;)
+
+
+def tapped():
+    status.set_text(&quot;Tapped&quot;)
+    app.toast(&quot;Hello from Notes&quot;)
+
+
+page.button(&quot;Tap me&quot;, tapped)
+app.run(page)</code></pre>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Language</th><th>Memory and callbacks</th><th>Differences to know</th></tr>
+<tr><td>C</td><td>One callback shape: <code>void cb(zui_node *node, void *data)</code>. <code>zui_event(node)</code> says why it ran. <code>zui_set_handler</code> takes a <code>free_data</code></td><td>Names start <code>zui_</code></td></tr>
+<tr><td>C++</td><td>Header only, namespace <code>zrn::ui</code>. <code>App</code> frees everything. <code>Node</code> is a handle you can copy</td><td><code>toggle</code>, not <code>switch</code>. No <code>watch_fd</code>: use <code>zui_watch_fd(app.get(), ...)</code></td></tr>
+<tr><td>Rust</td><td>Every <code>Node&lt;'a&gt;</code> is tied to its <code>App</code> by lifetime. Closures are boxed and dropped with the node</td><td>Handlers: <code>on_click</code>, <code>on_change</code>, <code>on_slide</code>, <code>on_edit</code>, <code>on_event</code>. Other threads use <code>app.poster()</code>. No <code>watch_fd</code> wrapper</td></tr>
+<tr><td>Python</td><td><code>ctypes</code>, with callbacks kept until the node is freed. An exception in a callback prints and does not cross into C</td><td>Keyword handlers and properties: <code>.detail=</code>, <code>.value=</code>, <code>.on=</code>, <code>.icon=</code></td></tr>
+</table></div>
+<h2 id="pages">Pages and moving between them</h2>
+<p>An app is a set of pages. Back on the first page closes the app. The hardware Back, Escape, the round back button and, in Metro, a tap on the title all go back.</p>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void open_wifi(zui_node *row, void *wifi_page) { zui_push(wifi_page); }
+
+zui_node *wifi = zui_page(app, &quot;Wi-Fi&quot;);
+zui_node *page = zui_page(app, &quot;Settings&quot;);
+zui_item(zui_card(page), &quot;Wi-Fi&quot;, NULL, open_wifi, wifi);
+return zui_run(app, page);</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>auto wifi = app.page(&quot;Wi-Fi&quot;);
+auto page = app.page(&quot;Settings&quot;);
+page.card().item(&quot;Wi-Fi&quot;, &quot;&quot;, [&amp;] { wifi.push(); });
+return app.run(page);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let wifi = app.page(&quot;Wi-Fi&quot;);
+let page = app.page(&quot;Settings&quot;);
+page.card().item(&quot;Wi-Fi&quot;, None).on_click(move || wifi.push());
+std::process::exit(app.run(page));</code></pre>
+<pre data-l="py" aria-label="Python"><code>wifi = app.page(&quot;Wi-Fi&quot;)
+page = app.page(&quot;Settings&quot;)
+page.card().item(&quot;Wi-Fi&quot;, on_click=wifi.push)
+app.run(page)</code></pre>
+</div>
+<h2 id="loop">The main loop</h2>
+<p>All calls come from one thread, the one that called <code>run</code>. <code>post</code> is the only way in from another. There is one app per process.</p>
+<div class="langs" data-langs><div role="tablist" aria-label="Language">
+<button type="button" role="tab" data-l="c" aria-selected="false">C</button>
+<button type="button" role="tab" data-l="cpp" aria-selected="false">C++</button>
+<button type="button" role="tab" data-l="rs" aria-selected="false">Rust</button>
+<button type="button" role="tab" data-l="py" aria-selected="false">Python</button>
+</div>
+<pre data-l="c" aria-label="C"><code>static void tick(void *data) { zui_toast(data, &quot;A second passed&quot;); }
+static void done(void *data) { zui_busy(data, false); zui_toast(data, &quot;Done&quot;); }
+
+int id = zui_timer(app, 1000, true, tick, app);   /* every second */
+zui_timer_cancel(app, id);
+zui_busy(app, true);
+zui_post(app, done, app);                         /* from any thread */
+zui_watch_fd(app, fd, ready, NULL);               /* ready(fd, data) when readable */
+zui_haptic(&quot;tap&quot;);                                /* tick, tap, click, heavy */</code></pre>
+<pre data-l="cpp" aria-label="C++"><code>int id = app.timer(1000, true, [&amp;] { app.toast(&quot;A second passed&quot;); });
+app.cancel_timer(id);
+app.busy(true);
+app.post([&amp;] { app.busy(false); app.toast(&quot;Done&quot;); });   // from any thread
+zui_watch_fd(app.get(), fd, ready, nullptr);             // C API
+zui_haptic(&quot;tap&quot;);</code></pre>
+<pre data-l="rs" aria-label="Rust"><code>let id = app.timer(1000, true, move || println!(&quot;a second passed&quot;));
+app.cancel_timer(id);
+app.busy(true);
+let poster = app.poster();                 // Send + Clone, for other threads
+std::thread::spawn(move || { poster.post(|| println!(&quot;on the UI thread&quot;)); });</code></pre>
+<pre data-l="py" aria-label="Python"><code>tid = app.timer(1000, lambda: app.toast(&quot;A second passed&quot;), repeat=True)
+app.cancel(tid)
+app.busy(True)
+app.post(lambda: app.busy(False))          # from any thread
+app.watch(fd, lambda fd: read_it(fd))      # fn(fd) when readable</code></pre>
+</div>
+<h2 id="zrn">The zrn commands</h2>
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>zrn new NAME --lang c|cpp|python|rust [--id ID] [--dir D]</code></td><td>A project from a template. The default id is <code>io.github.$USER.name</code></td></tr>
+<tr><td><code>zrn build [--arch A]</code></td><td>C and C++ against the system's or the SDK's libzrnui. Rust with cargo. Python is syntax-checked</td></tr>
+<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style cool|metro] [--theme dark|light] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
+<tr><td><code>zrn run [--headless] [--script S] [--style] [--theme] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
+<tr><td><code>zrn pack [--arch] [--out D] [--key K] [--no-sign] [--bundle-zrnui]</code></td><td>Makes <code>dist/&lt;id&gt;-&lt;version&gt;-&lt;arch&gt;.zexec</code> and <code>.minisig</code></td></tr>
+<tr><td><code>zrn verify FILE [--sig S] [--key K]</code></td><td>Exit 0 good, 1 broken, 2 not trusted</td></tr>
+<tr><td><code>zrn install FILE [--key K]</code>, <code>zrn uninstall ID</code></td><td>For this user, on this computer</td></tr>
+<tr><td><code>zrn info FILE</code></td><td>The manifest and the files inside</td></tr>
+<tr><td><code>zrn exec FILE</code></td><td>What <code>zrn-exec</code> does: verify, unpack once, run</td></tr>
+<tr><td><code>zrn keygen [--name N] [--output O] [--force] [--no-trust]</code></td><td>A signing key. <code>zrn pack</code> makes one if you have none</td></tr>
+<tr><td><code>zrn submit [--repo R] [--commit C] [--contact C] [--notes N] [--send]</code></td><td>Shows the store entry for HEAD. Only <code>--send</code> sends it</td></tr>
+<tr><td><code>zrn doctor</code></td><td>The toolchain, and how to fix what is missing</td></tr>
+<tr><td><code>zrn init-agents [--agent a,b] [--all] [--list] [--force]</code></td><td>Instruction files and the <code>zrnui</code> skill for coding agents</td></tr>
+</table></div>
+<p>Every command takes <code>--json</code>, which prints one object on stdout. Errors look like <code>{"ok": false, "error": {"code", "message", "hint"}}</code>. Exit 3 is a usage error. <code>-C DIR</code> runs in another project folder.</p>
+<h2 id="agents">With a coding agent</h2>
+<pre><code>zrn init-agents --list
+claude       CLAUDE.md                            .claude/skills/zrnui
+codex        AGENTS.md                            .agents/skills/zrnui
+gemini       GEMINI.md                            .gemini/skills/zrnui
+cursor       .cursor/rules/zrnui.mdc              .cursor/skills/zrnui
+copilot      .github/copilot-instructions.md      .github/skills/zrnui
+opencode     AGENTS.md                            .opencode/skills/zrnui
+antigravity  .agent/rules/zrnui.md                .agent/skills/zrnui
+windsurf     .windsurf/rules/zrnui.md             .windsurf/skills/zrnui</code></pre>
+<p>It only writes into an app's own folder, one with <code>zrnapp.toml</code>. An agent can check its own work with <code>zrn render</code> and read the picture. The paths for Cursor, Windsurf and Gemini are the least certain, as <code>DESIGN.md</code> says.</p>
+<h2 id="old">The older Python SDK <span class="tag dashed">older</span></h2>
+<p>In the ztOS repository at <code>sdk/</code>. Apps are Python with Qt (PySide6), in the Metro look only. A built app is a small aarch64 ELF launcher with a zip behind it. No screenshots here: nothing from this SDK was rendered for this site.</p>
+<pre><code>ztos-sdk new "Notes"     <span class="c"># a new app in ./notes</span>
+ztos-sdk run             <span class="c"># a 360x640 window; Escape is back</span>
+ztos-sdk designer        <span class="c"># draw pages in Qt Designer</span>
+ztos-sdk deploy          <span class="c"># build, install on the phone over SSH, open it</span>
+ztos-sdk logs -f
+ztos-sdk doctor          <span class="c"># also: build, install, launch, uninstall, list</span></code></pre>
+<pre><code>import ztos
+
+app = ztos.App()
+
+class Home(ztos.Page):
+    def __init__(self):
+        super().__init__("notes")
+        self.entry("new note", "start writing", lambda: app.push(Editor()))
+        self.toggle("Sync", on=True, on_change=self.sync)
+
+    def sync(self, on):
+        ztos.notify("Notes", "sync on" if on else "sync off")
+
+app.run(Home())</code></pre>
+<p>It has things libzrnui lacks at this commit: <code>Pivot</code>, <code>RoundButton</code>, <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
+<h2 id="core">ZrnMetroCore <span class="tag dashed">not an SDK</span></h2>
+<p>The C toolkit behind ztOS's own apps (<code>ztmetro/core</code>). It builds inside the ztOS tree and has no packaging or stable interface for outside apps. It appears here because its <a href="/animations">animations</a> are the reference for Metro's motion. <code>DESIGN.md</code> plans to move those apps to libzrnui one at a time.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>

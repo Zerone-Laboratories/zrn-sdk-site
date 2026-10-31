@@ -1,0 +1,41 @@
+libzrnui source: 8f6fb14
+text       cool-dark  cpp=same rs=same py=same
+text       cool-light cpp=same rs=same py=same
+text       metro      cpp=same rs=same py=same
+button     cool-dark  cpp=same rs=same py=same
+button     cool-light cpp=same rs=same py=same
+button     metro      cpp=same rs=same py=same
+item       cool-dark  cpp=same rs=same py=same
+item       cool-light cpp=same rs=same py=same
+item       metro      cpp=same rs=same py=same
+switch     cool-dark  cpp=same rs=same py=same
+switch     cool-light cpp=same rs=same py=same
+switch     metro      cpp=same rs=same py=same
+slider     cool-dark  cpp=same rs=same py=same
+slider     cool-light cpp=same rs=same py=same
+slider     metro      cpp=same rs=same py=same
+progress   cool-dark  cpp=DIFFERENT rs=DIFFERENT py=DIFFERENT
+progress   cool-light cpp=DIFFERENT rs=DIFFERENT py=DIFFERENT
+progress   metro      cpp=DIFFERENT rs=DIFFERENT py=DIFFERENT
+field      cool-dark  cpp=same rs=same py=same
+field      cool-light cpp=same rs=same py=same
+field      metro      cpp=same rs=same py=same
+section    cool-dark  cpp=same rs=same py=same
+section    cool-light cpp=same rs=same py=same
+section    metro      cpp=same rs=same py=same
+layout     cool-dark  cpp=same rs=same py=same
+layout     cool-light cpp=same rs=same py=same
+layout     metro      cpp=same rs=same py=same
+icons      cool-dark  cpp=same rs=same py=same
+icons      cool-light cpp=same rs=same py=same
+icons      metro      cpp=same rs=same py=same
+unexpected differences: 0
+(progress holds an indeterminate bar, so its frames may differ by the instant drawn)
+live toast  cool-dark  captured
+live busy   cool-dark  captured
+live toast  cool-light captured
+live busy   cool-light captured
+live toast  metro      captured
+live busy   metro      captured
+frames cool   6 of 6, at (20, 60, 110, 170, 250, 380) ms
+frames metro  8 of 8, at (40, 120, 200, 300, 380, 460, 560, 720) ms

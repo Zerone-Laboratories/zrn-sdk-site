@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sdk.ztos.online/sitemap.xml

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Troubleshooting: ztOS SDK</title>
+<meta name="description" content="Real zrn errors and what to do about them.">
+<link rel="canonical" href="https://sdk.ztos.online/troubleshooting">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Troubleshooting: ztOS SDK">
+<meta property="og:description" content="Real zrn errors and what to do about them.">
+<meta property="og:url" content="https://sdk.ztos.online/troubleshooting">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting" aria-current="page">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout, themes, styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting" aria-current="page">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Troubleshooting</h1>
+<p class="lead"><b>Start with <code>zrn doctor</code>.</b> Every <code>zrn</code> error names the file or value and a fix. The errors quoted here were produced for real.</p>
+<h2 id="id">"id ... is not valid"</h2>
+<pre><code>zrn: error: .../zrnapp.toml: id 'badid' is not valid
+zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-name for Zerone Laboratories' apps</code></pre>
+<p>Use something like <code>io.github.you.notes</code>. Do not use <code>zrn-</code>, which is reserved for Zerone Laboratories.</p>
+<h2 id="page">"the app did not draw"</h2>
+<pre><code>zrn: error: the app did not draw .../x.png (exit 0)
+zrnui: no page "nope" (the app has 1 pages: 0="Notes")
+zrn: fix: the app must call zui_run()/app.run() with its first page; offscreen drawing needs Mesa's EGL (surfaceless) or a /dev/dri render node</code></pre>
+<p><b>Read the middle line.</b> It lists the pages that exist. The "fix" line is generic, and here the cause is the wrong <code>--page</code>. Otherwise check that your program reaches <code>run</code>, and that <code>zrn doctor</code> shows "offscreen GPU".</p>
+<h2 id="git">"not in a git repository"</h2>
+<pre><code>zrn: error: .../notes is not in a git repository
+zrn: fix: the store builds from a public git repository: push the app to one first</code></pre>
+<p><code>zrn submit</code> needs a repository, a clean HEAD and a pushed commit.</p>
+<h2 id="verify">zrn verify exits 2</h2>
+<p>The package is sound but no key you trust signed it. Trust the signer in <code>~/.config/zrn/trusted-keys</code>, or pass <code>--key FILE</code>. Exit 1 means broken: rebuild it. The same check stops <code>zrn install</code> and <code>zrn-exec</code>.</p>
+<h2 id="rust">A Rust project will not build elsewhere</h2>
+<p><code>zrn new --lang rust</code> writes an absolute path to your SDK copy in <code>Cargo.toml</code>. <b>If you move the SDK or share the project, change that path.</b> How the store's CI handles it is decided by its build tooling, so test a clean checkout.</p>
+<h2 id="render">The render looks different from the window</h2>
+<ul>
+<li><code>ZUI_STYLE</code>, <code>ZUI_THEME</code>, <code>ZUI_ACCENT</code> and your <code>~/.config/ztmetro/config</code> all override your code. <code>--style</code> and <code>--theme</code> override those for a run.</li>
+<li>A moving bar is drawn at whichever instant the render happens, so two renders of it differ.</li>
+<li>A page rendered by number that is not the first page you run gets a back button.</li>
+</ul>
+<h2 id="icon">My icon does not appear</h2>
+<p>Metro draws no icons on rows. In zrnCoolStyle, check the name against the <a href="/elements#icons">twenty that exist</a>: an unknown name draws nothing.</p>
+<h2 id="slow">A callback did nothing, or the app froze</h2>
+<ul>
+<li>Everything runs on one thread. Do long work on another and come back through <code>post</code>.</li>
+<li>Python: an exception in a callback prints a traceback and goes no further. Look at the terminal or <code>~/.local/state/zrn/&lt;id&gt;.log</code>.</li>
+<li>Rust: a closure that outlives its <code>App</code> will not compile, by design.</li>
+</ul>
+<h2 id="old">The older SDK</h2>
+<p><code>ztos-sdk doctor --fix</code> installs what the phone needs for that SDK, over SSH to <code>alarm@172.16.42.1</code>. A package with compiled code cannot be bundled there: install it on the phone with pacman.</p>
+
+<p class="foot">Checked against zrn-sdk commit <code>8f6fb14</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+<script src="/assets/site.js"></script>
+<script src="/assets/motion.js"></script>
+</body>
+</html>
