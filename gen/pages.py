@@ -280,8 +280,6 @@ PAGES = {
 "index": ("ztOS SDK wiki", "How to make apps for ztOS: C, C++, Rust and Python, every UI element with real renders, every animation running live, and how to publish.", """
 <h1>Make apps for ztOS</h1>
 <p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. They ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
-<div class="gap"><b>Read this first: the SDK is young</b>
-<p>At commit <code>""" + COMMIT + """</code> libzrnui runs on a laptop in a virtual compositor. <b>It has not run on the phone</b>, the store app on the phone cannot install these packages yet, and permissions are declared but not enforced. <a href="/status">Status and gaps</a> has the whole list.</p></div>
 <pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
 cd zrn-sdk && export PATH="$PWD/tools:$PATH"
 zrn doctor
