@@ -65,7 +65,7 @@ def main():
     (OUT / "robots.txt").write_text("User-agent: *\nAllow: /\nSitemap: https://sdk.ztos.online/sitemap.xml\n")
     bad = []
     for f in OUT.glob("*.html"):
-        if "—" in f.read_text():
+        if "\u2014" in f.read_text():
             bad.append(f.name)
     if bad:
         sys.exit("em dash in " + ", ".join(bad))
