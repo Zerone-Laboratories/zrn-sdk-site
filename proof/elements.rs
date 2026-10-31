@@ -91,9 +91,9 @@ fn main() {
     let p_slider = app.page("Sliders"); el_slider(&app, p_slider);
     let p_progress = app.page("Progress"); el_progress(&app, p_progress);
     let p_field = app.page("Text fields"); el_field(&app, p_field);
-    let p_section = app.page("Sections and cards"); el_section(&app, p_section);
-    let p_layout = app.page("Rows, columns, space"); el_layout(&app, p_layout);
-    let p_round = app.page("Round buttons"); el_round(&app, p_round);
+    let p_section = app.page("Sections"); el_section(&app, p_section);
+    let p_layout = app.page("Rows"); el_layout(&app, p_layout);
+    let p_round = app.page("Round"); el_round(&app, p_round);
     let p_icons = app.page("Icons"); el_icons(&app, p_icons);
     std::process::exit(app.run(p_text));
 }

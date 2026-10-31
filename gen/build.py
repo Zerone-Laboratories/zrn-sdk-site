@@ -6,6 +6,10 @@ import elements as E, pages as P
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public"
+MDL2 = [("send", 0xE724), ("chevron", 0xE76C), ("back", 0xE72B), ("check", 0xE73E), ("plus", 0xE710), ("close", 0xE711),
+        ("more", 0xE712), ("search", 0xE721), ("wifi", 0xE701), ("bluetooth", 0xE702), ("bell", 0xEA8F), ("moon", 0xE708),
+        ("sun", 0xE706), ("lock", 0xE72E), ("volume", 0xE767), ("battery", 0xE83F), ("info", 0xE946), ("music", 0xE8D6),
+        ("person", 0xE77B), ("gear", 0xE713), ("phone", 0xE717)]
 LANGNAME = {"c": "C", "cpp": "C++", "rs": "Rust", "py": "Python"}
 NAV = [("index", "Overview"), ("start", "Getting started"), ("apps", "Ways to make an app"),
        ("project", "Project and permissions"), ("elements", "UI elements"), ("layout", "Layout and styles"),
@@ -42,6 +46,9 @@ def elements_html():
         if "rs" not in e:
             out.append('<p class="only"><b>C and C++ only.</b> The Rust and Python bindings have no call for this at this commit.</p>')
         out.append(tabs(codes))
+        if e["id"] == "icons":
+            rows = "".join("<tr><td><code>%s</code></td><td><code>U+%04X</code></td></tr>" % (n, c) for n, c in MDL2)
+            out.append('<div class="table-wrap"><table><tr><th>Name</th><th>Segoe MDL2 Assets code point</th></tr>%s</table></div><p>From <code>libzrnui/src/icons.c</code>.</p>' % rows)
     return "\n".join(out)
 
 

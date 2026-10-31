@@ -366,7 +366,7 @@ zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; qu
 <tr><td>Python</td><td><code>ctypes</code>, with callbacks kept until the node is freed. An exception in a callback prints and does not cross into C</td><td>Keyword handlers and properties: <code>.detail=</code>, <code>.value=</code>, <code>.on=</code>, <code>.icon=</code></td></tr>
 </table></div>
 <h2 id="pages">Pages and moving between them</h2>
-<p>An app is a set of pages. Back on the first page closes the app. The hardware Back, Escape, the round back button and, in Metro, a tap on the title all go back.</p>
+<p>An app is a set of pages. Back on the first page closes the app. The hardware Back, Escape and a tap on the title all go back.</p>
 {{TAB:nav}}
 <h2 id="loop">The main loop</h2>
 <p>All calls come from one thread, the one that called <code>run</code>. <code>post</code> is the only way in from another. There is one app per process.</p>

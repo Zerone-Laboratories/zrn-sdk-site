@@ -142,13 +142,13 @@ int main() {
 	auto p_slider = app.page("Sliders"); el_slider(app, p_slider);
 	auto p_progress = app.page("Progress"); el_progress(app, p_progress);
 	auto p_field = app.page("Text fields"); el_field(app, p_field);
-	auto p_section = app.page("Sections and cards"); el_section(app, p_section);
-	auto p_layout = app.page("Rows, columns, space"); el_layout(app, p_layout);
-	auto p_round = app.page("Round buttons"); el_round(app, p_round);
+	auto p_section = app.page("Sections"); el_section(app, p_section);
+	auto p_layout = app.page("Rows"); el_layout(app, p_layout);
+	auto p_round = app.page("Round"); el_round(app, p_round);
 	auto p_picture = app.page("Pictures"); el_picture(app, p_picture);
 	auto p_list = app.page("Long lists"); el_list(app, p_list);
 	auto p_pivot = app.page("Pivots"); el_pivot(app, p_pivot);
-	auto p_bubble = app.page("Bubbles and compact titles"); el_bubble(app, p_bubble);
+	auto p_bubble = app.page("Ada Lane"); el_bubble(app, p_bubble);
 	auto p_footer = app.page("Footer"); el_footer(app, p_footer);
 	auto p_icons = app.page("Icons"); el_icons(app, p_icons);
 	return app.run(p_text);

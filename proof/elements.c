@@ -190,13 +190,13 @@ int main(void) {
 	zui_node *p_slider = zui_page(app, "Sliders"); el_slider(app, p_slider);
 	zui_node *p_progress = zui_page(app, "Progress"); el_progress(app, p_progress);
 	zui_node *p_field = zui_page(app, "Text fields"); el_field(app, p_field);
-	zui_node *p_section = zui_page(app, "Sections and cards"); el_section(app, p_section);
-	zui_node *p_layout = zui_page(app, "Rows, columns, space"); el_layout(app, p_layout);
-	zui_node *p_round = zui_page(app, "Round buttons"); el_round(app, p_round);
+	zui_node *p_section = zui_page(app, "Sections"); el_section(app, p_section);
+	zui_node *p_layout = zui_page(app, "Rows"); el_layout(app, p_layout);
+	zui_node *p_round = zui_page(app, "Round"); el_round(app, p_round);
 	zui_node *p_picture = zui_page(app, "Pictures"); el_picture(app, p_picture);
 	zui_node *p_list = zui_page(app, "Long lists"); el_list(app, p_list);
 	zui_node *p_pivot = zui_page(app, "Pivots"); el_pivot(app, p_pivot);
-	zui_node *p_bubble = zui_page(app, "Bubbles and compact titles"); el_bubble(app, p_bubble);
+	zui_node *p_bubble = zui_page(app, "Ada Lane"); el_bubble(app, p_bubble);
 	zui_node *p_footer = zui_page(app, "Footer"); el_footer(app, p_footer);
 	zui_node *p_icons = zui_page(app, "Icons"); el_icons(app, p_icons);
 	return zui_run(app, p_text);
