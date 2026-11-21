@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coming next: ztOS SDK</title>
+<meta name="description" content="Work on zrnSDK that is not committed yet: live theme following, Holding and flyouts, new transitions, keyboard inset, cached rows, colour emoji and more.">
+<link rel="canonical" href="https://sdk.ztos.online/next">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Coming next: ztOS SDK">
+<meta property="og:description" content="Work on zrnSDK that is not committed yet: live theme following, Holding and flyouts, new transitions, keyboard inset, cached rows, colour emoji and more.">
+<meta property="og:url" content="https://sdk.ztos.online/next">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next" aria-current="page">Coming next</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next" aria-current="page">Coming next</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Coming next</h1>
+<p class="lead">This work is in progress in zrn-sdk but <b>not in the pinned commit</b>. Names and behaviour may change. Nothing on this page is documented elsewhere on the site.</p>
+<div class="table-wrap"><table>
+<tr><th>What</th><th>In short</th></tr>
+<tr><td>Live theme following</td><td>Apps follow the system's Dark or Light theme and accent while they run</td></tr>
+<tr><td>Holding and flyouts</td><td>A press and hold raises Holding, and can open a flyout</td></tr>
+<tr><td>Continuum and slide-up transitions</td><td>More page transitions beside the turnstile</td></tr>
+<tr><td>Keyboard inset</td><td>Pages make room for the on-screen keyboard</td></tr>
+<tr><td>Cached rows, <code>Z_CACHE_BITMAP</code></td><td>List rows drawn once and reused while scrolling</td></tr>
+<tr><td>Colour emoji</td><td>Emoji drawn in colour</td></tr>
+<tr><td>Scroll anchoring</td><td>The view stays put when content above it changes</td></tr>
+<tr><td>Swipes</td><td>Swipe gestures on list items</td></tr>
+<tr><td>zrn-frosted-diffusion</td><td>A frosted, blurred backdrop: NONE, NORMAL, ASCENDING, DESCENDING, and a system-wide switch. <a href="#frost">Pictures below</a></td></tr>
+<tr><td><code>.zexec</code> format 2</td><td>Signed store packages for v2 apps</td></tr>
+</table></div>
+<h2 id="frost">zrn-frosted-diffusion</h2>
+<p>What lies behind an element shows through it, blurred and grainy, under a theme tint at 75 %. The element's own text and icons stay sharp on top. App bars, headers and composers are the use.</p>
+<pre><code>Zelement_set_frosted_diffusion(bar, Z_FROSTED_DIFFUSION_NORMAL, Z_RES_PHONE_CHROME_BRUSH);
+Zset_frosted_diffusion_enabled(false);   <span class="c">// the system-wide switch</span></code></pre>
+<p>A <a href="/animations#frost">clip of it over scrolling content</a> is on Animations. These pictures were drawn by zrnui's <b>GLES2 renderer</b>, offscreen through Mesa on a laptop, from the <b>uncommitted working tree</b> on top of 71a5ace. The program is <code>gen/frost.c</code>. A bar 150 px tall lies over the top of coloured rows.</p>
+<h3>Z_FROSTED_DIFFUSION_NONE</h3><p>NONE</p><div class="shots"><figure><img src="/img/frost-none-dark.webp" alt="frosted diffusion none in the dark theme" loading="lazy"><figcaption>Dark</figcaption></figure><figure><img src="/img/frost-none-light.webp" alt="frosted diffusion none in the light theme" loading="lazy"><figcaption>Light</figcaption></figure></div>
+<h3>Z_FROSTED_DIFFUSION_NORMAL</h3><p>NORMAL</p><div class="shots"><figure><img src="/img/frost-normal-dark.webp" alt="frosted diffusion normal in the dark theme" loading="lazy"><figcaption>Dark</figcaption></figure><figure><img src="/img/frost-normal-light.webp" alt="frosted diffusion normal in the light theme" loading="lazy"><figcaption>Light</figcaption></figure></div>
+<h3>Z_FROSTED_DIFFUSION_ASCENDING</h3><p>ASCENDING: full at the top, fading down</p><div class="shots"><figure><img src="/img/frost-ascending-dark.webp" alt="frosted diffusion ascending in the dark theme" loading="lazy"><figcaption>Dark</figcaption></figure><figure><img src="/img/frost-ascending-light.webp" alt="frosted diffusion ascending in the light theme" loading="lazy"><figcaption>Light</figcaption></figure></div>
+<h3>Z_FROSTED_DIFFUSION_DESCENDING</h3><p>DESCENDING: full at the bottom, fading up</p><div class="shots"><figure><img src="/img/frost-descending-dark.webp" alt="frosted diffusion descending in the dark theme" loading="lazy"><figcaption>Dark</figcaption></figure><figure><img src="/img/frost-descending-light.webp" alt="frosted diffusion descending in the light theme" loading="lazy"><figcaption>Light</figcaption></figure></div>
+<p>The software renderer does not blur: it fills the element with the tint. When the system-wide switch is off (ztOS Settings, theme, frosted diffusion, or <code>frost = 0</code> in <code>~/.config/ztmetro/config</code>), every frosted element paints only its tint, opaque, and nothing is blurred. zrnapp windows follow that switch live. At most 16 elements have the effect at a time.</p>
+
+<p class="foot">Checked against zrn-sdk commit <a href="https://github.com/Zerone-Laboratories/zrn-sdk/tree/71a5ace"><code>71a5ace</code></a> (SDK v2). Pictures and clips are drawn by zrnui's GLES2 renderer, offscreen, from code that compiled, against the zrn-sdk working tree on top of that commit (it adds the app bar measured on a Windows Phone 8.1 phone and the Segoe WP font lookup), in Segoe WP. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+</body>
+</html>

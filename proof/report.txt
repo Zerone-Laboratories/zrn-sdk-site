@@ -1,41 +1,49 @@
-libzrnui source: ea16771
-text       metro      cpp=same rs=same py=same
-text       dotmatrix  cpp=same rs=same py=same
-button     metro      cpp=same rs=same py=same
-button     dotmatrix  cpp=same rs=same py=same
-item       metro      cpp=same rs=same py=same
-item       dotmatrix  cpp=same rs=same py=same
-switch     metro      cpp=same rs=same py=same
-switch     dotmatrix  cpp=same rs=same py=same
-slider     metro      cpp=same rs=same py=same
-slider     dotmatrix  cpp=same rs=same py=same
-progress   metro      cpp=DIFFERENT rs=DIFFERENT py=DIFFERENT
-progress   dotmatrix  cpp=DIFFERENT rs=DIFFERENT py=DIFFERENT
-field      metro      cpp=same rs=same py=same
-field      dotmatrix  cpp=same rs=same py=same
-section    metro      cpp=same rs=same py=same
-section    dotmatrix  cpp=same rs=same py=same
-layout     metro      cpp=same rs=same py=same
-layout     dotmatrix  cpp=same rs=same py=same
-round      metro      cpp=same rs=same py=same
-round      dotmatrix  cpp=same rs=same py=same
-picture    metro      cpp=same
-picture    dotmatrix  cpp=same
-list       metro      cpp=same
-list       dotmatrix  cpp=same
-pivot      metro      cpp=same
-pivot      dotmatrix  cpp=same
-bubble     metro      cpp=same
-bubble     dotmatrix  cpp=same
-footer     metro      cpp=same
-footer     dotmatrix  cpp=same
-icons      metro      cpp=same rs=same py=same
-icons      dotmatrix  cpp=same rs=same py=same
-unexpected differences: 0
-(progress holds moving dots, so its frames may differ by the instant drawn)
-live toast  metro      captured
-live busy   metro      captured
-live toast  dotmatrix  captured
-live busy   dotmatrix  captured
-frames metro  8 of 8, at (40, 120, 200, 300, 380, 460, 560, 720) ms
-frames dotmatrix 8 of 8, at (40, 120, 200, 300, 380, 460, 560, 720) ms
+zrn-sdk commit: 71a5ace (WORKING TREE NOT CLEAN)
+renderer: zrnui GLES2 (Z_RENDERER_GPU) offscreen through Mesa, 360 points wide at density 3, Cobalt accent
+pictures cropped to the content plus 19 points; built with -Wall -Wextra -Werror
+fonts: regular=SegoeWP.ttf, light=SegoeWP-Light.ttf, semilight=SegoeWP-Semilight.ttf, semibold=SegoeWP-Semibold.ttf, bold=SegoeWP-Bold.ttf, symbol=seguisym.ttf
+text     dark  renderer gles2, 1080x1260
+text     light renderer gles2, 1080x1260
+button   dark  renderer gles2, 1080x1080
+button   light renderer gles2, 1080x1080
+toggles  dark  renderer gles2, 1080x1140
+toggles  light renderer gles2, 1080x1140
+switch   dark  renderer gles2, 1080x780
+switch   light renderer gles2, 1080x780
+range    dark  renderer gles2, 1080x1140
+range    light renderer gles2, 1080x1140
+input    dark  renderer gles2, 1080x1260
+input    light renderer gles2, 1080x1260
+list     dark  renderer gles2, 1080x1380
+list     light renderer gles2, 1080x1380
+combo    dark  renderer gles2, 1080x780
+combo    light renderer gles2, 1080x780
+pickers  dark  renderer gles2, 1080x900
+pickers  light renderer gles2, 1080x900
+pivot    dark  renderer gles2, 1080x900
+pivot    light renderer gles2, 1080x900
+hub      dark  renderer gles2, 1080x1260
+hub      light renderer gles2, 1080x1260
+appbar   dark  renderer gles2, 1080x900
+appbar   light renderer gles2, 1080x900
+dialog   dark  renderer gles2, 1080x900
+dialog   light renderer gles2, 1080x900
+layout   dark  renderer gles2, 1080x900
+layout   light renderer gles2, 1080x900
+clip turnstile  dark  anim turnstile dark: 220 frames, 720x1280, renderer gles2; webm 157 KB, mp4 101 KB
+clip turnstile  light anim turnstile light: 220 frames, 720x1280, renderer gles2; webm 158 KB, mp4 102 KB
+clip pivot      dark  anim pivot dark: 187 frames, 720x1280, renderer gles2; webm 155 KB, mp4 213 KB
+clip pivot      light anim pivot light: 187 frames, 720x1280, renderer gles2; webm 145 KB, mp4 197 KB
+clip tilt       dark  anim tilt dark: 170 frames, 720x1280, renderer gles2; webm 54 KB, mp4 30 KB
+clip tilt       light anim tilt light: 170 frames, 720x1280, renderer gles2; webm 54 KB, mp4 29 KB
+clip appbar     dark  anim appbar dark: 150 frames, 720x1280, renderer gles2; webm 35 KB, mp4 23 KB
+clip appbar     light anim appbar light: 150 frames, 720x1280, renderer gles2; webm 35 KB, mp4 23 KB
+clip toggle     dark  anim toggle dark: 190 frames, 720x1280, renderer gles2; webm 20 KB, mp4 17 KB
+clip toggle     light anim toggle light: 190 frames, 720x1280, renderer gles2; webm 20 KB, mp4 17 KB
+clip theme      dark  anim theme dark: 150 frames, 720x1280, renderer gles2; webm 77 KB, mp4 33 KB
+clip theme      light anim theme light: 150 frames, 720x1280, renderer gles2; webm 77 KB, mp4 33 KB
+clip hub        dark  anim hub dark: 228 frames, 720x1280, renderer gles2; webm 122 KB, mp4 92 KB
+clip hub        light anim hub light: 228 frames, 720x1280, renderer gles2; webm 118 KB, mp4 107 KB
+frost clip from /home/zerone/Documents/Projects/zrn-sdk at 71a5ace plus uncommitted changes
+clip frost      dark  anim frost dark: 300 frames, 720x1280, renderer gles2; webm 302 KB, mp4 385 KB
+clip frost      light anim frost light: 300 frames, 720x1280, renderer gles2; webm 311 KB, mp4 387 KB
