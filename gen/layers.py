@@ -11,9 +11,8 @@ personal parts are covered first (redact()). The captures themselves stay out of
 only the cut, covered layers are written to public/. The call screen is not captured (that would
 mean a real call): gen/layers.c draws it with zrnui, in the phone's red accent.
 
-Start is not one sheet: each tile is its own texture in the shell, turning about the screen's left edge
-with its own delay (by row from the bottom, small tiles early, the top-left tile last, a little
-jitter), so here each tile is cut out and floats apart on its own clock.
+In the shell each Start tile is its own texture (and in the turnstile each moves on its own clock),
+so layer 01 is built from the tiles cut out of the capture, each lying flat in its place.
 
 Writes
     public/img/shell-layers-{dark,light}.{png,webp}         the picture, 1600 x 1000
@@ -38,16 +37,16 @@ IMG, CLIPS = ROOT / "public/img", ROOT / "public/clips"
 
 # bottom first, as render_frame draws them: (key, name, the shell's own name, in the flat frame)
 LAYERS = [
-    ("start", "Start tiles", "a texture each, own clock", False),
-    ("frost", "frost strips", "frost[0..1]", False),
-    ("app", "app window", "wl_surface texture", True),
-    ("keyboard", "keyboard", "osk_layer", True),
-    ("status", "status bar", "status_layer", True),
-    ("shade", "action centre", "shade_layer", False),
-    ("nav", "nav bar", "nav_layer", True),
-    ("lock", "lock screen", "lock_layer", False),
-    ("call", "call", "ztphone, drawn, not captured", False),
-    ("volume", "volume and toasts", "volume_layer, toast_layer", True),
+    ("start", "Start", "Cairo, a GL texture\nper tile", False),
+    ("frost", "frost strips", "GLSL blur,\nhalf-size atlas", False),
+    ("app", "app window", "client wl_surface\nas a GL texture", True),
+    ("keyboard", "keyboard", "osk_layer:\nCairo to GL texture", True),
+    ("status", "status bar", "status_layer: Cairo,\nuploaded on change", True),
+    ("shade", "action centre", "shade_layer:\nCairo to GL texture", False),
+    ("nav", "nav bar", "nav_layer: Cairo,\nuploaded on change", True),
+    ("lock", "lock screen", "lock_layer:\nCairo to GL texture", False),
+    ("call", "call", "ztphone wl_surface,\nblurred backdrop", False),
+    ("volume", "volume, toasts", "volume_layer,\ntoast_layer: Cairo", True),
 ]
 PX = 4                      # capture pixels a point
 W_PT, H_PT = 360, 740       # the S9 as ztOS lays it out
@@ -246,8 +245,8 @@ def cut():
 
 # ---------------------------------------------------------------- geometry
 
-TURN, TILT = 52.0, 4.0       # degrees a pane turns about its upright axis, and leans back
-STEP_X, STEP_Z, STEP_Y = 0.36, 0.28, -0.02   # per layer, in pane heights: right, back, up
+TURN, TILT = 58.0, 3.0       # degrees a pane turns about its upright axis, and leans back
+STEP_X, STEP_Z, STEP_Y = 0.25, 0.30, -0.015   # per layer, in pane heights: right, back, up
 EYE = 7.0                    # the eye's distance, in pane heights
 
 
@@ -275,15 +274,13 @@ def pane_corners(i, t):
 
 
 def tile_amount(tm, t):
-    """How far a tile has come away from its pane, 0..1, on its own clock."""
-    u = (t - tm["d"] * 0.5) / max(0.05, 0.5 * tm["life"] + 0.4)
-    u = min(1.0, max(0.0, u))
-    return u * u * (3 - 2 * u)
+    """How far a tile has turned out of its pane: always 0. The tiles sit flat on layer 01, in
+    their places as captured (the picture shows the layers, not the turnstile)."""
+    return 0.0
 
 
 def tile_corners(rect, tm, t):
-    """A tile of Start, turned about the screen's left edge (the turnstile's axis) by its own amount:
-    the same angle sweeps a tile further right through a longer arc."""
+    """A tile of Start on layer 01: with tile_amount() at 0 it lies flat, where it was captured."""
     a = tile_amount(tm, t)
     turn = math.radians(26 * tm["turn"] * a)
     edge = -ASPECT / 2
@@ -362,8 +359,9 @@ def labels(canvas, t, s, ox, oy, pal, alpha=1.0, numbers_only=False, size=(21, 1
     big, small, num = font("SegoeWP-Semilight.ttf", size[0]), font("SegoeWP.ttf", size[1]), font("SegoeWP-Semibold.ttf", size[1])
     col = lambda c: c[:3] + (round(255 * alpha),)
     corners = [[(ox + s * x, oy + s * y) for x, y in pane_corners(i, t)] for i in range(n)]
-    top = min(c[0][1] for c in corners) - 26
-    bottom = max(c[3][1] for c in corners) + 26
+    gap = round(size[0] * 1.2)
+    top = min(c[0][1] for c in corners) - gap
+    bottom = max(c[3][1] for c in corners) + gap
     for i, (key, name, code, _) in enumerate(LAYERS):
         c = corners[i]
         below = i % 2 == 0
@@ -371,17 +369,22 @@ def labels(canvas, t, s, ox, oy, pal, alpha=1.0, numbers_only=False, size=(21, 1
         ax, ay = a[0] + (b[0] - a[0]) * 0.2, a[1] + (b[1] - a[1]) * 0.2
         ly = bottom if below else top
         d.line((ax, ay + (5 if below else -5), ax, ly + (-4 if below else 4)), fill=col(pal["line"]), width=1)
-        ty = ly if below else ly - 44
-        tw = 26 + max(d.textlength(name, font=big), d.textlength(code, font=small))
+        lh = round(size[0] * 1.15)
+        code_lines = code.split("\n")
+        sh = round(size[1] * 1.3)
+        ty = ly if below else ly - lh - sh * len(code_lines)
+        ind = round(size[1] * 1.8)
+        tw = ind + max([d.textlength(name, font=big)] + [d.textlength(c, font=small) for c in code_lines])
         tx = min(ax, canvas.width - 24 - tw)
-        d.text((tx, ty), "%02d" % (i + 1), font=num, fill=col(pal["accent"]))
-        d.text((tx + 26, ty - 5), name, font=big, fill=col(pal["fg"]))
-        d.text((tx + 26, ty + 21), code, font=small, fill=col(pal["sub"]))
+        d.text((tx, ty + round(size[0] * 0.2)), "%02d" % (i + 1), font=num, fill=col(pal["accent"]))
+        d.text((tx + ind, ty - round(size[0] * 0.2)), name, font=big, fill=col(pal["fg"]))
+        for j, c in enumerate(code_lines):
+            d.text((tx + ind, ty + lh + j * sh), c, font=small, fill=col(pal["sub"]))
 
 
 CAPTION = [
     ("Drawn on the GPU.", "render_frame draws the layers bottom to top with GLES2. App windows are the textures their buffers already are; the shell's own parts are textures repainted only when they change. An app at rest can instead go straight to a display plane (plane_pick)."),
-    ("The shell moves the apps.", "Start's turnstile, an app swinging in and out, the switcher and the turn are drawn by the shell. Each tile is its own texture and turns about the screen's left edge on its own clock; tiles further right sweep a longer arc."),
+    ("The shell moves the apps.", "Start's turnstile, an app swinging in and out, the switcher and the turn of the screen are drawn by the shell, so every app arrives and leaves the same way. In the turnstile each Start tile moves on its own clock."),
     ("A fixed order.", "The nav bar, the lock screen, a call and the volume are drawn after the apps, so nothing an app draws can cover them."),
 ]
 
@@ -406,35 +409,40 @@ def prepare(layers, rects, tile_ims, timing, pal, px, flat=None):
 
 def picture(layers, rects, tile_ims, timing, flat, theme):
     pal = palette(theme)
-    W, H = 1600, 1000
+    W, H = 2000, 1250
     canvas = Image.new("RGBA", (W, H), pal["bg"] + (255,))
     d = ImageDraw.Draw(canvas)
-    d.text((64, 44), "HOW ZTMETRO DRAWS A FRAME", font=font("SegoeWP-Semibold.ttf", 17), fill=pal["fg"])
-    d.text((61, 66), "one screen, ten layers", font=font("SegoeWP-Light.ttf", 46), fill=pal["fg"])
-    fh = 560
+    d.text((56, 40), "HOW ZTMETRO DRAWS A FRAME", font=font("SegoeWP-Semibold.ttf", 22), fill=pal["fg"])
+    d.text((53, 66), "one compositor: ztMETRO (wlroots)", font=font("SegoeWP-Light.ttf", 54), fill=pal["fg"])
+    # the base: the frame as seen, and the surface everything is drawn into
+    fh = 700
     fw = round(fh * ASPECT)
-    fx, fy = 64, 176
+    fx, fy = 56, 190
     canvas.alpha_composite(flat.resize((fw, fh), Image.LANCZOS), (fx, fy))
     d.rectangle((fx - 1, fy - 1, fx + fw, fy + fh), outline=pal["edge"][:3], width=1)
-    d.text((fx, fy + fh + 14), "the frame you see", font=font("SegoeWP-Semilight.ttf", 21), fill=pal["fg"])
-    d.text((fx, fy + fh + 40), "S9 capture: Settings, keyboard, toast", font=font("SegoeWP.ttf", 15), fill=pal["sub"])
-    s, ox, oy = fit(1.0, (fx + fw + 60, 210, 1400, 700))
+    t1, t2 = font("SegoeWP-Semilight.ttf", 30), font("SegoeWP.ttf", 19)
+    d.text((fx, fy + fh + 14), "OpenGL ES 2 surface", font=t1, fill=pal["fg"])
+    for j, line in enumerate(("EGL, wlroots GLES2 renderer, DRM", "Panfrost on the Mali-G72", "app at rest: plane_pick puts", "its dmabuf on a display plane")):
+        d.text((fx, fy + fh + 56 + j * 25), line, font=t2, fill=pal["sub"])
+    s, ox, oy = fit(1.0, (fx + fw + 40, 250, W - 200, 860))
     L = prepare(layers, rects, tile_ims, timing, pal, s * 1.05)
     draw_stack(canvas, L, 1.0, s, ox, oy, pal, [1.0] * len(LAYERS), s)
-    labels(canvas, 1.0, s, ox, oy, pal)
-    by = 812
-    d.line((fx + fw + 70, by, 1536, by), fill=pal["line"], width=1)
-    d.polygon([(1536, by - 5), (1546, by), (1536, by + 5)], fill=pal["line"])
-    sm = font("SegoeWP.ttf", 15)
-    d.text((fx + fw + 70, by + 8), "drawn first, in front", font=sm, fill=pal["sub"])
-    d.text((1546 - d.textlength("drawn last, at the back", font=sm), by + 8), "drawn last, at the back", font=sm, fill=pal["sub"])
-    hb, bf = font("SegoeWP-Semibold.ttf", 19), font("SegoeWP.ttf", 16)
+    labels(canvas, 1.0, s, ox, oy, pal, size=(25, 18))
+    by = 1030
+    x0 = fx + fw + 40
+    d.line((x0, by, W - 64, by), fill=pal["line"], width=1)
+    d.polygon([(W - 64, by - 6), (W - 52, by), (W - 64, by + 6)], fill=pal["line"])
+    sm = font("SegoeWP.ttf", 19)
+    d.text((x0, by + 10), "draw order: 01 first, in front", font=sm, fill=pal["sub"])
+    d.text((W - 52 - d.textlength("10 last, at the back", font=sm), by + 10), "10 last, at the back", font=sm, fill=pal["sub"])
+    hb, bf = font("SegoeWP-Semibold.ttf", 22), font("SegoeWP.ttf", 18)
+    cw = (W - 112 - 2 * 48) / 3
     for i, (head, body) in enumerate(CAPTION):
-        cx0 = 64 + i * 506
-        d.rectangle((cx0, 852, cx0 + 28, 855), fill=pal["accent"])
-        d.text((cx0, 866), head, font=hb, fill=pal["fg"])
-        for j, line in enumerate(wrap(d, body, bf, 470)):
-            d.text((cx0, 894 + j * 22), line, font=bf, fill=pal["sub"])
+        cx0 = 56 + i * (cw + 48)
+        d.rectangle((cx0, 1066, cx0 + 32, 1069), fill=pal["accent"])
+        d.text((cx0, 1080), head, font=hb, fill=pal["fg"])
+        for j, line in enumerate(wrap(d, body, bf, cw)):
+            d.text((cx0, 1112 + j * 25), line, font=bf, fill=pal["sub"])
     return canvas.convert("RGB")
 
 
@@ -447,7 +455,7 @@ def clip(layers, rects, tile_ims, timing, flat, theme):
     """The stack, flat with 01 in front, comes apart layer by layer and tile by tile, holds, and folds back: 6 s, 60 frames a second."""
     pal = palette(theme)
     W, H, FPS, N = 1280, 720, 60, 360
-    s1, ox1, oy1 = fit(1.0, (90, 120, 1190, 600))
+    s1, ox1, oy1 = fit(1.0, (24, 96, 1130, 630))
     s0 = 560.0
     ox0, oy0 = W / 2, H / 2
     L = prepare(layers, rects, tile_ims, timing, pal, max(s0, s1) * 1.02)
