@@ -3,7 +3,7 @@
  *
  *   layers OUT_DIR <dark|light>
  *
- * Writes OUT_DIR/<layer>-<theme>.png, each 360 x 640 points at 3 device pixels
+ * Writes OUT_DIR/<layer>-<theme>.png, each 360 x 740 points at 3 device pixels
  * a point (the S9 as ztOS lays it out), drawn by zrnui's GLES2 renderer
  * offscreen (Mesa, surfaceless EGL). Every layer is built from zrnui elements
  * at the place and size ztmetro gives it (STATUS_H 28, NAV_BAR_H 40,
@@ -23,9 +23,9 @@
 #include <zrnui/platform.h>
 #include "writepng.h"
 
-enum { W = 360, H = 640, STATUS = 28, NAV = 40, TOAST = 58 };
+enum { W = 360, H = 740, STATUS = 28, NAV = 40, TOAST = 58 };
 static bool light;
-static const uint32_t ACCENT = 0xFF0050EF;	/* Cobalt, the default accent */
+static const uint32_t ACCENT = 0xFFE51400;	/* Red, the accent the phone was captured in */
 
 static uint32_t fg(void) { return light ? 0xFF000000 : 0xFFFFFFFF; }
 static uint32_t bg(void) { return light ? 0xFFFFFFFF : 0xFF000000; }

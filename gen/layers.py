@@ -1,35 +1,44 @@
 #!/usr/bin/env python3
-"""The exploded-layers picture and clip for "How the shell draws" (public/shell.html).
+"""The exploded-layers picture, clip and scroll stack for "How the shell draws" (public/shell.html).
 
-    SDK=/path/to/zrn-sdk WORK=/path/to/scratch SEGOE_FONT_DIR=/path/to/segoe-wp python3 gen/layers.py
+    CAPTURES=/path/to/captures SDK=/path/to/zrn-sdk WORK=/path/to/scratch SEGOE_FONT_DIR=/path/to/segoe-wp \
+        python3 gen/layers.py
 
-Builds gen/layers.c against zrnui, which draws each ztMETRO layer with the GLES2
-renderer offscreen (360 x 640 points at 3 device pixels a point, demo content
-only), then lays the layers out in perspective here with Pillow and writes
+CAPTURES holds screenshots of ztMETRO taken on the Galaxy S9 with grim (1440 x 2960, 4 pixels a
+point): lock.png, start.png, shade.png, app.png (Settings), osk.png (Settings with the keyboard up)
+and toast.png (Settings with a demo toast). They are cut into the shell's layers here, and the
+personal parts are covered first (redact()). The captures themselves stay out of this repository:
+only the cut, covered layers are written to public/. The call screen is not captured (that would
+mean a real call): gen/layers.c draws it with zrnui, in the phone's red accent.
 
-    public/img/shell-layers-{dark,light}.{png,webp}    the picture, 1600 x 1000
-    public/clips/shell-layers-{dark,light}.{webm,mp4,webp}   the clip, 1280 x 720, 5 s
-    public/img/layers/<layer>-{dark,light}.webp        each layer alone, for the scroll-driven stack
+Start is not one sheet: each tile is its own texture in the shell, turning about the screen's left edge
+with its own delay (by row from the bottom, small tiles early, the top-left tile last, a little
+jitter), so here each tile is cut out and floats apart on its own clock.
 
-The order of the layers is ztmetro's render_frame (ztOSMobile, ztmetro/ztmetro.c),
-bottom first; the page says which lines. Segoe WP is read from SEGOE_FONT_DIR at
-render time and never copied here. Needs cmake, ninja, a C23 compiler, mesa
-(EGL, GLES2), libpng, ffmpeg (libvpx-vp9, libx264), numpy and Pillow.
+Writes
+    public/img/shell-layers-{dark,light}.{png,webp}         the picture, 1600 x 1000
+    public/clips/shell-layers-{dark,light}.{webm,mp4,webp}  the clip, 1280 x 720, 6 s
+    public/img/layers/*.webp, gen/layers.json                each layer and tile, for the scroll stack
+
+Layer 01 is at the front and each later layer further back, as a frame is painted: the order is
+render_frame's in ztOSMobile ztmetro/ztmetro.c, bottom first. Segoe WP is read from SEGOE_FONT_DIR
+and never copied here.
 """
-import math, os, pathlib, subprocess, sys
+import json, math, os, pathlib, random, subprocess, sys
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GEN = ROOT / "gen"
 SDK = pathlib.Path(os.environ.get("SDK", ".")).resolve()
 WORK = pathlib.Path(os.environ.get("WORK", ".")).resolve()
+CAP = pathlib.Path(os.environ.get("CAPTURES", ".")).resolve()
 SEGOE = os.environ.get("SEGOE_FONT_DIR")
 IMG, CLIPS = ROOT / "public/img", ROOT / "public/clips"
 
-# bottom first, as render_frame draws them: (file, name, the shell's own name, shown in the flat frame)
+# bottom first, as render_frame draws them: (key, name, the shell's own name, in the flat frame)
 LAYERS = [
-    ("start", "Start, app list", "tiles, items", True),
+    ("start", "Start tiles", "a texture each, own clock", False),
     ("frost", "frost strips", "frost[0..1]", False),
     ("app", "app window", "wl_surface texture", True),
     ("keyboard", "keyboard", "osk_layer", True),
@@ -37,13 +46,133 @@ LAYERS = [
     ("shade", "action centre", "shade_layer", False),
     ("nav", "nav bar", "nav_layer", True),
     ("lock", "lock screen", "lock_layer", False),
-    ("call", "call", "ztphone over the lock", False),
-    ("volume", "volume and toasts", "volume_layer, toast_layer", False),
+    ("call", "call", "ztphone, drawn, not captured", False),
+    ("volume", "volume and toasts", "volume_layer, toast_layer", True),
 ]
-PW, PH = 360, 640  # points
+PX = 4                      # capture pixels a point
+W_PT, H_PT = 360, 740       # the S9 as ztOS lays it out
+STATUS, NAV = 28, 40        # STATUS_H, NAV_BAR_H
+ASPECT = W_PT / H_PT
+
+# the turnstile's tile timing in ztmetro.c (TILE_*): ms
+TILE_LIFE_MS, TILE_ROW_MS, TILE_LEFT_MS = 186.0, 50.0, 51.0
+TILE_SMALL_EARLY_MS, TILE_LAST_LATE_MS, TILE_JITTER_MS, TILE_JITTER_SPEED = 33.0, 70.0, 6.0, 0.05
 
 
-def build():
+def font(face, size):
+    if SEGOE:
+        p = pathlib.Path(SEGOE) / face
+        if p.exists():
+            return ImageFont.truetype(str(p), size)
+    return ImageFont.truetype("DejaVuSans.ttf", size)
+
+
+# ---------------------------------------------------------------- the captures, covered
+
+def cover(im, box, fill=(0, 0, 0), text=None, size=46, face="SegoeWP.ttf", ink=(153, 153, 153)):
+    d = ImageDraw.Draw(im)
+    d.rectangle(box, fill=fill)
+    if text:
+        d.text((box[0] + 6, box[1] + 2), text, font=font(face, size), fill=ink)
+
+
+def redact(name, im):
+    """Cover what is personal: network names, the carrier, the device's name, notification text."""
+    if name in ("app", "osk", "toast"):
+        # Settings: the Wi-Fi network's name and the carrier, under "Wi-Fi" and "cellular + SIM"
+        cover(im, (50, 1378, 520, 1442), text="connected")
+        if name != "osk":
+            cover(im, (50, 1855, 620, 1918), text="4G, data off")
+        else:
+            cover(im, (50, 1855, 620, 1903))
+    if name == "shade":
+        cover(im, (40, 104, 240, 166))                      # the carrier
+        cover(im, (180, 880, 1400, 1040))                   # the notification's source (the device's name)
+        cover(im, (40, 1040, 1400, 1240))                   # its text
+        ImageDraw.Draw(im).text((210, 905), "ztOS SDK", font=font("SegoeWP-Semilight.ttf", 64), fill=(255, 255, 255))
+        ImageDraw.Draw(im).text((56, 1072), "Build finished", font=font("SegoeWP-Semibold.ttf", 46), fill=(255, 255, 255))
+        ImageDraw.Draw(im).text((56, 1150), "hello.c compiled", font=font("SegoeWP.ttf", 46), fill=(153, 153, 153))
+    return im
+
+
+def captures():
+    c = {}
+    for n in ("lock", "start", "shade", "app", "osk", "toast"):
+        c[n] = redact(n, Image.open(CAP / ("%s.png" % n)).convert("RGBA"))
+    return c
+
+
+def band(im, y0, y1):
+    """Rows y0..y1 of a capture on a transparent screen."""
+    out = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    out.paste(im.crop((0, y0, im.width, y1)), (0, y0))
+    return out
+
+
+def deglyph(strip):
+    """The bar strips of Start without the bars' own glyphs (those are the status and nav layers)."""
+    a = np.asarray(strip.convert("RGB")).astype(np.float32)
+    glyph = Image.fromarray(((a.max(axis=2) > 170) * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))
+    soft = strip.filter(ImageFilter.GaussianBlur(18))
+    return Image.composite(soft, strip, glyph)
+
+
+def tiles(start):
+    """Each tile of Start, from the capture: connected areas of colour on the black page, on a point grid."""
+    a = np.asarray(start.convert("RGB")).astype(np.int32)
+    g = a.reshape(H_PT, PX, W_PT, PX, 3).max(axis=(1, 3)).max(axis=2) > 24
+    g[:STATUS + 2] = False
+    g[H_PT - NAV:] = False
+    seen = np.zeros_like(g)
+    out = []
+    for y in range(H_PT):
+        for x in range(W_PT):
+            if g[y, x] and not seen[y, x]:
+                stack, pts = [(y, x)], []
+                seen[y, x] = True
+                while stack:
+                    cy, cx = stack.pop()
+                    pts.append((cy, cx))
+                    for ny, nx in ((cy + 1, cx), (cy - 1, cx), (cy, cx + 1), (cy, cx - 1)):
+                        if 0 <= ny < H_PT and 0 <= nx < W_PT and g[ny, nx] and not seen[ny, nx]:
+                            seen[ny, nx] = True
+                            stack.append((ny, nx))
+                ys, xs = [p[0] for p in pts], [p[1] for p in pts]
+                x0, y0, x1, y1 = min(xs), min(ys), max(xs) + 1, max(ys) + 1
+                if (x1 - x0) * (y1 - y0) >= 900:   # a tile (the smallest is about 40 x 40 points)
+                    out.append([x0, y0, x1, y1])
+    return out
+
+
+def tile_timing(rects):
+    """Delay and speed of each tile, from the shell's turnstile constants."""
+    rng = random.Random(7)
+    rows = sorted({r[1] for r in rects})
+    bottom = sorted({r[3] for r in rects})
+    out = []
+    for r in rects:
+        from_bottom = sum(1 for b in bottom if b > r[3])     # rows below it
+        delay = from_bottom * TILE_ROW_MS
+        if r[2] - r[0] < 100:
+            delay -= TILE_SMALL_EARLY_MS
+        right = [q for q in rects if q is not r and abs(q[1] - r[1]) < 8 and q[0] > r[0]]
+        if right:
+            delay += TILE_LEFT_MS * 0.5                      # the left of two neighbours after the right
+        if r[1] == rows[0] and r[0] == min(q[0] for q in rects if q[1] == rows[0]):
+            delay += TILE_LAST_LATE_MS                       # the top-left tile goes last
+        delay += rng.uniform(-TILE_JITTER_MS, TILE_JITTER_MS)
+        speed = 1.0 + rng.uniform(-TILE_JITTER_SPEED, TILE_JITTER_SPEED)
+        out.append(dict(delay=delay, speed=speed, lift=0.7 + rng.random() * 0.6, turn=0.7 + rng.random() * 0.6))
+    lo = min(t["delay"] for t in out)
+    span = max(t["delay"] for t in out) - lo + TILE_LIFE_MS
+    for t in out:
+        t["d"] = (t["delay"] - lo) / span                    # 0..1 of the stagger
+        t["life"] = TILE_LIFE_MS / span / t["speed"]
+    return out
+
+
+def call_pane():
+    """The call screen, drawn by gen/layers.c with zrnui (no call is placed to capture it)."""
     proj = WORK / "layers"
     proj.mkdir(parents=True, exist_ok=True)
     src = (GEN / "render.py").read_text()
@@ -70,63 +199,123 @@ target_link_libraries(layers PRIVATE zrnui::zrnui PNG::PNG)
     subprocess.run(["cmake", "--build", proj / "build"], check=True, capture_output=True)
     out = proj / "out"
     out.mkdir(exist_ok=True)
-    for t in ("dark", "light"):
-        r = subprocess.run([proj / "build/layers", out, t], env=env, capture_output=True, text=True)
-        if r.returncode:
-            sys.exit("layers failed\n" + r.stderr)
-        print("\n".join(l for l in r.stderr.splitlines() if l.startswith("layers")))
+    r = subprocess.run([proj / "build/layers", out, "dark"], env=env, capture_output=True, text=True)
+    if r.returncode:
+        sys.exit("layers.c failed\n" + r.stderr)
+    b = np.asarray(Image.open(out / "call-dark-b.png").convert("RGB")).astype(np.float32)
+    w = np.asarray(Image.open(out / "call-dark-w.png").convert("RGB")).astype(np.float32)
+    a = np.clip(1.0 - (w - b).mean(axis=2) / 255.0, 0, 1)
+    rgb = np.where(a[..., None] > 0.002, b / np.maximum(a[..., None], 0.002), 0)
+    im = Image.fromarray(np.dstack([np.clip(rgb, 0, 255), a * 255]).astype(np.uint8), "RGBA")
+    return im.resize((W_PT * PX, H_PT * PX), Image.LANCZOS)
+
+
+def cut():
+    """The ten layers (and Start's tiles) from the covered captures."""
+    c = captures()
+    s, n = STATUS * PX, (H_PT - NAV) * PX
+    start = c["start"]
+    rects = tiles(start)
+    base = band(start, s, n)
+    d = ImageDraw.Draw(base)
+    tile_ims = []
+    for x0, y0, x1, y1 in rects:
+        box = (x0 * PX, y0 * PX, x1 * PX, y1 * PX)
+        tile_ims.append(start.crop(box))
+        d.rectangle(box, fill=(0, 0, 0, 255))
+    frost = Image.new("RGBA", start.size, (0, 0, 0, 0))
+    frost.paste(deglyph(start.crop((0, 0, start.width, s + 10 * PX))), (0, 0))
+    frost.paste(deglyph(start.crop((0, n - 10 * PX, start.width, start.height))), (0, n - 10 * PX))
+    kb_top = 1904
+    layers = {
+        "start": base,
+        "frost": frost,
+        "app": band(c["app"], s, n),
+        "keyboard": band(c["osk"], kb_top, n),
+        "status": band(c["app"], 0, s),
+        "shade": band(c["shade"], 0, n),
+        "nav": band(c["app"], n, start.height),
+        "lock": c["lock"],
+        "call": call_pane(),
+        "volume": band(c["toast"], 0, 232),
+    }
+    flat = c["osk"].copy()
+    flat.alpha_composite(layers["volume"])
+    return layers, rects, tile_ims, tile_timing(rects), flat
+
+
+# ---------------------------------------------------------------- geometry
+
+TURN, TILT = 52.0, 4.0       # degrees a pane turns about its upright axis, and leans back
+STEP_X, STEP_Z, STEP_Y = 0.36, 0.28, -0.02   # per layer, in pane heights: right, back, up
+EYE = 7.0                    # the eye's distance, in pane heights
+
+
+def point(i, x, y, z, t):
+    """A point of pane i (x right, y down, z toward the eye; in pane heights, about its centre) in the
+    scene: the pane turned (TURN * t) and leant (TILT * t), then moved along the stack. Returns X, Y, Z
+    with Z away from the eye."""
+    th, ph = math.radians(TURN * t), math.radians(TILT * t)
+    X = x * math.cos(th) + z * math.sin(th)
+    Z = x * math.sin(th) - z * math.cos(th)
+    Y = y * math.cos(ph) - Z * math.sin(ph)
+    Z = y * math.sin(ph) + Z * math.cos(ph)
+    return X + i * STEP_X * t, Y + i * STEP_Y * t, Z + i * STEP_Z * t
+
+
+def screen(P):
+    X, Y, Z = P
+    s = EYE / (EYE + Z)
+    return X * s, Y * s
+
+
+def pane_corners(i, t):
+    hw, hh = ASPECT / 2, 0.5
+    return [screen(point(i, x, y, 0, t)) for x, y in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh))]
+
+
+def tile_amount(tm, t):
+    """How far a tile has come away from its pane, 0..1, on its own clock."""
+    u = (t - tm["d"] * 0.5) / max(0.05, 0.5 * tm["life"] + 0.4)
+    u = min(1.0, max(0.0, u))
+    return u * u * (3 - 2 * u)
+
+
+def tile_corners(rect, tm, t):
+    """A tile of Start, turned about the screen's left edge (the turnstile's axis) by its own amount:
+    the same angle sweeps a tile further right through a longer arc."""
+    a = tile_amount(tm, t)
+    turn = math.radians(26 * tm["turn"] * a)
+    edge = -ASPECT / 2
+    x0, y0, x1, y1 = (rect[0] / H_PT - ASPECT / 2, rect[1] / H_PT - 0.5, rect[2] / H_PT - ASPECT / 2, rect[3] / H_PT - 0.5)
+    out = []
+    for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
+        r = x - edge
+        out.append(screen(point(0, edge + r * math.cos(turn), y, r * math.sin(turn), t)))
     return out
 
 
-def matte(out, name, theme):
-    """A layer as RGBA: its coverage from the difference between the black and the white pass."""
-    if name == "app":
-        full = Image.new("RGBA", (PW * 3, PH * 3), (0, 0, 0, 0))
-        full.paste(Image.open(out / ("app-%s.png" % theme)).convert("RGBA"), (0, 28 * 3))
-        return full
-    b = np.asarray(Image.open(out / ("%s-%s-b.png" % (name, theme))).convert("RGB")).astype(np.float32)
-    w = np.asarray(Image.open(out / ("%s-%s-w.png" % (name, theme))).convert("RGB")).astype(np.float32)
-    a = np.clip(1.0 - (w - b).mean(axis=2) / 255.0, 0, 1)
-    rgb = np.where(a[..., None] > 0.002, b / np.maximum(a[..., None], 0.002), 0)
-    px = np.dstack([np.clip(rgb, 0, 255), a * 255]).astype(np.uint8)
-    im = Image.fromarray(px, "RGBA")
-    if name == "frost":
-        # only the bars' strips: what the shell blurs under the status bar and the nav bar (STATUS_H, NAV_BAR_H + FROST_MARGIN)
-        keep = Image.new("L", im.size, 0)
-        d = ImageDraw.Draw(keep)
-        d.rectangle((0, 0, im.width, (28 + 10) * 3), fill=255)
-        d.rectangle((0, (640 - 40 - 10) * 3, im.width, im.height), fill=255)
-        im.putalpha(Image.fromarray(np.minimum(np.asarray(im.getchannel("A")), np.asarray(keep))))
-    return im
+def fit(t, box, n=len(LAYERS)):
+    """Scale and offset that put the stack at spread t inside box (x0, y0, x1, y1)."""
+    pts = [p for i in range(n) for p in pane_corners(i, t)]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    s = min((box[2] - box[0]) / (max(xs) - min(xs)), (box[3] - box[1]) / (max(ys) - min(ys)))
+    ox = (box[0] + box[2]) / 2 - s * (max(xs) + min(xs)) / 2
+    oy = (box[1] + box[3]) / 2 - s * (max(ys) + min(ys)) / 2
+    return s, ox, oy
 
 
-def font(face, size):
-    if SEGOE:
-        p = pathlib.Path(SEGOE) / face
-        if p.exists():
-            return ImageFont.truetype(str(p), size)
-    return ImageFont.truetype("DejaVuSans.ttf", size)
-
+# ---------------------------------------------------------------- drawing
 
 def palette(theme):
     dark = theme == "dark"
     return dict(bg=(0, 0, 0) if dark else (255, 255, 255), fg=(255, 255, 255) if dark else (0, 0, 0),
-                sub=(154, 154, 154) if dark else (110, 110, 110), line=(70, 70, 70) if dark else (200, 200, 200),
-                pane=(255, 255, 255, 18) if dark else (0, 0, 0, 14), edge=(255, 255, 255, 90) if dark else (0, 0, 0, 70),
-                accent=(0x33, 0x7A, 0xFF) if dark else (0x00, 0x50, 0xEF))
-
-
-def plate(im, pal, scale):
-    """A layer on its pane: a faint glass the size of the screen with a hairline edge, then the layer."""
-    w, h = round(PW * scale), round(PH * scale)
-    p = Image.new("RGBA", (w, h), pal["pane"])
-    p.alpha_composite(im.resize((w, h), Image.LANCZOS))
-    ImageDraw.Draw(p).rectangle((0, 0, w - 1, h - 1), outline=pal["edge"], width=max(1, round(scale)))
-    return p
+                sub=(160, 160, 160) if dark else (100, 100, 100), line=(90, 90, 90) if dark else (190, 190, 190),
+                pane=(22, 22, 22, 235), edge=(255, 255, 255, 70) if dark else (0, 0, 0, 90),
+                accent=(229, 20, 0))
 
 
 def coeffs(dst, src):
-    """Pillow PERSPECTIVE coefficients mapping output points dst to input points src."""
     a = []
     for (x, y), (u, v) in zip(dst, src):
         a.append([x, y, 1, 0, 0, 0, -u * x, -u * y])
@@ -134,87 +323,65 @@ def coeffs(dst, src):
     return np.linalg.solve(np.array(a, float), np.array([c for p in src for c in p], float)).tolist()
 
 
-def project(i, n, t, cx, cy, size):
-    """Screen corners of layer i of n at spread t (0 flat, 1 apart), the stack's middle at (cx, cy).
-
-    Each pane turns about its vertical axis by up to 60 degrees and a little about its
-    horizontal one; the panes move apart along the stack, bottom layer at the front left."""
-    th, ph = math.radians(60 * t), math.radians(-6 * t)
-    gap = 104 * t * size / 400
-    f = 2200.0
-    hw, hh = size * 0.5625 / 2, size / 2
-    k = i - (n - 1) / 2
-    out = []
-    for x, y in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)):
-        # turn about y, then about x
-        X, Z = x * math.cos(th), x * math.sin(th)
-        Y, Z = y * math.cos(ph) - Z * math.sin(ph), y * math.sin(ph) + Z * math.cos(ph)
-        # along the stack: to the right and back, a little up
-        X += k * gap * 1.0
-        Z += k * gap * 0.3
-        Y -= k * gap * 0.08
-        s = f / (f + Z)
-        out.append((cx + X * s, cy + Y * s))
-    return out
+def warp(canvas, im, quad, alpha=1.0):
+    src = [(0, 0), (im.width, 0), (im.width, im.height), (0, im.height)]
+    w = im.transform(canvas.size, Image.PERSPECTIVE, coeffs(quad, src), Image.BICUBIC)
+    if alpha < 0.999:
+        w.putalpha(w.getchannel("A").point(lambda v: round(v * alpha)))
+    canvas.alpha_composite(w)
 
 
-def stack(canvas, plates, t, cx, cy, size, alphas):
-    n = len(plates)
-    # farthest first: the top layers are at the back
-    for i in reversed(range(n)):
-        if alphas[i] <= 0.004:
-            continue
-        p = plates[i]
-        dst = project(i, n, t, cx, cy, size)
-        src = [(0, 0), (p.width, 0), (p.width, p.height), (0, p.height)]
-        warped = p.transform(canvas.size, Image.PERSPECTIVE, coeffs(dst, src), Image.BICUBIC)
-        if alphas[i] < 0.999:
-            warped.putalpha(warped.getchannel("A").point(lambda v, a=alphas[i]: round(v * a)))
-        canvas.alpha_composite(warped)
+def plate(im, pal, px):
+    """A layer on its pane: dark glass the size of the screen with a hairline edge."""
+    w, h = round(px * ASPECT), round(px)
+    p = Image.new("RGBA", (w, h), pal["pane"])
+    p.alpha_composite(im.resize((w, h), Image.LANCZOS))
+    ImageDraw.Draw(p).rectangle((0, 0, w - 1, h - 1), outline=pal["edge"], width=1)
+    return p
 
 
-def labels(canvas, t, cx, cy, size, pal, alpha=1.0):
-    """Each layer's name and the shell's own name, alternately above and below the stack, on a hairline."""
+def draw_stack(canvas, L, t, s, ox, oy, pal, alphas, px):
+    """Back to front, so 01 is in front. Near t = 0 that order would put Start over the app, so the
+    frame as seen (L["flat"]) lies over the stack and fades as the layers part."""
+    plates = L["plates"]
+    tr = lambda q: [(ox + s * x, oy + s * y) for x, y in q]
+    for i in reversed(range(len(plates))):                  # the farthest first: 01 is painted last, in front
+        if alphas[i] > 0.004:
+            warp(canvas, plates[i], tr(pane_corners(i, t)), alphas[i])
+        if i == 0:
+            order = sorted(range(len(L["rects"])), key=lambda k: tile_amount(L["timing"][k], t))
+            for k in order:
+                warp(canvas, L["tiles"][k], tr(tile_corners(L["rects"][k], L["timing"][k], t)), alphas[0])
+    if L.get("flat") is not None and t < 0.2:
+        warp(canvas, L["flat"], tr(pane_corners(0, t)), 1.0 - t / 0.2)
+
+
+def labels(canvas, t, s, ox, oy, pal, alpha=1.0, numbers_only=False, size=(21, 15)):
     d = ImageDraw.Draw(canvas)
     n = len(LAYERS)
-    big, small, num = font("SegoeWP-Semilight.ttf", 21), font("SegoeWP.ttf", 15), font("SegoeWP-Semibold.ttf", 15)
-    a = round(255 * alpha)
-    corners = [project(i, n, t, cx, cy, size) for i in range(n)]
-    top_row = min(c[0][1] for c in corners) - 26
-    bottom_row = max(c[3][1] for c in corners) + 26
-
-    def col(c):
-        return c[:3] + (a,)
+    big, small, num = font("SegoeWP-Semilight.ttf", size[0]), font("SegoeWP.ttf", size[1]), font("SegoeWP-Semibold.ttf", size[1])
+    col = lambda c: c[:3] + (round(255 * alpha),)
+    corners = [[(ox + s * x, oy + s * y) for x, y in pane_corners(i, t)] for i in range(n)]
+    top = min(c[0][1] for c in corners) - 26
+    bottom = max(c[3][1] for c in corners) + 26
     for i, (key, name, code, _) in enumerate(LAYERS):
         c = corners[i]
         below = i % 2 == 0
-        ax, ay = (c[3] if below else c[0])
-        ax += (c[2][0] - c[3][0]) * 0.18 if below else (c[1][0] - c[0][0]) * 0.18
-        ay = (c[3][1] + (c[2][1] - c[3][1]) * 0.18) if below else (c[0][1] + (c[1][1] - c[0][1]) * 0.18)
-        ly = bottom_row if below else top_row
-        d.line((ax, ay + (6 if below else -6), ax, ly + (-4 if below else 4)), fill=col(pal["line"]), width=1)
-        d.ellipse((ax - 2.5, ay - 2.5 + (6 if below else -6), ax + 2.5, ay + 2.5 + (6 if below else -6)), fill=col(pal["accent"]))
+        a, b = (c[3], c[2]) if below else (c[0], c[1])
+        ax, ay = a[0] + (b[0] - a[0]) * 0.2, a[1] + (b[1] - a[1]) * 0.2
+        ly = bottom if below else top
+        d.line((ax, ay + (5 if below else -5), ax, ly + (-4 if below else 4)), fill=col(pal["line"]), width=1)
         ty = ly if below else ly - 44
-        tw = 24 + max(d.textlength(name, font=big), d.textlength(code, font=small))
-        tx = min(ax, canvas.width - 28 - tw)
+        tw = 26 + max(d.textlength(name, font=big), d.textlength(code, font=small))
+        tx = min(ax, canvas.width - 24 - tw)
         d.text((tx, ty), "%02d" % (i + 1), font=num, fill=col(pal["accent"]))
-        d.text((tx + 24, ty - 5), name, font=big, fill=col(pal["fg"]))
-        d.text((tx + 24, ty + 21), code, font=small, fill=col(pal["sub"]))
-
-
-def flat(plates_full, theme):
-    """The frame as it is seen: the layers that are in it, composited in order."""
-    pal = palette(theme)
-    im = Image.new("RGBA", plates_full[0].size, pal["bg"] + (255,))
-    for (key, _, _, shown), p in zip(LAYERS, plates_full):
-        if shown:
-            im.alpha_composite(p)
-    return im
+        d.text((tx + 26, ty - 5), name, font=big, fill=col(pal["fg"]))
+        d.text((tx + 26, ty + 21), code, font=small, fill=col(pal["sub"]))
 
 
 CAPTION = [
-    ("Drawn on the GPU.", "render_frame draws the layers bottom to top with GLES2. App windows are the textures their buffers already are; the shell's own parts are textures repainted only when they change. What the lock screen or an app at rest covers is not drawn."),
-    ("The shell moves the apps.", "Start's turnstile, an app swinging in and out, the switcher and the turn of the screen are drawn by the shell, so every app arrives and leaves the same way."),
+    ("Drawn on the GPU.", "render_frame draws the layers bottom to top with GLES2. App windows are the textures their buffers already are; the shell's own parts are textures repainted only when they change. An app at rest can instead go straight to a display plane (plane_pick)."),
+    ("The shell moves the apps.", "Start's turnstile, an app swinging in and out, the switcher and the turn are drawn by the shell. Each tile is its own texture and turns about the screen's left edge on its own clock; tiles further right sweep a longer arc."),
     ("A fixed order.", "The nav bar, the lock screen, a call and the volume are drawn after the apps, so nothing an app draws can cover them."),
 ]
 
@@ -231,111 +398,114 @@ def wrap(d, text, f, width):
     return lines + [cur]
 
 
-def picture(layers, theme):
+def prepare(layers, rects, tile_ims, timing, pal, px, flat=None):
+    k = px / (H_PT * PX)
+    return dict(flat=plate(flat, pal, px) if flat is not None else None, plates=[plate(layers[key], pal, px) for key, *_ in LAYERS], rects=rects, timing=timing,
+                tiles=[im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS) for im in tile_ims])
+
+
+def picture(layers, rects, tile_ims, timing, flat, theme):
     pal = palette(theme)
     W, H = 1600, 1000
     canvas = Image.new("RGBA", (W, H), pal["bg"] + (255,))
     d = ImageDraw.Draw(canvas)
     d.text((64, 44), "HOW ZTMETRO DRAWS A FRAME", font=font("SegoeWP-Semibold.ttf", 17), fill=pal["fg"])
     d.text((61, 66), "one screen, ten layers", font=font("SegoeWP-Light.ttf", 46), fill=pal["fg"])
-    # the frame as seen, at the left
-    size = 420
-    fw, fh = round(size * 0.5625), size
-    fx, fy = 64, 214
-    shown = flat(layers, theme).resize((fw, fh), Image.LANCZOS)
-    canvas.alpha_composite(shown, (fx, fy))
+    fh = 560
+    fw = round(fh * ASPECT)
+    fx, fy = 64, 176
+    canvas.alpha_composite(flat.resize((fw, fh), Image.LANCZOS), (fx, fy))
     d.rectangle((fx - 1, fy - 1, fx + fw, fy + fh), outline=pal["edge"][:3], width=1)
-    d.text((fx, fy + fh + 14), "the frame you see", font=font("SegoeWP-Semilight.ttf", 19), fill=pal["fg"])
-    d.text((fx, fy + fh + 38), "an app, its keyboard and the bars", font=font("SegoeWP.ttf", 13), fill=pal["sub"])
-    # an arrow into the stack
-    ay = fy + fh / 2
-    d.line((fx + fw + 22, ay, fx + fw + 70, ay), fill=pal["line"], width=2)
-    d.polygon([(fx + fw + 70, ay - 6), (fx + fw + 80, ay), (fx + fw + 70, ay + 6)], fill=pal["line"])
-    # the layers apart
-    plates = [plate(l, pal, 1.2) for l in layers]
-    cx, cy = 1010, fy + fh / 2 + 4
-    stack(canvas, plates, 1.0, cx, cy, size, [1.0] * len(plates))
-    labels(canvas, 1.0, cx, cy, size, pal)
-    # drawn first, drawn last
-    by = 802
-    d.line((430, by, 1536, by), fill=pal["line"], width=1)
+    d.text((fx, fy + fh + 14), "the frame you see", font=font("SegoeWP-Semilight.ttf", 21), fill=pal["fg"])
+    d.text((fx, fy + fh + 40), "S9 capture: Settings, keyboard, toast", font=font("SegoeWP.ttf", 15), fill=pal["sub"])
+    s, ox, oy = fit(1.0, (fx + fw + 60, 210, 1400, 700))
+    L = prepare(layers, rects, tile_ims, timing, pal, s * 1.05)
+    draw_stack(canvas, L, 1.0, s, ox, oy, pal, [1.0] * len(LAYERS), s)
+    labels(canvas, 1.0, s, ox, oy, pal)
+    by = 812
+    d.line((fx + fw + 70, by, 1536, by), fill=pal["line"], width=1)
     d.polygon([(1536, by - 5), (1546, by), (1536, by + 5)], fill=pal["line"])
     sm = font("SegoeWP.ttf", 15)
-    d.text((430, by + 8), "drawn first (bottom)", font=sm, fill=pal["sub"])
-    d.text((1546 - d.textlength("drawn last (top)", font=sm), by + 8), "drawn last (top)", font=sm, fill=pal["sub"])
-    # the caption
-    x, cw = 64, 470
+    d.text((fx + fw + 70, by + 8), "drawn first, in front", font=sm, fill=pal["sub"])
+    d.text((1546 - d.textlength("drawn last, at the back", font=sm), by + 8), "drawn last, at the back", font=sm, fill=pal["sub"])
     hb, bf = font("SegoeWP-Semibold.ttf", 19), font("SegoeWP.ttf", 16)
     for i, (head, body) in enumerate(CAPTION):
-        cx0 = x + i * (cw + 36)
+        cx0 = 64 + i * 506
         d.rectangle((cx0, 852, cx0 + 28, 855), fill=pal["accent"])
         d.text((cx0, 866), head, font=hb, fill=pal["fg"])
-        for j, line in enumerate(wrap(d, body, bf, cw)):
+        for j, line in enumerate(wrap(d, body, bf, 470)):
             d.text((cx0, 894 + j * 22), line, font=bf, fill=pal["sub"])
     return canvas.convert("RGB")
 
 
 def ease(x):
     x = min(1.0, max(0.0, x))
-    return x * x * (3 - 2 * x) if x < 1 else 1.0
+    return x * x * (3 - 2 * x)
 
 
-def clip(layers, theme, work):
-    """The flat frame fans apart into its layers, holds, and folds back: 5 s at 60 frames a second."""
+def clip(layers, rects, tile_ims, timing, flat, theme):
+    """The stack, flat with 01 in front, comes apart layer by layer and tile by tile, holds, and folds back: 6 s, 60 frames a second."""
     pal = palette(theme)
-    W, H, FPS, N = 1280, 720, 60, 300
-    plates = [plate(l, pal, 0.9) for l in layers]
-    raw = work / ("shell-layers-%s.rgba" % theme)
+    W, H, FPS, N = 1280, 720, 60, 360
+    s1, ox1, oy1 = fit(1.0, (90, 120, 1190, 600))
+    s0 = 560.0
+    ox0, oy0 = W / 2, H / 2
+    L = prepare(layers, rects, tile_ims, timing, pal, max(s0, s1) * 1.02)
+    raw = WORK / ("shell-layers-%s.rgba" % theme)
     with open(raw, "wb") as out:
         for k in range(N):
-            s = k / FPS
-            if s < 0.6:
-                t = 0.0
-            elif s < 2.1:
-                t = ease((s - 0.6) / 1.5)
-            elif s < 3.4:
-                t = 1.0
-            elif s < 4.6:
-                t = 1.0 - ease((s - 3.4) / 1.2)
-            else:
-                t = 0.0
-            size = 520 - 120 * t
-            cx, cy = W / 2 + 40 * t, H / 2 - 10 * t
+            sec = k / FPS
+            t = 0.0 if sec < 0.6 else ease((sec - 0.6) / 1.8) if sec < 2.4 else 1.0 if sec < 3.8 else 1.0 - ease((sec - 3.8) / 1.6) if sec < 5.4 else 0.0
+            s, ox, oy = s0 + (s1 - s0) * t, ox0 + (ox1 - ox0) * t, oy0 + (oy1 - oy0) * t
             canvas = Image.new("RGBA", (W, H), pal["bg"] + (255,))
-            alphas = [1.0 if shown else min(1.0, t * 1.6) for (_, _, _, shown) in LAYERS]
-            stack(canvas, plates, t, cx, cy, size, alphas)
-            la = min(1.0, max(0.0, (t - 0.82) / 0.18))
+            # every layer is there from the first frame, stacked flat with 01 in front: they part, nothing fades
+            draw_stack(canvas, L, t, s, ox, oy, pal, [1.0] * len(LAYERS), s)
+            la = min(1.0, max(0.0, (t - 0.85) / 0.15))
             if la > 0:
-                labels(canvas, t, cx, cy, size, pal, alpha=la)
+                labels(canvas, t, s, ox, oy, pal, alpha=la, size=(16, 12))
             out.write(canvas.convert("RGB").tobytes())
-            if k == 150:
-                canvas.convert("RGB").save(work / ("shell-layers-%s-mid.png" % theme))
+            if k == 190:
+                canvas.convert("RGB").save(WORK / ("shell-layers-%s-mid.png" % theme))
     base = CLIPS / ("shell-layers-%s" % theme)
     src = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "%dx%d" % (W, H), "-r", str(FPS), "-i", str(raw)]
-    subprocess.run(src + ["-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "38", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", str(base) + ".webm"], check=True)
-    subprocess.run(src + ["-c:v", "libx264", "-crf", "24", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(base) + ".mp4"], check=True)
-    Image.open(work / ("shell-layers-%s-mid.png" % theme)).save(str(base) + ".webp", "WEBP", quality=82)
+    subprocess.run(src + ["-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "42", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", str(base) + ".webm"], check=True)
+    subprocess.run(src + ["-c:v", "libx264", "-crf", "27", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(base) + ".mp4"], check=True)
+    Image.open(WORK / ("shell-layers-%s-mid.png" % theme)).save(str(base) + ".webp", "WEBP", quality=82)
     raw.unlink()
 
 
+def plates_out(layers, rects, tile_ims, timing, flat):
+    """Each layer and each tile for the scroll stack, and where the tiles are (gen/layers.json)."""
+    d = IMG / "layers"
+    d.mkdir(parents=True, exist_ok=True)
+    for f in d.glob("*.webp"):
+        f.unlink()
+    flat.resize((540, 1110), Image.LANCZOS).save(d / "flat.webp", "WEBP", quality=86, method=6)
+    for key, *_ in LAYERS:
+        layers[key].resize((540, 1110), Image.LANCZOS).save(d / ("%s.webp" % key), "WEBP", quality=86, method=6)
+    for k, im in enumerate(tile_ims):
+        im.resize((max(1, im.width * 3 // 8), max(1, im.height * 3 // 8)), Image.LANCZOS).save(d / ("tile-%02d.webp" % k), "WEBP", quality=86, method=6)
+    meta = dict(aspect=ASPECT, turn=TURN, tilt=TILT, step=[STEP_X, STEP_Y, STEP_Z], eye=EYE,
+                tiles=[dict(rect=[r[0] / W_PT, r[1] / H_PT, r[2] / W_PT, r[3] / H_PT], **{k: round(v, 4) for k, v in tm.items()})
+                       for r, tm in zip(rects, timing)])
+    (GEN / "layers.json").write_text(json.dumps(meta, indent=1) + "\n")
+
+
 def main():
-    out = build()
     IMG.mkdir(parents=True, exist_ok=True)
     CLIPS.mkdir(parents=True, exist_ok=True)
+    layers, rects, tile_ims, timing, flat = cut()
+    print("tiles:", len(rects))
     only = os.environ.get("ONLY", "picture,clip,plates").split(",")
-    (IMG / "layers").mkdir(exist_ok=True)
+    if "plates" in only:
+        plates_out(layers, rects, tile_ims, timing, flat)
     for theme in ("dark", "light"):
-        layers = [matte(out, key, theme) for key, *_ in LAYERS]
         if "picture" in only:
-            pic = picture(layers, theme)
+            pic = picture(layers, rects, tile_ims, timing, flat, theme)
             pic.save(IMG / ("shell-layers-%s.png" % theme), optimize=True)
             pic.save(IMG / ("shell-layers-%s.webp" % theme), "WEBP", quality=88, method=6)
-        if "plates" in only:
-            # each layer alone, for the page's scroll-driven stack (the pane's glass and edge are CSS)
-            for (key, *_), im in zip(LAYERS, layers):
-                im.resize((540, 960), Image.LANCZOS).save(IMG / "layers" / ("%s-%s.webp" % (key, theme)), "WEBP", quality=86, method=6)
         if "clip" in only:
-            clip(layers, theme, WORK)
+            clip(layers, rects, tile_ims, timing, flat, theme)
         print("shell-layers", theme, "done")
 
 
