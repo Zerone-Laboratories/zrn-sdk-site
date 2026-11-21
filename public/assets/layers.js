@@ -1,7 +1,6 @@
 /* How the shell draws: the frame's layers, captured on the S9, come apart as the page scrolls down and
-   fold back as it scrolls up. Layer 01 (Start) is in front and each later layer further back; Start's
-   tiles come away one by one, each on its own clock (the turnstile's timing in ztmetro.c, via
-   gen/layers.json). The geometry is gen/layers.py's: each quad is projected here and drawn with a
+   fold back as it scrolls up. Layer 01 (Start) is in front and each later layer further back; Start is
+   built from its tiles (gen/layers.json), each flat in its place on layer 01. The geometry is gen/layers.py's: each quad is projected here and drawn with a
    matrix3d that maps the element onto it. */
 (function () {
   var ex = document.querySelector(".explode");
@@ -21,7 +20,7 @@
   var flat = img("/img/layers/flat.webp", "q pane");
   var tags = M.layers.map(function (l, i) {
     var p = el("p", "ltag " + (i % 2 ? "above" : "below"), stack);
-    p.innerHTML = "<b>" + (i < 9 ? "0" : "") + (i + 1) + "</b><span class=nm> " + l.name + "</span><small>" + l.code + "</small>";
+    p.innerHTML = "<b>" + (i < 9 ? "0" : "") + (i + 1) + "</b><span class=nm> " + l.name + "</span><small>" + l.code.replace("\n", "<br>") + "</small>";
     return p;
   });
 
@@ -38,12 +37,9 @@
     var hw = A / 2;
     return [point(i, -hw, -0.5, 0, t), point(i, hw, -0.5, 0, t), point(i, hw, 0.5, 0, t), point(i, -hw, 0.5, 0, t)];
   }
-  function amount(tm, t) {
-    var u = (t - tm.d * 0.5) / Math.max(0.05, 0.5 * tm.life + 0.4);
-    u = Math.min(1, Math.max(0, u));
-    return u * u * (3 - 2 * u);
-  }
-  /* a tile turns about the screen's left edge, by its own amount: a tile further right sweeps a longer arc */
+  /* the tiles sit flat on layer 01, where they are in the capture */
+  function amount() { return 0; }
+  /* a tile on layer 01 (amount() is 0, so it lies flat where it was captured) */
   function tile(tm, t) {
     var turn = 26 * tm.turn * amount(tm, t) * R, r = tm.rect, edge = -A / 2;
     var x0 = r[0] * A - A / 2, y0 = r[1] - 0.5, x1 = r[2] * A - A / 2, y1 = r[3] - 0.5;
@@ -79,7 +75,7 @@
     var w = stage.clientWidth, h = stage.clientHeight, phone = w < 700;
     var fh = Math.min(h * 0.72, w * 0.8 / A);
     var f0 = [fh, w / 2, h / 2];
-    var side = phone ? 16 : 150, f1 = fit(1, phone ? 8 : 24, h * 0.2, w - side, h * 0.78);
+    var side = phone ? 8 : 130, f1 = fit(1, phone ? 8 : 16, h * (phone ? 0.2 : 0.13), w - side, h * (phone ? 0.8 : 0.85));
     var s = f0[0] + (f1[0] - f0[0]) * t, ox = f0[1] + (f1[1] - f0[1]) * t, oy = f0[2] + (f1[2] - f0[2]) * t;
     var glass = Math.min(1, t * 3);
     for (var i = 0; i < n; i++) {
@@ -105,7 +101,7 @@
     /* labels alternate above and below: names only where every other pane is far enough apart, else numbers */
     var gapx = Infinity;
     for (i = 2; i < n; i++) gapx = Math.min(gapx, cs[i][0][0] - cs[i - 2][0][0]);
-    var nums = phone || gapx < 125;
+    var nums = phone || gapx < 100;
     if (nums !== stack.classList.contains("nums")) stack.classList.toggle("nums", nums);
     tags.forEach(function (g, i) {
       var c = cs[i], below = i % 2 === 0, a = below ? c[3] : c[0], b = below ? c[2] : c[1];

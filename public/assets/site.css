@@ -160,10 +160,10 @@ td code, th code { overflow-wrap: break-word; }
 .explode .stack { position: absolute; inset: 0; }
 .explode .q { position: absolute; left: 0; top: 0; width: 100px; height: 100px; transform-origin: 0 0; display: block; max-width: none; will-change: transform, opacity; }
 .explode .pane { background: rgba(22, 22, 22, calc(0.92 * var(--g, 0))); outline: 1px solid rgba(128, 128, 128, calc(0.6 * var(--g, 0))); }
-.explode .ltag { position: absolute; margin: 0; white-space: nowrap; font-size: 0.85rem; line-height: 1.2; opacity: 0; pointer-events: none; z-index: 200; }
+.explode .ltag { position: absolute; margin: 0; white-space: nowrap; font-size: 0.8rem; line-height: 1.2; opacity: 0; pointer-events: none; z-index: 200; }
 .explode .ltag.above { transform: translateY(-100%); }
 .explode .ltag b { color: #e51400; font-weight: 600; font-size: 0.8rem; margin-right: 0.15rem; }
-.explode .ltag small { display: block; color: var(--mute); font-size: 0.75rem; margin-left: 1.3rem; }
+.explode .ltag small { display: block; color: var(--mute); font-size: 0.68rem; margin-left: 1.3rem; }
 .explode .ltag::before { content: ""; position: absolute; left: 0; width: 1px; height: var(--lead, 0); background: var(--line); }
 .explode .ltag.below::before { bottom: 100%; }
 .explode .ltag.above::before { top: 100%; }
