@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds public/*.html from gen/pages.py and gen/elements.py (SDK v2)."""
-import html, pathlib, re, sys
+import html, json, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import elements as E, pages as P, layers as L
 
@@ -44,23 +44,20 @@ def layers():
     for t in ("light", "dark"):
         pics.append('<a class="only-%s" href="/img/shell-layers-%s.png"><img src="/img/shell-layers-%s.webp" width="1600" height="1000" '
                     'alt="The ztMETRO frame at the left, and its ten layers spread out in perspective to the right, bottom to top: Start and the app list, '
-                    'frost strips, app window, keyboard, status bar, action centre, nav bar, lock screen, call, volume and toasts"></a>' % (t, t, t))
-    return '<figure class="layers">%s<figcaption>One frame of ztMETRO and its layers, bottom (left) to top (right). Open it full size.</figcaption></figure>' % "".join(pics)
+                    'frost strips, app window, keyboard, status bar, action centre, nav bar, lock screen, call, volume and toasts, with layer 01 in front and Start cut into its tiles"></a>' % (t, t, t))
+    return '<figure class="layers">%s<figcaption>One frame of ztMETRO on the S9 and its layers: 01, painted first, in front; 10, painted last, at the back. Open it full size.</figcaption></figure>' % "".join(pics)
 
 
 def layer_stack():
-    """The layers as panes that fan apart as the page scrolls and fold back as it scrolls up (assets/layers.js).
-    Without script, or with reduced motion, it is not shown: the picture below says the same."""
-    panes = []
-    n = len(L.LAYERS)
-    for i, (key, name, code_name, shown) in enumerate(L.LAYERS):
-        imgs = "".join('<img class="only-%s" src="/img/layers/%s-%s.webp" alt="" width="540" height="960">' % (t, key, t) for t in ("light", "dark"))
-        panes.append('<div class="pane" data-k="%g" data-shown="%d"><div class="face">%s</div>'
-                     '<p class="ltag %s"><b>%02d</b><span class="nm"> %s</span><small>%s</small></p></div>'
-                     % (i - (n - 1) / 2, 1 if shown else 0, imgs, "below" if i % 2 == 0 else "above", i + 1, name, html.escape(code_name)))
-    return ('<div class="explode" role="img" aria-label="The layers of a ztMETRO frame, which spread apart as you scroll down and fold together as you scroll up">'
-            '<div class="stage"><div class="stack">%s</div><p class="hint">Scroll, and the frame comes apart into its layers</p></div></div>'
-            '<script src="/assets/layers.js" defer></script>' % "".join(panes))
+    """The layers, from the S9 captures, as panes that come apart as the page scrolls down and fold
+    back as it scrolls up (assets/layers.js, geometry and tile timing from gen/layers.json). Without
+    script, or with reduced motion, it is not shown: the picture below says the same."""
+    meta = json.loads((GEN / "layers.json").read_text())
+    meta["layers"] = [dict(key=k, name=n, code=c, shown=s) for k, n, c, s in L.LAYERS]
+    return ('<div class="explode" role="img" data-meta="%s" aria-label="The layers of a ztMETRO frame, captured on a Galaxy S9: they come apart as you scroll down, '
+            'Start tile by tile, and fold together as you scroll up"><div class="stage"><div class="stack"></div>'
+            '<p class="hint">Scroll, and the frame comes apart into its layers</p></div></div>'
+            '<script src="/assets/layers.js" defer></script>' % html.escape(json.dumps(meta, separators=(",", ":")), quote=True))
 
 
 def layer_clip():

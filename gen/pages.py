@@ -327,21 +327,21 @@ Zframe_set_transition(frame, Z_TRANSITION_NONE);</code></pre>
 
 "shell": ("How the shell draws: ztOS SDK", "How ztMETRO, the ztOS Mobile shell, puts a frame together: ten layers drawn bottom to top on the GPU, the order that keeps calls and volume on top, and what it means for your app.", """
 <h1>How the shell draws</h1>
-<p class="lead">ztMETRO is the shell and the Wayland compositor in one. Every frame it draws the whole screen in <b>one GLES2 pass</b>, layer by layer, <b>bottom to top</b>, in a fixed order. Your app is one of those layers.</p>
+<p class="lead">ztMETRO is the shell and the Wayland compositor in one. Every frame it draws the whole screen in <b>one GLES2 pass</b>, layer by layer, <b>bottom to top</b>, in a fixed order. Your app is one of those layers. Below, layer 01 is in front, because it is painted first, and each later layer stands further back.</p>
 {{STACK}}
 <h2 id="picture">The picture</h2>
 <p>The same layers as one picture, with what they mean. Open it for the full size.</p>
 {{LAYERS}}
-<p class="note">The picture is ours: each layer is drawn with zrnui's controls by <code>gen/layers.c</code> (GLES2, offscreen, demo content) at the place and size ztMETRO gives it, then laid out in perspective by <code>gen/layers.py</code>. It shows what each layer is, not the shell's own pixels. The order and the names come from <code>render_frame</code> in <code>ztmetro/ztmetro.c</code> (ztOSMobile, read on 21 November 2026).</p>
+<p class="note">The layers are screenshots of ztMETRO on a Galaxy S9, cut apart along the shell's own lines (status bar 28 points, nav bar 40). Wi-Fi network and carrier names are covered, and the notification in the action centre is replaced with a demo one. The call screen is not a capture: it is drawn with zrnui by <code>gen/layers.c</code>, because we do not place a real call for a picture. The order and the names come from <code>render_frame</code> in <code>ztmetro/ztmetro.c</code> (ztOSMobile, read on 21 November 2026).</p>
 <h2 id="clip">Apart and back</h2>
-<p>The frame you see fans out into its ten layers and folds back. The layers that are not in this frame (frost, the action centre, the lock screen, the call, the volume) fade in as they move apart.</p>
+<p>The frame you see comes apart into its ten layers and folds back. Start's tiles come away one by one: in the shell each tile is its own texture and turns about the screen's left edge on its own clock; tiles further right sweep a longer arc. The clocks run row by row from the bottom, small tiles a little early and the top-left tile last. The clip starts with every layer stacked flat, 01 in front.</p>
 {{LAYERCLIP}}
 <h2 id="order">The order, bottom to top</h2>
 <p>This is the order <code>render_frame</code> draws in; a later layer covers an earlier one. The numbers are the picture's; a dash marks a step that is not in it.</p>
 <div class="table-wrap"><table>
 <tr><th>#</th><th>Layer</th><th>What the shell draws</th><th>In the code</th></tr>
 <tr><td>–</td><td>Background</td><td>The screen is cleared to the shell background (white in Light, black in Dark). Only the gaps between Start's tiles show it</td><td><code>glClear</code>, <code>shell_bg_color</code></td></tr>
-<tr><td>01</td><td>Start and the app list</td><td>The tiles, each turned and placed in 3D for the turnstile, and the list beside them. Not drawn at all while an app at rest or the lock screen covers them</td><td><code>tiles</code>, <code>items</code>; skipped when <code>app_covers</code> or <code>lock_covers</code></td></tr>
+<tr><td>01</td><td>Start and the app list</td><td>The tiles, each its own texture: for the turnstile each turns about the screen's left edge on its own clock; tiles further right sweep a longer arc (clocks by row from the bottom, small tiles early, the top-left last, a little jitter). And the list beside them. Not drawn at all while an app at rest or the lock screen covers them</td><td><code>tiles</code>, <code>items</code>; skipped when <code>app_covers</code> or <code>lock_covers</code></td></tr>
 <tr><td>02</td><td>Frost strips</td><td>What of Start and the list passes under the status bar and the nav bar, blurred into two strips right after Start is drawn, and blurred again only when what is under them changes. Each strip is laid on the screen just under its own bar (step 05 and 07), as the bar's backing. Over an app the bars are opaque and there is no frost</td><td><code>frost_prepare</code>, <code>frost[0]</code>, <code>frost[1]</code></td></tr>
 <tr><td>03</td><td>App window</td><td>Your window, between the bars. The app's buffer is already a GPU texture; the shell draws it as a quad. Or the switcher's cards, or the launch flip in landscape</td><td><code>draw_app_surface</code>, <code>wlr_surface_get_texture</code></td></tr>
 <tr><td>–</td><td>Hyperscan</td><td>The shell's search page, when it is up (not in the picture)</td><td><code>hyper_layer</code></td></tr>

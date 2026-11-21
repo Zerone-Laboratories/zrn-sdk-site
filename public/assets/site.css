@@ -153,28 +153,22 @@ td code, th code { overflow-wrap: break-word; }
   .layers img, .layers video { width: 900px; max-width: none; }
 }
 
-/* the scroll-driven stack: shown only when assets/layers.js runs and motion is welcome */
-.explode { display: none; height: 260vh; margin: 0 0 1.5em; }
+/* the scroll-driven stack (assets/layers.js): shown only when the script runs and motion is welcome */
+.explode { display: none; height: 280vh; margin: 0 0 1.5em; }
 .explode-on .explode { display: block; }
-.explode .stage { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-.explode .stack { position: relative; transform-style: preserve-3d; }
-.explode .pane { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform, opacity; }
-.explode .face { position: absolute; inset: 0; background: color-mix(in srgb, var(--ink) calc(6% * var(--t, 0)), transparent); outline: 1px solid color-mix(in srgb, var(--ink) calc(35% * var(--t, 0)), transparent); will-change: transform; }
-.explode .face img { width: 100%; height: 100%; display: block; }
-.explode .face img.only-dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .explode .face img.only-dark { display: block; }
-  :root:not([data-theme="light"]) .explode .face img.only-light { display: none; }
-}
-:root[data-theme="dark"] .explode .face img.only-dark { display: block; }
-:root[data-theme="dark"] .explode .face img.only-light { display: none; }
-.explode .ltag { position: absolute; left: 30%; margin: 0; white-space: nowrap; font-size: 0.85rem; line-height: 1.2; opacity: 0; pointer-events: none; }
-.explode .ltag.below { top: calc(100% + 1.4rem); }
-.explode .ltag.above { bottom: calc(100% + 1.6rem); }
-.explode .ltag b { color: var(--mute); font-weight: 600; font-size: 0.8rem; margin-right: 0.15rem; }
-.explode .ltag small { display: block; color: var(--mute); font-family: var(--mono); font-size: 0.7rem; margin-left: 1.3rem; }
-.explode .ltag::before { content: ""; position: absolute; left: 0.3rem; width: 1px; height: 1.2rem; background: var(--line); }
+.explode .stage { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+.explode .stack { position: absolute; inset: 0; }
+.explode .q { position: absolute; left: 0; top: 0; width: 100px; height: 100px; transform-origin: 0 0; display: block; max-width: none; will-change: transform, opacity; }
+.explode .pane { background: rgba(22, 22, 22, calc(0.92 * var(--g, 0))); outline: 1px solid rgba(128, 128, 128, calc(0.6 * var(--g, 0))); }
+.explode .ltag { position: absolute; margin: 0; white-space: nowrap; font-size: 0.85rem; line-height: 1.2; opacity: 0; pointer-events: none; z-index: 200; }
+.explode .ltag.above { transform: translateY(-100%); }
+.explode .ltag b { color: #e51400; font-weight: 600; font-size: 0.8rem; margin-right: 0.15rem; }
+.explode .ltag small { display: block; color: var(--mute); font-size: 0.75rem; margin-left: 1.3rem; }
+.explode .ltag::before { content: ""; position: absolute; left: 0; width: 1px; height: var(--lead, 0); background: var(--line); }
 .explode .ltag.below::before { bottom: 100%; }
 .explode .ltag.above::before { top: 100%; }
-.explode .hint { position: absolute; bottom: 1.5rem; margin: 0; color: var(--mute); font-size: 0.875rem; }
 .explode .stack.nums .ltag .nm, .explode .stack.nums .ltag small { display: none; }
+.explode .hint { position: absolute; left: 0; right: 0; bottom: 1.5rem; margin: 0; text-align: center; color: var(--mute); font-size: 0.875rem; }
+@media (max-width: 700px) {
+  .explode .ltag .nm, .explode .ltag small { display: none; }
+}
