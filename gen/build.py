@@ -2,14 +2,14 @@
 """Builds public/*.html from gen/pages.py and gen/elements.py (SDK v2)."""
 import html, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-import elements as E, pages as P
+import elements as E, pages as P, layers as L
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public"
 GEN = pathlib.Path(__file__).resolve().parent
 NAV = [("index", "Overview"), ("start", "Getting started"), ("apps", "Ways to make an app"),
        ("project", "Project layout"), ("elements", "UI elements"), ("layout", "Layout and theme"),
-       ("animations", "Animations"), ("shipping", "Build and ship"), ("publish", "Publish to the store"), ("troubleshooting", "Troubleshooting"),
+       ("animations", "Animations"), ("shell", "How the shell draws"), ("shipping", "Build and ship"), ("publish", "Publish to the store"), ("troubleshooting", "Troubleshooting"),
        ("status", "Status and gaps"), ("next", "Coming next")]
 
 
@@ -38,6 +38,40 @@ def clip(name):
     return '<div class="shots">%s</div>' % "".join(out)
 
 
+def layers():
+    """The exploded picture: dark or light with the reader's theme, a link to the full size."""
+    pics = []
+    for t in ("light", "dark"):
+        pics.append('<a class="only-%s" href="/img/shell-layers-%s.png"><img src="/img/shell-layers-%s.webp" width="1600" height="1000" '
+                    'alt="The ztMETRO frame at the left, and its ten layers spread out in perspective to the right, bottom to top: Start and the app list, '
+                    'frost strips, app window, keyboard, status bar, action centre, nav bar, lock screen, call, volume and toasts"></a>' % (t, t, t))
+    return '<figure class="layers">%s<figcaption>One frame of ztMETRO and its layers, bottom (left) to top (right). Open it full size.</figcaption></figure>' % "".join(pics)
+
+
+def layer_stack():
+    """The layers as panes that fan apart as the page scrolls and fold back as it scrolls up (assets/layers.js).
+    Without script, or with reduced motion, it is not shown: the picture below says the same."""
+    panes = []
+    n = len(L.LAYERS)
+    for i, (key, name, code_name, shown) in enumerate(L.LAYERS):
+        imgs = "".join('<img class="only-%s" src="/img/layers/%s-%s.webp" alt="" width="540" height="960">' % (t, key, t) for t in ("light", "dark"))
+        panes.append('<div class="pane" data-k="%g" data-shown="%d"><div class="face">%s</div>'
+                     '<p class="ltag %s"><b>%02d</b><span class="nm"> %s</span><small>%s</small></p></div>'
+                     % (i - (n - 1) / 2, 1 if shown else 0, imgs, "below" if i % 2 == 0 else "above", i + 1, name, html.escape(code_name)))
+    return ('<div class="explode" role="img" aria-label="The layers of a ztMETRO frame, which spread apart as you scroll down and fold together as you scroll up">'
+            '<div class="stage"><div class="stack">%s</div><p class="hint">Scroll, and the frame comes apart into its layers</p></div></div>'
+            '<script src="/assets/layers.js" defer></script>' % "".join(panes))
+
+
+def layer_clip():
+    out = []
+    for t in ("light", "dark"):
+        out.append('<video class="only-%s" autoplay loop muted playsinline preload="metadata" width="1280" height="720" poster="/clips/shell-layers-%s.webp" '
+                   'aria-label="The frame fans apart into its layers and folds back, %s theme"><source src="/clips/shell-layers-%s.webm" type="video/webm">'
+                   '<source src="/clips/shell-layers-%s.mp4" type="video/mp4"></video>' % (t, t, t, t, t))
+    return '<figure class="layers">%s</figure>' % "".join(out)
+
+
 def code(c):
     return '<pre><code>%s</code></pre>' % html.escape(c)
 
@@ -64,6 +98,7 @@ def main():
     hello = html.escape((GEN / "hello.c").read_text().replace("\t", "    ").rstrip())
     for key, (title, desc, body) in P.PAGES.items():
         body = body.replace("{{ELEMENTS}}", elements_html()).replace("{{HELLO}}", hello).replace("{{FROST}}", frost())
+        body = body.replace("{{LAYERS}}", layers()).replace("{{LAYERCLIP}}", layer_clip()).replace("{{STACK}}", layer_stack())
         body = re.sub(r"\{\{SHOTS:(\w+)\}\}", lambda m: shots(m.group(1)), body)
         body = re.sub(r"\{\{CLIP:(\w+)\}\}", lambda m: clip(m.group(1)), body)
         (OUT / (key + ".html")).write_text(page(key, title, desc, body))

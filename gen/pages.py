@@ -325,6 +325,54 @@ Zframe_set_transition(frame, Z_TRANSITION_NONE);</code></pre>
 <p><code>Zelement_set_tilt(element, on)</code> turns tilt on or off. It is on by default for list and grid items, group headers, hyperlinks, check boxes, radio buttons and menu items. It is off for Button.</p>
 """),
 
+"shell": ("How the shell draws: ztOS SDK", "How ztMETRO, the ztOS Mobile shell, puts a frame together: ten layers drawn bottom to top on the GPU, the order that keeps calls and volume on top, and what it means for your app.", """
+<h1>How the shell draws</h1>
+<p class="lead">ztMETRO is the shell and the Wayland compositor in one. Every frame it draws the whole screen in <b>one GLES2 pass</b>, layer by layer, <b>bottom to top</b>, in a fixed order. Your app is one of those layers.</p>
+{{STACK}}
+<h2 id="picture">The picture</h2>
+<p>The same layers as one picture, with what they mean. Open it for the full size.</p>
+{{LAYERS}}
+<p class="note">The picture is ours: each layer is drawn with zrnui's controls by <code>gen/layers.c</code> (GLES2, offscreen, demo content) at the place and size ztMETRO gives it, then laid out in perspective by <code>gen/layers.py</code>. It shows what each layer is, not the shell's own pixels. The order and the names come from <code>render_frame</code> in <code>ztmetro/ztmetro.c</code> (ztOSMobile, read on 21 November 2026).</p>
+<h2 id="clip">Apart and back</h2>
+<p>The frame you see fans out into its ten layers and folds back. The layers that are not in this frame (frost, the action centre, the lock screen, the call, the volume) fade in as they move apart.</p>
+{{LAYERCLIP}}
+<h2 id="order">The order, bottom to top</h2>
+<p>This is the order <code>render_frame</code> draws in; a later layer covers an earlier one. The numbers are the picture's; a dash marks a step that is not in it.</p>
+<div class="table-wrap"><table>
+<tr><th>#</th><th>Layer</th><th>What the shell draws</th><th>In the code</th></tr>
+<tr><td>–</td><td>Background</td><td>The screen is cleared to the shell background (white in Light, black in Dark). Only the gaps between Start's tiles show it</td><td><code>glClear</code>, <code>shell_bg_color</code></td></tr>
+<tr><td>01</td><td>Start and the app list</td><td>The tiles, each turned and placed in 3D for the turnstile, and the list beside them. Not drawn at all while an app at rest or the lock screen covers them</td><td><code>tiles</code>, <code>items</code>; skipped when <code>app_covers</code> or <code>lock_covers</code></td></tr>
+<tr><td>02</td><td>Frost strips</td><td>What of Start and the list passes under the status bar and the nav bar, blurred into two strips right after Start is drawn, and blurred again only when what is under them changes. Each strip is laid on the screen just under its own bar (step 05 and 07), as the bar's backing. Over an app the bars are opaque and there is no frost</td><td><code>frost_prepare</code>, <code>frost[0]</code>, <code>frost[1]</code></td></tr>
+<tr><td>03</td><td>App window</td><td>Your window, between the bars. The app's buffer is already a GPU texture; the shell draws it as a quad. Or the switcher's cards, or the launch flip in landscape</td><td><code>draw_app_surface</code>, <code>wlr_surface_get_texture</code></td></tr>
+<tr><td>–</td><td>Hyperscan</td><td>The shell's search page, when it is up (not in the picture)</td><td><code>hyper_layer</code></td></tr>
+<tr><td>04</td><td>Keyboard</td><td>The on-screen keyboard, sliding up from the nav bar</td><td><code>osk_layer</code></td></tr>
+<tr><td>–</td><td>The turn</td><td>While the screen rotates, a picture of the old layout over the new one (not in the picture)</td><td><code>rot_snapshot_draw</code></td></tr>
+<tr><td>05</td><td>Status bar</td><td>Signal, battery, clock; the charging plug and the taller row you get by holding it</td><td><code>status_layer</code>, <code>plug_layer</code>, <code>peek_layer</code></td></tr>
+<tr><td>06</td><td>Action centre</td><td>The panel pulled down from the top: quick actions and notifications</td><td><code>shade_layer</code></td></tr>
+<tr><td>07</td><td>Nav bar</td><td>Back, Start, search. Drawn after the action centre, so the panel comes down behind it</td><td><code>nav_layer</code></td></tr>
+<tr><td>08</td><td>Lock screen</td><td>Its picture, clock and notification row. Opaque: while it is fully down, Start and the apps under it are not drawn, and while it slides only the strip below it is</td><td><code>lock_layer</code>, <code>lock_clock_layer</code></td></tr>
+<tr><td>09</td><td>Call</td><td>The phone app's window (<code>ztphone</code>) drawn again here, over the lock, with the status row over it</td><td><code>call_over_lock</code></td></tr>
+<tr><td>10</td><td>Volume, toasts, dialogs</td><td>The volume banner and a notification toast in the same place at the top, and the shell's dialogs</td><td><code>volume_layer</code>, <code>toast_layer</code>, <code>dialog_layer</code></td></tr>
+</table></div>
+<p>The boot splash is left out too. One exception to "one pass": when your app is at rest and fills its area, the shell may put its buffer straight on a display plane (<code>plane_pick</code>) instead of drawing it, if the display hardware accepts it.</p>
+<h2 id="textures">Textures and what is drawn each frame</h2>
+<ul>
+<li><b>App windows</b> are textures already: the shell gets your buffer from Wayland and draws it, it does not copy it.</li>
+<li><b>The shell's own layers</b> (the bars, the keyboard, the action centre, the lock screen, the banners, each tile) are painted once into a texture and uploaded again only when what they show changes.</li>
+<li><b>Each frame</b> the shell only places those textures: a quad each, with the position, turn and fade of the moment. The frost strips are blurred on the GPU only when what is under the bars has changed (every frame only during the turn); the call's frosted backdrop is the other blur.</li>
+</ul>
+<h2 id="transitions">The shell moves the apps</h2>
+<p>Because every app is a layer of the same frame, the shell, not the app, animates going between them: Start's tiles turning away and an app swinging in (the turnstile), an app swinging out on Back, the switcher's cards, the launch flip in landscape, and the turn of the screen. Every app arrives and leaves the same way, and an app needs no code for it.</p>
+<h2 id="for-apps">What it means for your app</h2>
+<ul>
+<li><b>Your window is one textured layer.</b> Draw your whole page into it, at 60 frames a second when it moves. The shell does not draw anything inside it.</li>
+<li><b>Your app bar is yours; the keyboard is the shell's.</b> zrnui draws the app bar inside your window, at the bottom of your page. The on-screen keyboard is a shell layer over your window: zrnui gives your page the room it takes (the keyboard inset, see <a href="/next">Coming next</a>).</li>
+<li><b>Frost samples what is under it.</b> The shell's frost blurs only Start and the list under its bars; over your app the bars are opaque. A frosted element in your app (<code>Zelement_set_frosted_diffusion</code>) blurs what your own page drew under it, never other apps or the shell.</li>
+<li><b>Calls, the nav bar and the volume are always on top.</b> Nothing your app draws can cover them, and you do not need to leave room for the volume banner or a toast: they come and go over you.</li>
+<li><b>You do not animate your arrival.</b> Launch, Back and the turn are drawn by the shell. Page transitions inside your app (the turnstile between pages, the pivot) are zrnui's, see <a href="/animations">Animations</a>.</li>
+</ul>
+"""),
+
 "shipping": ("Build and ship: ztOS SDK", "Cross build a zrnSDK v2 app for an aarch64 phone with the phone-release preset, run it with tools/zrn, and install it. The store's .zexec format 2 is coming.", """
 <h1>Build and ship</h1>
 <p class="lead">Build on your computer for aarch64, then upload and run on the phone with one script, <b><code>tools/zrn</code></b>. It is <code>cmake</code>, <code>podman</code>, <code>rsync</code> and <code>ssh</code>, nothing more.</p>
