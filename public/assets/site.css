@@ -2,7 +2,7 @@
    colour on these pages comes from real renders and from the demos' phones. */
 :root {
   --paper: #f2f2f2; --panel: #fff; --ink: #181818; --mute: #595959; --faint: #dcdcdc; --line: #868686;
-  --font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font: "Segoe UI", "Segoe WP", "Archivo", "Helvetica Neue", Arial, sans-serif; /* Segoe only if installed on the reader's machine; no Segoe files are served */
   --mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -64,7 +64,8 @@ th { font-weight: 500; border-bottom: 1px solid var(--line); }
 .cards b { display: block; }
 .cards span { font-size: 0.9375rem; }
 /* renders */
-.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); gap: 0.75rem; margin: 0 0 1em; align-items: start; }
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 360px)); gap: 1rem; margin: 0 0 1em; align-items: start; }
+.shots video { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: #000; }
 .shots figure { margin: 0; }
 .shots img, .strip img { border: 1px solid var(--line); width: 100%; height: auto; }
 figcaption { font-size: 0.8125rem; color: var(--mute); margin-top: 0.3rem; }
@@ -88,7 +89,7 @@ figcaption { font-size: 0.8125rem; color: var(--mute); margin-top: 0.3rem; }
 .demo-bar input { flex: 1 1 100%; min-width: 0; width: 100%; accent-color: var(--ink); margin: 0.25rem 0 0; }
 .demo-bar .read { font-family: var(--mono); font-size: 0.72rem; color: var(--mute); }
 .phone { position: relative; overflow: hidden; width: 100%; max-width: 280px; border: 1px solid var(--line); touch-action: none; user-select: none; -webkit-user-select: none; }
-.screen { position: absolute; left: 0; top: 0; width: 360px; transform-origin: 0 0; overflow: hidden; font-family: "Segoe UI", "Selawik", "Helvetica Neue", Arial, sans-serif; }
+.screen { position: absolute; left: 0; top: 0; width: 360px; transform-origin: 0 0; overflow: hidden; font-family: "Segoe WP", "Segoe UI", "Selawik", "Helvetica Neue", Arial, sans-serif; }
 .metro .screen, .phone.metro .screen { background: #000; color: #fff; }
 .r { position: absolute; left: 0; width: 360px; display: flex; flex-direction: column; justify-content: center; padding: 0 16px; transform-origin: 0 50%; }
 .phone .mt { font-size: 48px; font-weight: 300; }
@@ -124,7 +125,7 @@ figcaption { font-size: 0.8125rem; color: var(--mute); margin-top: 0.3rem; }
   main { padding-left: 16px; padding-right: 16px; }
 }
 @media (max-width: 560px) {
-  .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .shots { grid-template-columns: minmax(0, 360px); gap: 0.75rem; }
   .demos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
   .strip img { height: 240px; }
 }

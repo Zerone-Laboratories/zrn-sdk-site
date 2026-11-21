@@ -1,203 +1,733 @@
+/* ---- text ---- */
 #include <stdio.h>
 #include <stdint.h>
-#include <stddef.h>
-#include <zrnui.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
 
-static void el_text(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_heading(page, "A heading");
-	zui_text(page, "Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.");
-	zui_caption(page, "A caption: small and quiet.");
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid title = Ztext_block_create("settings");
+	Ztext_block_set_style(title, Z_TEXT_STYLE_PHONE_TITLE1);
+	Zpanel_add(stack, title);
+	
+	const Zid body = Ztext_block_create("Body text wraps at the width of its parent when wrapping is on.");
+	Ztext_block_set_style(body, Z_TEXT_STYLE_BODY);
+	Ztext_block_set_text_wrapping(body, Z_WRAP);
+	Zpanel_add(stack, body);
+	
+	const Zid subtle = Ztext_block_create("A subtle line");
+	Ztext_block_set_style(subtle, Z_TEXT_STYLE_PHONE_SUBTLE);
+	Zpanel_add(stack, subtle);
+	
+	const Zid accent = Ztext_block_create("In the accent colour");
+	Ztext_block_set_style(accent, Z_TEXT_STYLE_PHONE_ACCENT);
+	Zpanel_add(stack, accent);
 }
 
-static void el_button(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_button(page, "Primary", NULL, NULL);
-	zui_set_variant(zui_button(page, "Tonal", NULL, NULL), ZUI_TONAL);
-	zui_set_variant(zui_button(page, "Plain", NULL, NULL), ZUI_PLAIN);
-	zui_set_variant(zui_button(page, "Danger", NULL, NULL), ZUI_DANGER);
-	zui_set_enabled(zui_button(page, "Disabled", NULL, NULL), false);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 420);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void row_tapped(zui_node *row, void *data) { zui_toast(zui_node_app(row), "Tapped"); }
 
-static void el_item(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *list = zui_section(page, "Rows");
-	zui_item(list, "Title only", NULL, NULL, NULL);
-	zui_item(list, "With a second line", "Under the title", NULL, NULL);
-	zui_item(list, "Takes a tap", NULL, row_tapped, NULL);
-	zui_node *wifi = zui_item(list, "Wi-Fi", NULL, row_tapped, NULL);
-	zui_set_icon(wifi, "wifi");
-	zui_set_detail(wifi, "Home-5G");
+/* ---- button ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+static void clicked(const Zid sender, void* const user_data) { (void)sender; (void)user_data; }
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid ok = Zbutton_create("save");
+	Zbutton_on_click(ok, clicked, nullptr);
+	Zpanel_add(stack, ok);
+	
+	const Zid off = Zbutton_create("disabled");
+	Zelement_set_enabled(off, false);
+	Zpanel_add(stack, off);
+	
+	const Zid link = Zhyperlink_button_create("open the website");
+	Zhyperlink_button_set_uri(link, "https://ztos.online");
+	Zpanel_add(stack, link);
 }
 
-static void wifi_changed(zui_node *sw, void *data) {
-	zui_set_detail(sw, zui_get_on(sw) ? "Connected" : "Off");
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 360);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_switch(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *card = zui_section(page, "Connections");
-	zui_switch(card, "Wi-Fi", true, wifi_changed, NULL);
-	zui_switch(card, "Bluetooth", false, NULL, NULL);
-	zui_set_enabled(zui_switch(card, "Roaming", false, NULL, NULL), false);
+
+/* ---- toggles ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid wifi = Zcheck_box_create("Wi-Fi");
+	Ztoggle_button_set_is_checked(wifi, true);
+	Zpanel_add(stack, wifi);
+	Zpanel_add(stack, Zcheck_box_create("Bluetooth"));
+	
+	const Zid dark = Zradio_button_create("dark", "theme");
+	Ztoggle_button_set_is_checked(dark, true);
+	Zpanel_add(stack, dark);
+	Zpanel_add(stack, Zradio_button_create("light", "theme"));
+	
+	const Zid bold = Ztoggle_button_create("bold");
+	Ztoggle_button_set_is_checked(bold, true);
+	Zpanel_add(stack, bold);
 }
 
-static void level_moved(zui_node *s, void *data) {
-	if (zui_event(s) == ZUI_EVENT_SUBMIT) printf("saved %.2f\n", zui_get_value(s));
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 380);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_slider(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *card = zui_section(page, "Display");
-	zui_slider(card, "Brightness", 0.6, level_moved, NULL);
-	zui_slider(page, "Outside a card", 0.25, NULL, NULL);
+
+/* ---- switch ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid on = Ztoggle_switch_create();
+	Ztoggle_switch_set_header(on, "Location");
+	Ztoggle_switch_set_is_on(on, true);
+	Zpanel_add(stack, on);
+	
+	const Zid off = Ztoggle_switch_create();
+	Ztoggle_switch_set_header(off, "Airplane mode");
+	Zpanel_add(stack, off);
 }
 
-static void el_progress(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_text(page, "Copying 7 of 10");
-	zui_progress(page, 0.7);
-	zui_text(page, "No idea how long");
-	zui_progress(page, -1);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 260);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void search_typed(zui_node *f, void *data) {
-	if (zui_event(f) == ZUI_EVENT_SUBMIT) printf("search: %s\n", zui_get_text(f));
+
+/* ---- range ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid volume = Zslider_create(Z_HORIZONTAL);
+	Zslider_set_header(volume, "Ringer volume");
+	Zrange_base_set_range(volume, 0, 10);
+	Zrange_base_set_value(volume, 6);
+	Zpanel_add(stack, volume);
+	
+	const Zid bar = Zprogress_bar_create();
+	Zrange_base_set_value(bar, 40);
+	Zpanel_add(stack, bar);
+	
+	const Zid ring = Zprogress_ring_create();
+	Zprogress_ring_set_is_active(ring, true);
+	Zpanel_add(stack, ring);
 }
 
-static void el_field(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_field(page, "Search", search_typed, NULL);
-	zui_set_text(zui_field(page, "Name", NULL, NULL), "Already filled in");
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 380);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_section(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_item(zui_section(page, "A section"), "In its card", NULL, NULL, NULL);
-	zui_node *card = zui_card(page);
-	zui_text(card, "A card with no heading can hold anything.");
-	zui_button(card, "Like this", NULL, NULL);
+
+/* ---- input ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid name = Ztext_box_create("");
+	Ztext_box_set_header(name, "Name");
+	Ztext_box_set_placeholder_text(name, "your name");
+	Zpanel_add(stack, name);
+	
+	const Zid city = Ztext_box_create("London");
+	Ztext_box_set_header(city, "City");
+	Zpanel_add(stack, city);
+	
+	const Zid pass = Zpassword_box_create();
+	Zpassword_box_set_header(pass, "Password");
+	Zpassword_box_set_password(pass, "secret");
+	Zpanel_add(stack, pass);
 }
 
-static void el_layout(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *row = zui_row(page);
-	zui_set_flex(zui_button(row, "1 share", NULL, NULL), 1);
-	zui_node *wide = zui_button(row, "2 shares", NULL, NULL);
-	zui_set_variant(wide, ZUI_TONAL);
-	zui_set_flex(wide, 2);
-	zui_space(page, 40);
-	zui_node *col = zui_column(page);
-	zui_text(col, "A column keeps things together");
-	zui_caption(col, "and can be hidden as one.");
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 420);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_round(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *bar = zui_row(page);
-	const char *names[] = { "plus", "search", "send", "more" };
-	for (int i = 0; i < 4; i++) {
-		zui_node *b = zui_button(bar, names[i], NULL, NULL);
-		zui_set_icon(b, names[i]);
-		zui_set_flex(b, 1);
-	}
+
+/* ---- list ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+static void add_row(const Zid list, const char* const name) {
+	const Zid row = Zlist_view_item_create(nullptr);
+	const Zid text = Ztext_block_create(name);
+	Ztext_block_set_style(text, Z_TEXT_STYLE_PHONE_EXTRA_LARGE);
+	Zcontent_control_set_content(row, text);
+	Zitems_control_add(list, row);
 }
 
-static void el_picture(zui_app *app, zui_node *page) {
-	(void)app;
-	static uint8_t px[64 * 64 * 4];
-	for (int i = 0; i < 64 * 64; i++) {
-		px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
-	}
-	zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  /* or zui_pixmap_load("photo.jpg", 1024) */
-	zui_image(page, pix, 0, 140);                   /* width 0: all there is */
-	zui_node *card = zui_section(page, "Thread rows");
-	zui_node *a = zui_item(card, "Ada", "A picture as the tile", NULL, NULL);
-	zui_set_image(a, pix);
-	zui_set_detail(a, "09:41");
-	zui_node *b = zui_item(card, "Ben", "A monogram, a count, unread", NULL, NULL);
-	zui_set_monogram(b, "B");
-	zui_set_tint(b, 0xd9486e);
-	zui_set_badge(b, "3");
-	zui_set_emphasis(b, true);
-	zui_pixmap_free(pix);
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid list = Zlist_view_create();
+	Zlist_view_add_group_header(list, "a");
+	add_row(list, "Alice");
+	add_row(list, "Amy");
+	Zlist_view_add_group_header(list, "b");
+	add_row(list, "Ben");
+	add_row(list, "Bob");
+	Zelement_set_height(list, 400);
+	Zpanel_add(stack, list);
 }
 
-static double row_height(int row, void *data) { return 66; }
-static void row_bind(int row, zui_node *node, void *data) {
-	char title[32];
-	snprintf(title, sizeof(title), "Row %d", row + 1);
-	zui_item(node, title, row % 3 ? "Made when it came near" : "Of 5000", NULL, NULL);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 460);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_list(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_list(page, 5000, row_height, row_bind, NULL);
+
+/* ---- combo ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid level = Zcombo_box_create();
+	Zcombo_box_set_header(level, "Brightness");
+	Zitems_control_add_text(level, "low");
+	Zitems_control_add_text(level, "medium");
+	Zitems_control_add_text(level, "high");
+	Zselector_set_selected_index(level, 1);
+	Zpanel_add(stack, level);
 }
 
-static void el_pivot(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_node *tabs = zui_tabs(page);
-	zui_node *one = zui_tab(tabs, "chats");
-	zui_item(one, "Ada", "See you soon", NULL, NULL);
-	zui_item(one, "Ben", "Thanks", NULL, NULL);
-	zui_item(zui_tab(tabs, "status"), "Nothing yet", NULL, NULL, NULL);
-	zui_item(zui_tab(tabs, "starred"), "Nothing yet", NULL, NULL, NULL);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 260);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_bubble(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_page_set_compact(page, true);
-	zui_set_subtitle(page, "Last seen today");
-	zui_node *in = zui_bubble(page, false);
-	zui_text(in, "Are you coming tonight?");
-	zui_caption(in, "18:02");
-	zui_node *me = zui_bubble(page, true);
-	zui_text(me, "Yes, on my way");
-	zui_caption(me, "18:03");
+
+/* ---- pickers ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid date = Zdate_picker_create();
+	Zdate_picker_set_header(date, "Date");
+	Zdate_picker_set_date(date, (ZDate){ 2026, 11, 20 });
+	Zpanel_add(stack, date);
+	
+	const Zid time = Ztime_picker_create();
+	Ztime_picker_set_header(time, "Alarm");
+	Ztime_picker_set_time(time, (ZTimeOfDay){ 7, 30 });
+	Zpanel_add(stack, time);
 }
 
-static void el_footer(zui_app *app, zui_node *page) {
-	(void)app;
-	zui_text(page, "The page scrolls under the bar.");
-	zui_node *bar = zui_footer(page);
-	zui_node *field = zui_field(bar, "Type a message", NULL, NULL);
-	zui_set_flex(field, 1);
-	zui_button(bar, "Send", NULL, NULL);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 300);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
 
-static void el_icons(zui_app *app, zui_node *page) {
-	(void)app;
-	const char *names[] = { "wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery", "info", "search", "plus", "check", "close", "more", "back", "chevron", "music", "person", "gear", "phone", "send" };
-	for (int i = 0; i < 21; i += 4) {
-		zui_node *row = zui_row(page);
-		for (int k = i; k < i + 4 && k < 21; k++) {
-			zui_node *b = zui_button(row, names[k], NULL, NULL);
-			zui_set_icon(b, names[k]);
-			zui_set_flex(b, 1);
-		}
-	}
+
+/* ---- pivot ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid pivot = Zpivot_create();
+	Zpivot_set_title(pivot, "SETTINGS");
+	
+	const Zid sound = Zpivot_item_create("sound");
+	const Zid ring = Ztoggle_switch_create();
+	Ztoggle_switch_set_header(ring, "Vibrate");
+	Zcontent_control_set_content(sound, ring);
+	Zpivot_add_item(pivot, sound);
+	
+	const Zid display = Zpivot_item_create("display");
+	Zcontent_control_set_text(display, "Brightness and colour");
+	Zpivot_add_item(pivot, display);
+	
+	Zpage_set_content(page, pivot);
 }
 
-int main(void) {
-	zui_app *app = zui_app_new("zrn-sdk-site-proof", "SDK");
-	zui_node *p_text = zui_page(app, "Text"); el_text(app, p_text);
-	zui_node *p_button = zui_page(app, "Buttons"); el_button(app, p_button);
-	zui_node *p_item = zui_page(app, "List rows"); el_item(app, p_item);
-	zui_node *p_switch = zui_page(app, "Switches"); el_switch(app, p_switch);
-	zui_node *p_slider = zui_page(app, "Sliders"); el_slider(app, p_slider);
-	zui_node *p_progress = zui_page(app, "Progress"); el_progress(app, p_progress);
-	zui_node *p_field = zui_page(app, "Text fields"); el_field(app, p_field);
-	zui_node *p_section = zui_page(app, "Sections"); el_section(app, p_section);
-	zui_node *p_layout = zui_page(app, "Rows"); el_layout(app, p_layout);
-	zui_node *p_round = zui_page(app, "Round"); el_round(app, p_round);
-	zui_node *p_picture = zui_page(app, "Pictures"); el_picture(app, p_picture);
-	zui_node *p_list = zui_page(app, "Long lists"); el_list(app, p_list);
-	zui_node *p_pivot = zui_page(app, "Pivots"); el_pivot(app, p_pivot);
-	zui_node *p_bubble = zui_page(app, "Ada Lane"); el_bubble(app, p_bubble);
-	zui_node *p_footer = zui_page(app, "Footer"); el_footer(app, p_footer);
-	zui_node *p_icons = zui_page(app, "Icons"); el_icons(app, p_icons);
-	return zui_run(app, p_text);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 300);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
+}
+
+
+/* ---- hub ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid hub = Zhub_create();
+	Zhub_set_header(hub, "music");
+	
+	const Zid recent = Zhub_section_create("recent");
+	const Zid lines = Zstack_panel_create(Z_VERTICAL);
+	const Zid a = Ztext_block_create("Morning");
+	Ztext_block_set_style(a, Z_TEXT_STYLE_PHONE_TITLE2);
+	Zpanel_add(lines, a);
+	const Zid b = Ztext_block_create("Drive home");
+	Ztext_block_set_style(b, Z_TEXT_STYLE_PHONE_TITLE2);
+	Zpanel_add(lines, b);
+	Zcontent_control_set_content(recent, lines);
+	Zhub_add_section(hub, recent);
+	
+	const Zid albums = Zhub_section_create("albums");
+	Zcontent_control_set_text(albums, "12 albums");
+	Zhub_add_section(hub, albums);
+	
+	Zpage_set_content(page, hub);
+}
+
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 420);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
+}
+
+
+/* ---- appbar ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid bar = Zcommand_bar_create();
+	Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("add", Zsymbol_icon_create(Z_SYMBOL_ADD)));
+	Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("edit", Zsymbol_icon_create(Z_SYMBOL_EDIT)));
+	Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("delete", Zsymbol_icon_create(Z_SYMBOL_DELETE)));
+	Zcommand_bar_add_secondary_command(bar, Zapp_bar_button_create("settings", Z_INVALID_ID));
+	Zpage_set_bottom_app_bar(page, bar);
+	
+	const Zid title = Ztext_block_create("notes");
+	Ztext_block_set_style(title, Z_TEXT_STYLE_PHONE_TITLE1);
+	Zpanel_add(stack, title);
+}
+
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 300);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
+}
+
+
+/* ---- dialog ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+static void done(const Zid dialog, const ZContentDialogResult result, void* const user_data) { (void)dialog; (void)result; (void)user_data; }
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid text = Ztext_block_create("A page under the dialog");
+	Ztext_block_set_style(text, Z_TEXT_STYLE_BODY);
+	Zpanel_add(stack, text);
+	
+	const Zid dialog = Zcontent_dialog_create();
+	Zcontent_dialog_set_title(dialog, "Delete this note?");
+	Zcontent_control_set_text(dialog, "It will be gone from every device.");
+	Zcontent_dialog_set_primary_button_text(dialog, "delete");
+	Zcontent_dialog_set_secondary_button_text(dialog, "cancel");
+	Zcontent_dialog_show(dialog, root, done, nullptr);
+}
+
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 300);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
+}
+
+
+/* ---- layout ---- */
+#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+	const Zid grid = Zgrid_create();
+	Zgrid_add_column(grid, Z_GRID_STAR, 1);
+	Zgrid_add_column(grid, Z_GRID_STAR, 1);
+	Zgrid_add_row(grid, Z_GRID_PIXEL, 100);
+	
+	const Zid left = Zborder_create();
+	Zborder_bind_background(left, Z_RES_PHONE_ACCENT_BRUSH);
+	Zborder_set_child(left, Ztext_block_create("one star"));
+	Zgrid_place(grid, left, 0, 0);
+	
+	const Zid right = Zborder_create();
+	Zborder_set_border_thickness(right, Zthickness_uniform(2));
+	Zborder_bind_border_brush(right, Z_RES_PHONE_FOREGROUND_BRUSH);
+	Zborder_set_child(right, Ztext_block_create("one star"));
+	Zgrid_place(grid, right, 1, 0);
+	
+	Zpanel_add(stack, grid);
+}
+
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, Z_THEME_DARK);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, 300);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %s, %dx%d\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }

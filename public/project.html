@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Project file and permissions: ztOS SDK</title>
-<meta name="description" content="zrnapp.toml field by field, id rules, permissions, and the .zexec manifest.">
+<title>Project layout: ztOS SDK</title>
+<meta name="description" content="How a zrnSDK v2 app is laid out: CMake, the four presets, the app id, installing, and the licences.">
 <link rel="canonical" href="https://sdk.ztos.online/project">
 <meta name="theme-color" content="#121212">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ztOS SDK">
-<meta property="og:title" content="Project file and permissions: ztOS SDK">
-<meta property="og:description" content="zrnapp.toml field by field, id rules, permissions, and the .zexec manifest.">
+<meta property="og:title" content="Project layout: ztOS SDK">
+<meta property="og:description" content="How a zrnSDK v2 app is laid out: CMake, the four presets, the app id, installing, and the licences.">
 <meta property="og:url" content="https://sdk.ztos.online/project">
 <meta property="og:image" content="https://ztos.online/og.jpg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -23,82 +23,56 @@
 <div class="layout">
 <aside class="sidebar">
 <a class="wordmark" href="/">ztOS <span>SDK</span></a>
-<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav>
-<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project and permissions</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and styles</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Package and publish</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li></ul></nav></details>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next">Coming next</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project" aria-current="page">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next">Coming next</a></li></ul></nav></details>
 <div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
 </aside>
 <main>
 
-<h1>Project file and permissions</h1>
-<p class="lead"><code>zrnapp.toml</code> says who the app is and how to build it. <b>Permissions are declarations only for now: nothing enforces them.</b></p>
-<h2 id="toml">zrnapp.toml</h2>
-<p>This is what <code>zrn new "Notes" --lang python</code> writes:</p>
-<pre><code>[app]
-id = "io.github.you.notes"
-name = "Notes"
-version = "0.1.0"
-summary = "Notes for ztOS"
-author = ""
-licence = "MIT"
-icon = "icon.svg"
-categories = ["Utility"]
-permissions = []
+<h1>Project layout</h1>
+<p class="lead">An app is <b>a CMake project</b> with a <code>CMakePresets.json</code>. The store reads <code>zrnapp.toml</code> (app id, version, permissions, <code>[build] sdk = 2</code>); see <a href="/publish">Publish to the store</a>.</p>
+<h2 id="cmake">CMakeLists.txt</h2>
+<p>This is the whole of <code>examples/helloworld/CMakeLists.txt</code>:</p>
+<pre><code>cmake_minimum_required(VERSION 3.16)
+project(helloworld C)
 
-[build]
-lang = "python"
-entry = "main.py"
-include = ["*.py"]</code></pre>
-<p>For C and C++ <code>[build]</code> has <code>lang</code> and <code>sources = ["main.c"]</code>. Rust has <code>lang = "rust"</code> and its <code>Cargo.toml</code>, whose <code>zrnui</code> dependency is a path into your copy of the SDK.</p>
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+add_subdirectory(../../zrnapp ${CMAKE_BINARY_DIR}/zrnapp)
+
+add_executable(helloworld hello.c)
+target_link_libraries(helloworld PRIVATE zrnapp::zrnapp zrnui::zrnui)</code></pre>
+<p>Outside the checkout, point <code>add_subdirectory</code> at your copy of <code>zrn-sdk/zrnapp</code>. With an installed SDK use pkg-config instead:</p>
+<pre><code>cc -std=c23 app.c $(pkg-config --cflags --libs zrnapp zrnui) -o app</code></pre>
+<p>Or in CMake: <code>pkg_check_modules(ZRN REQUIRED IMPORTED_TARGET zrnapp zrnui)</code> and link <code>PkgConfig::ZRN</code>. There is no CMake package file.</p>
+<h2 id="presets">Presets</h2>
 <div class="table-wrap"><table>
-<tr><th>Field</th><th>Rule</th></tr>
-<tr><td><code>id</code></td><td>Reverse-DNS with three or more parts, lower case. Never changes. Also the Wayland app_id and desktop id. Pass the same id to <code>App</code> in your code</td></tr>
-<tr><td><code>version</code></td><td>Semantic. Higher than any version already in the store</td></tr>
-<tr><td><code>name</code>, <code>summary</code>, <code>author</code>, <code>licence</code>, <code>icon</code></td><td>All needed by the store. Licence is an SPDX id</td></tr>
-<tr><td><code>homepage</code>, <code>categories</code></td><td>Shown in the app list and the store</td></tr>
-<tr><td><code>permissions</code></td><td>See below</td></tr>
+<tr><th>Preset</th><th>For</th><th>Build directory</th></tr>
+<tr><td><code>host-debug</code>, <code>host-release</code></td><td>This computer</td><td><code>build/host-&lt;type&gt;</code></td></tr>
+<tr><td><code>phone-debug</code>, <code>phone-release</code></td><td>A phone (aarch64 Arch Linux ARM), cross build with clang and a sysroot. zrnui and zrnapp are linked statically, no tests</td><td><code>build/phone-&lt;type&gt;</code></td></tr>
 </table></div>
-<p>A bad id stops the build and tells you the fix:</p>
-<pre><code>zrn: error: .../zrnapp.toml: id 'badid' is not valid
-zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-name for Zerone Laboratories' apps</code></pre>
-<h2 id="perms">Permissions</h2>
-<div class="gap"><b>Gap: declared, not enforced</b><p>An app can do what its user can do, whatever this list says. Moderators read the list and ask about each one. Enforcing it with bubblewrap or Landlock is planned in <code>DESIGN.md</code>'s Round 2. Declare honestly now, because that is what gets reviewed.</p></div>
-<div class="table-wrap"><table>
-<tr><th>Name</th><th>Means</th></tr>
-<tr><td><code>network</code>, <code>audio</code>, <code>camera</code>, <code>location</code>, <code>bluetooth</code></td><td>The hardware or network</td></tr>
-<tr><td><code>notifications</code>, <code>background</code></td><td>Showing notifications, running when not in front</td></tr>
-<tr><td><code>phone</code>, <code>contacts</code>, <code>messages</code></td><td>Personal data and calls</td></tr>
-<tr><td><code>files.music</code>, <code>files.pictures</code>, <code>files.documents</code>, <code>files.downloads</code></td><td>Those folders</td></tr>
-</table></div>
-<h2 id="manifest">What goes in the package</h2>
-<p><code>zrn pack</code> turns the project into a manifest, <code>zexec.json</code>. From <code>zrn info</code> on the app above:</p>
-<pre><code>{
- "arch": "any",
- "built": { "by": "zrn 0.1.0", "lang": "python" },
- "categories": [ "Utility" ],
- "entry": "app/main.py",
- "icon": "icon.svg",
- "id": "io.github.you.notes",
- "licence": "MIT",
- "min_ztos": "0.1",
- "name": "Notes",
- "permissions": [],
- "runtime": "python3",
- "summary": "Notes for ztOS",
- "version": "0.1.0",
- "zexec": 1,
- "zrnui": "0.1"
-}
-        417  zexec.json
-        345  app/main.py
-        207  icon.svg</code></pre>
-<p>The store's CI adds <code>source</code>, which holds the repo and commit. <code>bundles</code> is set when libzrnui is inside. <code>arch</code> is <code>aarch64</code>, <code>x86_64</code> or <code>any</code>.</p>
+<p>Copy <code>CMakePresets.json</code> from an example. Its phone presets point at <code>../../cmake/toolchain-aarch64.cmake</code>, so fix that path if your app lives elsewhere. Your own presets go in <code>CMakeUserPresets.json</code>. CLion, VS Code, Qt Creator and Visual Studio read the presets.</p>
+<h2 id="id">The app id</h2>
+<p>The shell matches a window to its <code>.desktop</code> file by app id. zrnapp takes it from <code>ZWindowOptions.app_id</code>, else <code>$ZRNAPP_APP_ID</code>, else the file name of the executable. The title in <code>ZWindowOptions.title</code> is for people.</p>
+<pre><code>const ZWindowOptions window = { .title = "Notes", .app_id = "zrn-notes" };
+Zwindow_run_ex(root, &amp;window);</code></pre>
+<h2 id="install">Installing the SDK</h2>
+<pre><code>cmake --install zrnui/build --prefix /usr/local
+cmake --install zrnapp/build --prefix /usr/local     <span class="c"># configured with -DZRNAPP_SYSTEM_ZRNUI=ON</span></code></pre>
+<p>On Arch Linux each part has a <code>PKGBUILD</code>. Build <code>zrnui</code> first, then <code>zrnapp</code>.</p>
 <h2 id="licence">Licences</h2>
-<p>libzrnui and the bindings are <b>LGPL-2.1-or-later</b>, so an app under any licence can link them. The <code>zrn</code> tools are GPL-2.0-or-later. Examples and templates are MIT, so what <code>zrn new</code> gives you is yours. The bundled fallback font, Selawik, is SIL OFL 1.1. Segoe UI and Segoe MDL2 Assets come from the system and are not in the SDK or on this site.</p>
+<div class="table-wrap"><table>
+<tr><th>What</th><th>Licence</th></tr>
+<tr><td>zrnui, zrnapp, zrnkit</td><td>LGPL-2.1-or-later: apps under any licence can link them</td></tr>
+<tr><td><code>tools/</code></td><td>GPL-2.0-or-later</td></tr>
+<tr><td><code>examples/</code></td><td>MIT: copy them into your app</td></tr>
+<tr><td>Selawik fonts</td><td>SIL Open Font License 1.1</td></tr>
+</table></div>
 
-<p class="foot">Checked against zrn-sdk commit <code>ea16771</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <a href="https://github.com/Zerone-Laboratories/zrn-sdk/tree/71a5ace"><code>71a5ace</code></a> (SDK v2). Pictures and clips are drawn by zrnui's GLES2 renderer, offscreen, from code that compiled, against the zrn-sdk working tree on top of that commit (it adds the app bar measured on a Windows Phone 8.1 phone and the Segoe WP font lookup), in Segoe WP. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
-<script src="/assets/site.js"></script>
-<script src="/assets/motion.js"></script>
 </body>
 </html>

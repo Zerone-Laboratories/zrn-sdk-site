@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Publish to the store: ztOS SDK</title>
+<meta name="description" content="Put a zrnSDK v2 app in the ztOS store: zrnapp.toml, the store&#x27;s CMake build, submitting on Discord, what CI checks and signs, updates, and what people see.">
+<link rel="canonical" href="https://sdk.ztos.online/publish">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS SDK">
+<meta property="og:title" content="Publish to the store: ztOS SDK">
+<meta property="og:description" content="Put a zrnSDK v2 app in the ztOS store: zrnapp.toml, the store&#x27;s CMake build, submitting on Discord, what CI checks and signs, updates, and what people see.">
+<meta property="og:url" content="https://sdk.ztos.online/publish">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<a class="wordmark" href="/">ztOS <span>SDK</span></a>
+<nav class="desk" aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish" aria-current="page">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next">Coming next</a></li></ul></nav>
+<details class="menu"><summary>Pages</summary><nav aria-label="Pages"><ul><li><a class="n" href="/">Overview</a></li><li><a class="n" href="/start">Getting started</a></li><li><a class="n" href="/apps">Ways to make an app</a></li><li><a class="n" href="/project">Project layout</a></li><li><a class="n" href="/elements">UI elements</a></li><li><a class="n" href="/layout">Layout and theme</a></li><li><a class="n" href="/animations">Animations</a></li><li><a class="n" href="/shipping">Build and ship</a></li><li><a class="n" href="/publish" aria-current="page">Publish to the store</a></li><li><a class="n" href="/troubleshooting">Troubleshooting</a></li><li><a class="n" href="/status">Status and gaps</a></li><li><a class="n" href="/next">Coming next</a></li></ul></nav></details>
+<div class="side-foot"><a href="https://ztos.online">ztos.online</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk">zrn-sdk on GitHub</a><a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">This site's source</a></div>
+</aside>
+<main>
+
+<h1>Publish to the store</h1>
+<p class="lead">You never build, sign or upload a package. The store <b>builds your app from your public source</b> at the commit you name, signs it with the store's key and lists it. Nobody merges a pull request to add an app.</p>
+<div class="gap"><b>Not live for v2 apps yet</b><p>This page follows the store's working tree (<a href="https://github.com/Zerone-Laboratories/ztOS-apprepo">ztOS-apprepo</a>), not a pinned commit. The store builds v2 apps only once zrn-sdk's v2 work is committed and pinned as <code>commit_v2</code> in its <code>sdk.lock</code>. Today that is all zeros, and a v2 build stops with <code>sdk.lock: no SDK v2 pinned yet</code>.</p></div>
+<p>You need <b>no signing key</b>. <code>tools/zrn setup-key</code> copies your <b>ssh</b> key to a phone for <code>tools/zrn run</code>. It has nothing to do with the store.</p>
+<h2 id="run">1. Make it work on the phone</h2>
+<pre><code>tools/zrn sysroot                              <span class="c"># one time</span>
+tools/zrn -p - setup-key 192.168.7.2           <span class="c"># one time per phone: your ssh key</span>
+tools/zrn run 192.168.7.2 path/to/your-app     <span class="c"># phone-release build, upload, run</span></code></pre>
+<p>See <a href="/shipping">Build and ship</a>. The <code>phone-release</code> preset links zrnui and zrnapp statically.</p>
+<h2 id="cmake">2. Let the store build it</h2>
+<p>The store does not use the presets. On arm64, inside Arch Linux ARM with only the ztOS image's packages, it runs:</p>
+<pre><code>cmake -S &lt;app&gt; -B &lt;app&gt;/build/store -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DZRN_SDK_DIR=&lt;zrn-sdk at sdk.lock commit_v2&gt; \
+      -DZRNUI_BUILD_SHARED=OFF -DZRNAPP_BUILD_SHARED=OFF \
+      -DZRNUI_BUILD_TESTS=OFF -DZRNAPP_BUILD_TESTS=OFF
+cmake --build &lt;app&gt;/build/store</code></pre>
+<ol>
+<li>Take the SDK from <code>ZRN_SDK_DIR</code>. The examples use a fixed <code>../../zrnapp</code>. A store app does this instead (below).</li>
+<li>Put the program at the top of the build folder, named as <code>[build] target</code> says.</li>
+<li>Link only what the image has. <code>ci/check-linkage.py</code> fails on any library <code>ldd</code> cannot find, and on a shared <code>libzrnui</code> or <code>libzrnapp</code>.</li>
+<li>Download nothing during the build.</li>
+</ol>
+<pre><code>set(ZRN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../zrn-sdk" CACHE PATH "zrn-sdk checkout")
+add_subdirectory(${ZRN_SDK_DIR}/zrnapp ${CMAKE_BINARY_DIR}/zrnapp)
+add_executable(notes main.c)
+target_link_libraries(notes PRIVATE zrnapp::zrnapp zrnui::zrnui)</code></pre>
+<h2 id="toml">3. Write zrnapp.toml</h2>
+<p>In the app folder. The store reads it at the commit you submit.</p>
+<pre><code>[app]
+id = "io.github.alice.notes"     <span class="c"># never changes</span>
+name = "Notes"
+version = "1.0.0"                <span class="c"># semantic, higher than any listed</span>
+summary = "Short notes"
+author = "Alice"
+licence = "MIT"                  <span class="c"># an SPDX id</span>
+icon = "icon.svg"
+categories = ["Utility"]
+permissions = ["network"]
+data_dirs = ["notes"]            <span class="c"># optional: removed on uninstall</span>
+
+[build]
+sdk = 2
+target = "notes"                 <span class="c"># default: the id</span>
+data = ["data/*.png"]            <span class="c"># optional, packed under share/</span></code></pre>
+<p><b>The id</b> is reverse DNS you control, at least three parts, lower case. <code>zrn-</code> ids are for Zerone Laboratories' own repositories. The app list matches your window by <code>StartupWMClass=&lt;id&gt;</code>, so give the window the same id: <code>{ .title = "Notes", .app_id = "io.github.alice.notes" }</code>.</p>
+<p><b>Permissions</b>: <code>network</code>, <code>audio</code>, <code>camera</code>, <code>location</code>, <code>notifications</code>, <code>bluetooth</code>, <code>phone</code>, <code>contacts</code>, <code>messages</code>, <code>background</code>, <code>files.music</code>, <code>files.pictures</code>, <code>files.documents</code>, <code>files.downloads</code>. Ask for what you use, nothing else. Login services are <code>[[service]]</code> tables and need <code>background</code>. Never write systemd units yourself.</p>
+<h2 id="version">4. Raise the version</h2>
+<p>Each submission needs a version that is not in the store yet. The relay refuses a version it already has. The build stops if <code>zrnapp.toml</code> at the commit names another id or version.</p>
+<h2 id="check">5. Check the package (optional)</h2>
+<p>Run the store's own build with a ledger entry of your own, from a checkout of ztOS-apprepo. Write <code>/tmp/ledger/io.github.alice.notes.toml</code>:</p>
+<pre><code>id = "io.github.alice.notes"
+source = "https://github.com/alice/notes"
+subdir = ""
+[[release]]
+version = "1.0.0"
+commit = "&lt;the 40-hex SHA&gt;"
+status = "approved"
+approved_by = "discord:0"
+approved_at = "2026-01-01T00:00:00Z"</code></pre>
+<p>Then build and look at the package:</p>
+<pre><code>STORE_LEDGER=/tmp/ledger ZRN_SDK2=/path/to/zrn-sdk \
+  python3 tools/store.py build --id io.github.alice.notes --version 1.0.0 --out out \
+  --source-override "https://github.com/alice/notes=/path/to/your/clone"
+python3 client/zrn info out/*.zexec      <span class="c"># manifest and files</span>
+python3 client/zrn verify out/*.zexec    <span class="c"># structure; no signature is expected</span></code></pre>
+<p>The package is built for your CPU (x86_64 on a laptop; the store builds aarch64) and is <b>not signed</b>, so the phone's <code>zrn install</code> refuses it. Test on the phone with <code>tools/zrn run</code>.</p>
+<h2 id="submit">6. Submit</h2>
+<ol>
+<li>Commit and push to a <b>public GitHub repository</b>.</li>
+<li>On the ztOS Mobile Discord: <code>/submit-app repo:https://github.com/alice/notes commit:&lt;40-hex SHA&gt; [subdir:app]</code>. The relay checks the repository is public, the commit exists and <code>zrnapp.toml</code> agrees, then opens a post in <b>#ztos-app-submissions</b>. SDK v1's <code>zrn submit</code> is not in v2.</li>
+<li>A moderator reads the source at that commit and presses <b>Accept</b> or <b>Reject</b>.</li>
+</ol>
+<h2 id="ci">7. After Accept</h2>
+<ol>
+<li>The bot adds an approved <code>[[release]]</code> to <code>ledger/&lt;id&gt;.toml</code> and starts <code>publish.yml</code>.</li>
+<li><b>plan</b>: approved releases with nothing published.</li>
+<li><b>build</b>, on arm64, with no secrets: your exact commit, zrn-sdk at <code>sdk.lock</code>, the CMake build, the linkage check.</li>
+<li><b>publish</b>, the only job with the store key: checks each package against the ledger, signs it (<code>.zexec.minisig</code>), uploads both to the release <code>&lt;id&gt;-&lt;version&gt;</code>, and writes a signed <code>index.json</code> on the <code>store-index</code> branch.</li>
+</ol>
+<p>A failed build leaves that release out and fails the run.</p>
+<h2 id="updates">8. Updates</h2>
+<p>Raise <code>version</code>, commit, push, <code>/submit-app</code> the new commit. Moderators see a compare link from your last approved commit. The store never follows a branch.</p>
+<h2 id="users">9. What people see</h2>
+<ul>
+<li>The store lists the app from the signed index. A higher listed version shows as an update.</li>
+<li>Install or update checks the signature, the sha256 and the id, version and arch, then puts the package at <code>~/.local/share/zrn/apps/&lt;id&gt;/&lt;id&gt;.zexec</code> and adds the app to the list. <b>An update never deletes the app's data.</b></li>
+<li>Uninstall asks first, then removes the app, its services and its data, unless <code>--keep-data</code>.</li>
+<li>A revoked release is disabled on phones, with the reason shown.</li>
+</ul>
+<p>The full write-up, with file references, is <code>docs/publishing.md</code> in zrn-sdk.</p>
+
+<p class="foot">Checked against zrn-sdk commit <a href="https://github.com/Zerone-Laboratories/zrn-sdk/tree/71a5ace"><code>71a5ace</code></a> (SDK v2). Pictures and clips are drawn by zrnui's GLES2 renderer, offscreen, from code that compiled, against the zrn-sdk working tree on top of that commit (it adds the app bar measured on a Windows Phone 8.1 phone and the Segoe WP font lookup), in Segoe WP. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+</main>
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
-"""The wiki's words. Everything here was checked against zrn-sdk at COMMIT."""
-COMMIT = "ea16771"
+"""The wiki's words. Everything here was checked against zrn-sdk at COMMIT (SDK v2)."""
+COMMIT = "71a5ace"
 
 SHELL = """<!DOCTYPE html>
 <html lang="en-AU">
@@ -32,698 +32,489 @@ SHELL = """<!DOCTYPE html>
 </aside>
 <main>
 {body}
-<p class="foot">Checked against zrn-sdk commit <code>{commit}</code>. Pictures are real renders of code that compiled. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
+<p class="foot">Checked against zrn-sdk commit <a href="https://github.com/Zerone-Laboratories/zrn-sdk/tree/{commit}"><code>{commit}</code></a> (SDK v2). Pictures and clips are drawn by zrnui's GLES2 renderer, offscreen, from code that compiled, against the zrn-sdk working tree on top of that commit (it adds the app bar measured on a Windows Phone 8.1 phone and the Segoe WP font lookup), in Segoe WP. <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">Source and proof</a>.</p>
 </main>
 </div>
-<script src="/assets/site.js"></script>
-<script src="/assets/motion.js"></script>
 </body>
 </html>
 """
 
-TABS = {
-    "hello": {
-        "c": '''#include <zrnui.h>
-
-static zui_node *status;
-
-static void tapped(zui_node *button, void *data) {
-	zui_set_text(status, "Tapped");
-	zui_toast(zui_node_app(button), "Hello from Notes");
-}
-
-int main(void) {
-	zui_app *app = zui_app_new("io.github.you.notes", "Notes");
-	zui_node *page = zui_page(app, "Notes");
-	zui_node *card = zui_section(page, "Status");
-	status = zui_heading(card, "Not tapped yet");
-	zui_button(page, "Tap me", tapped, NULL);
-	return zui_run(app, page);
-}''',
-        "cpp": '''#include <zrnui.hpp>
-
-int main() {
-	zrn::ui::App app("io.github.you.notes", "Notes");
-	auto page = app.page("Notes");
-	auto status = page.section("Status").heading("Not tapped yet");
-	page.button("Tap me", [&]() {
-		status.set_text("Tapped");
-		app.toast("Hello from Notes");
-	});
-	return app.run(page);
-}''',
-        "rs": '''fn main() {
-    let app = zrnui::App::new("io.github.you.notes", "Notes");
-    let page = app.page("Notes");
-    let status = page.section("Status").heading("Not tapped yet");
-    let app_ref = &app;
-    page.button("Tap me").on_click(move || {
-        status.set_text("Tapped");
-        app_ref.toast("Hello from Notes");
-    });
-    std::process::exit(app.run(page));
-}''',
-        "py": '''import zrnui
-
-app = zrnui.App("io.github.you.notes", "Notes")
-page = app.page("Notes")
-status = page.section("Status").heading("Not tapped yet")
-
-
-def tapped():
-    status.set_text("Tapped")
-    app.toast("Hello from Notes")
-
-
-page.button("Tap me", tapped)
-app.run(page)''',
-    },
-    "nav": {
-        "c": '''static void open_wifi(zui_node *row, void *wifi_page) { zui_push(wifi_page); }
-
-zui_node *wifi = zui_page(app, "Wi-Fi");
-zui_node *page = zui_page(app, "Settings");
-zui_item(zui_card(page), "Wi-Fi", NULL, open_wifi, wifi);
-return zui_run(app, page);''',
-        "cpp": '''auto wifi = app.page("Wi-Fi");
-auto page = app.page("Settings");
-page.card().item("Wi-Fi", "", [&] { wifi.push(); });
-return app.run(page);''',
-        "rs": '''let wifi = app.page("Wi-Fi");
-let page = app.page("Settings");
-page.card().item("Wi-Fi", None).on_click(move || wifi.push());
-std::process::exit(app.run(page));''',
-        "py": '''wifi = app.page("Wi-Fi")
-page = app.page("Settings")
-page.card().item("Wi-Fi", on_click=wifi.push)
-app.run(page)''',
-    },
-    "loop": {
-        "c": '''static void tick(void *data) { zui_toast(data, "A second passed"); }
-static void done(void *data) { zui_busy(data, false); zui_toast(data, "Done"); }
-
-int id = zui_timer(app, 1000, true, tick, app);   /* every second */
-zui_timer_cancel(app, id);
-zui_busy(app, true);
-zui_post(app, done, app);                         /* from any thread */
-zui_watch_fd(app, fd, ready, NULL);               /* ready(fd, data) when readable */
-zui_haptic("tap");                                /* tick, tap, click, heavy */''',
-        "cpp": '''int id = app.timer(1000, true, [&] { app.toast("A second passed"); });
-app.cancel_timer(id);
-app.busy(true);
-app.post([&] { app.busy(false); app.toast("Done"); });   // from any thread
-zui_watch_fd(app.get(), fd, ready, nullptr);             // C API
-zui_haptic("tap");''',
-        "rs": '''let id = app.timer(1000, true, move || println!("a second passed"));
-app.cancel_timer(id);
-app.busy(true);
-let poster = app.poster();                 // Send + Clone, for other threads
-std::thread::spawn(move || { poster.post(|| println!("on the UI thread")); });''',
-        "py": '''tid = app.timer(1000, lambda: app.toast("A second passed"), repeat=True)
-app.cancel(tid)
-app.busy(True)
-app.post(lambda: app.busy(False))          # from any thread
-app.watch(fd, lambda fd: read_it(fd))      # fn(fd) when readable''',
-    },
-    "accent": {
-        "c": '''zui_app_set_accent(app, 0x0050ef);   /* DotMatrix ignores this; the style rules say leave it */''',
-        "cpp": '''app.set_accent(0x0050ef);''',
-        "rs": '''app.set_accent(0x0050ef);''',
-        "py": '''app = zrnui.App("io.github.you.notes", "Notes", accent=0x0050ef)''',
-    },
-}
-
-def demo(name, title=None):
-    return '<div class="demo" data-demo="%s">%s</div>' % (name, "<h4>%s</h4>" % title if title else "")
-
-def curve(spec, label):
-    return '<figure><svg viewBox="0 0 100 100" data-curve="%s" role="img" aria-label="%s" preserveAspectRatio="none"></svg><figcaption>%s</figcaption></figure>' % (spec, label, label)
-
-CATALOGUE_ROWS = [
-    ("turnstile-in", "Y", "-80 to 0", "left edge", "no", "350", "Log 60"),
-    ("turnstile-out", "Y", "0 to 50", "left edge", "1 to 0", "128", "Exp 60"),
-    ("swivel-in", "X", "-45 to 0", "middle", "no (shown from its start)", "300", "Log 200"),
-    ("swivel-out", "X", "0 to 60", "middle", "no (hidden at its end)", "200", "Exp 150"),
-    ("continuum-hide", "X", "0 to 80", "top edge", "1 to 0, drops 120 pt", "120", "Exp 60"),
-    ("continuum-show", "X", "-50 to 0", "top edge", "0 to 1, scale 1.5 to 1, from -60 pt", "350", "Log 60"),
-    ("readerboard-in", "X", "-45 to 0", "top edge", "0 to 1", "166", "Log 60"),
-    ("readerboard-out", "X", "0 to 90", "top edge", "1 to 0", "166", "Exp 60"),
-    ("slide-up-fade-in", "none", "none", "none", "0 to 1, up from 24 pt", "240", "Log 150"),
-    ("rotate-90", "Z", "90 to 0", "middle", "no", "167", "SCurve 7.5"),
-    ("fade-in", "none", "none", "none", "0 to 1", "350", "Log 150"),
-    ("fade-out", "none", "none", "none", "1 to 0", "150", "Exp 150"),
-    ("tile-flip-notify", "X", "-180, 35, -6, 0", "middle", "no", "520", "Log 10, SCurve 10, linear"),
-]
-
-ANIMATIONS = """
-<h1>Animations</h1>
-<p class="lead">Every animation here runs from the same formula and the same numbers as the C code, and each one names the file those numbers come from.</p>
-
-<div class="note"><p><b>A zrnui app does not call any of these.</b> libzrnui has <b>no animation API</b> at commit <code>""" + COMMIT + """</code>: page changes, presses, switches and toasts animate by themselves, and the style decides how. <b>Swivel, fade and the other named transitions are not in libzrnui.</b> They exist in ZrnMetroCore (ztOS's own apps) and in the older Python SDK's <code>animate()</code>.</p></div>
-
-<div class="table-wrap"><table>
-<tr><th>Where you are</th><th>What you get</th><th>How</th></tr>
-<tr><td>zrn-sdk, libzrnui</td><td>Page change, press, switch, pivot, toast, busy, progress, fling</td><td>Automatic. No call, no way to change the numbers</td></tr>
-<tr><td>Older Python SDK, <code>ztos</code></td><td>Its own turnstile and tilt, plus 13 named transitions</td><td><code>ztos.animate(widget, "swivel-in")</code>. Some values differ: see <a href="#old">below</a></td></tr>
-<tr><td>ZrnMetroCore (<code>ztmetro/core</code>)</td><td>13 named transitions, the Swivel board, <code>zmc_turn</code></td><td><code>zmc_transition()</code>, <code>zmc_board_open()</code>. For apps in the ztOS tree, not an SDK</td></tr>
-</table></div>
-
-<h2 id="how">Using these demos</h2>
-<p><b>Replay</b> runs it again. The speed button cycles 1x, 0.25x and 0.1x. The slider shows any single millisecond. Demos start when you scroll to them. If your system asks for reduced motion, nothing starts by itself and each demo rests on its last frame, so you can step through with the slider.</p>
-
-<div class="gap"><b>Where the web version only approximates</b>
-<ul>
-<li><b>Same:</b> durations, staggers, angles, pivots, opacity, easing formulas and the eye distance (a 34 degree field of view on a 740 pt tall screen, <code>gfx.c</code>, <code>zrnmetrogpu.c</code>). A browser's <code>perspective</code> is the same divide the shader does.</li>
-<li><b>Different:</b> the fonts and row layouts are plain CSS stand-ins, not Segoe UI through the SDF renderer. The real look is in the <a href="/elements">renders</a>.</li>
-<li><b>Different:</b> the demos draw in the Metro look only. DotMatrix runs the same motion through its lattice, as the real frames show.</li>
-<li><b>Different:</b> phones here run at your browser's frame rate, not the S9's, and the C code samples its clock once per compositor frame.</li>
-<li><b>Different:</b> libzrnui rotates each row's quads, while these demos rotate a whole row box. Each named-transition demo shows one rectangle in a 300 pt tall stage, while the eye distance stays that of a 740 pt screen.</li>
-<li><b>Not compared to the phone:</b> these were compared by eye with frames from the laptop's virtual compositor, not with the S9's display.</li>
-</ul></div>
-
-<h2 id="curves">The curves</h2>
-<p>Progress over time for each easing. <b>libzrnui</b> has three, in <code>libzrnui/src/core.c</code>: <code>zui_ease_out</code> is <code>1 - (1-t)^3</code>, <code>zui_ease_in</code> is <code>t^3</code>, and <code>zui_ease_emph</code> is a cubic Bezier (0.2, 0.8, 0.2, 1). <b>ZrnMetroCore</b> rebuilds the firmware's named curves in <code>zt_shape</code>, with <code>k = weight / 30</code>: Exp is <code>(e^(k t) - 1) / (e^k - 1)</code> and Log is <code>1 - (e^(k (1-t)) - 1) / (e^k - 1)</code>. The firmware stores names and weights. The formula itself is a reconstruction, as the core's own comment says.</p>
-<div class="curves">""" + curve("out", "zui_ease_out") + curve("in", "zui_ease_in") + curve("emph", "zui_ease_emph") + curve("l:200", "Log 200 (swivel in)") + curve("e:150", "Exp 150 (swivel out)") + curve("l:60", "Log 60") + curve("e:60", "Exp 60") + curve("s:7.5", "SCurve 7.5") + """</div>
-
-<h2 id="page-metro">Page change: the turnstile <span class="tag">libzrnui</span></h2>
-<p>Automatic on <code>zui_push</code> and <code>zui_back</code>, in both styles, with the same numbers. Runs <b>720 ms</b> in all. Rows leave one at a time, 28 ms apart, each over 128 ms, turning 50 degrees about the left edge on <code>zui_ease_in</code> toward the viewer, with opacity <code>1 - u^2</code>. New rows start at 330 ms, also 28 ms apart, each over 180 ms from 80 degrees behind the screen, on <code>zui_ease_out</code>. Going back, both run bottom up and the old rows turn the other way.</p>
-<p>Source: <code>page_xf</code>, <code>OUT_MS</code>, <code>IN_MS</code>, <code>STAGGER</code>, <code>GAP_AT</code> in <code>libzrnui/src/style-metro.c</code>. The comment above them says 33 ms apart; the code that runs says 28.</p>
-<div class="demos">""" + demo("metro-forward", "Forward") + demo("metro-back", "Back") + """</div>
-<p>Real frames, from <code>zrn run --headless</code> in a virtual compositor, one run per picture. Frames the compositor delayed past the end are dropped, and the times are not exact: this shows the shape, while the numbers above come from the code. Metro, then DotMatrix.</p>
-<div class="strip" tabindex="0"><img src="/img/frames-metro.webp" alt="Real frames of the page change in Metro" loading="lazy"></div>
-<div class="strip" tabindex="0"><img src="/img/frames-dotmatrix.webp" alt="Real frames of the page change in DotMatrix" loading="lazy"></div>
-
-<h2 id="page-core">Page change: ZrnMetroCore turnstile <span class="tag dashed">ztOS apps only</span></h2>
-<p>The built-in apps' own version, for comparison: rows 33 ms apart, 128 ms out on <code>t^2</code>, a 120 ms black gap, 180 ms in on <code>1 - (1-t)^3</code>. The total depends on the row count. <code>zmc_turn</code> plays this on one page when its content changes. Source: <code>ROW_OUT_MS</code>, <code>ROW_IN_MS</code>, <code>ROW_STAGGER_MS</code>, <code>GAP_MS</code> and <code>TURN_OUT_DEG</code> in <code>ztmetro/core/zrnmetrocore.c</code>. Simplified here: the real one also holds the tapped row until last, and an app's first page arrives by a different curve (<code>zmr_entrance</code>, 28 ms stagger, 190 ms rows, 200 ms title), which is not shown.</p>
-<div class="demos">""" + demo("core-forward", "Forward") + demo("core-back", "Back") + """</div>
-
-<h2 id="swivel">Swivel: the domino board <span class="tag dashed">ztOS apps only</span></h2>
-<p>The jump grid and the pickers. Each of the 28 tiles turns about a horizontal line through its own middle, in reading order, and each starts while the one before is still moving.</p>
-<div class="table-wrap"><table>
-<tr><th></th><th>Angle</th><th>Time</th><th>Curve</th><th>Visibility</th></tr>
-<tr><td>In</td><td>-45 to 0 degrees</td><td>0.3 s</td><td>Log 200</td><td>opacity 0 at 0 s, 1 at 0.01 s</td></tr>
-<tr><td>Out</td><td>0 to 60 degrees</td><td>0.2 s</td><td>Exp 150</td><td>opacity 1 until 0.199 s, 0 at 0.2 s</td></tr>
-</table></div>
-<p>These come from the Lumia 530 firmware's <code>ANIMATIONS.UIX</code> (<code>SwivelTransitionIn</code> at 0x3f29, <code>SwivelTransitionOut</code> at 0x3eb3), recorded in <code>ztmetro/core/zrnboard.h</code> as <code>ZB_SWIVEL_*</code>. <b>The firmware fixes each tile's motion but not the stagger.</b> The 12 ms step (<code>ZB_STAGGER_MS</code>) is ztOS's own choice, and so is using the same order going out. The source says which is which. Tile sizes are also from there and <code>CONSTANTS.UIX</code>: 99 wide with a 12 gap at 480, scaled by 0.75.</p>
-<p>A picker adds fixed steps this demo leaves out: the box lit for 116 ms, the page gone in 50 ms, the surface in 33 ms (<code>ZB_BOX_MS</code>, <code>ZB_PAGE_OUT_MS</code>, <code>ZB_PAGE_IN_MS</code>).</p>
-<div class="demos">""" + demo("board", "Board in, 500 ms held here for viewing, then out") + """</div>
-
-<h2 id="catalogue">Every named transition <span class="tag dashed">ZrnMetroCore, older Python SDK</span></h2>
-<p>The table <code>ztanims[]</code> in <code>ztmetro/core/zrnmetrocore.c</code>, read from the Lumia 530's compiled Iris markup. The readerboard pair stays only for the motion catalogue in <code>zrndevtest</code>.</p>
-<div class="table-wrap"><table>
-<tr><th>Name</th><th>Axis</th><th>Degrees</th><th>Pivot</th><th>Other</th><th>ms</th><th>Curve</th></tr>
-""" + "".join("<tr><td><code>%s</code></td>%s</tr>\n" % (r[0], "".join("<td>%s</td>" % c for c in r[1:])) for r in CATALOGUE_ROWS) + """</table></div>
-<div class="demos wide">""" + "".join(demo("n:" + r[0], r[0]) for r in CATALOGUE_ROWS) + """</div>
-
-<h2 id="press">Press and tilt <span class="tag">libzrnui</span></h2>
-<p>Press a row in this demo: it follows your pointer. What is under the finger leans toward it by up to <b>14 degrees</b>, but its far edge never lifts more than <b>40 pt</b>, and it sinks <b>4.5 %</b>. Rows tilt. Sliders and fields do not move, and a button fills instead. In takes <b>90 ms</b>, and the release takes 200 ms (160 ms when the press is cancelled by a scroll), all on <code>zui_ease_out</code>. DotMatrix uses the same <code>press_xf</code>.</p>
-<p>Source: <code>press_xf</code>, <code>TILT_DEG</code>, <code>TILT_LIFT</code>, <code>PRESS_SINK</code> in <code>style-metro.c</code>, timing in <code>core.c</code>. ZrnMetroCore shares the numbers (<code>ZMC_TILT_*</code>).</p>
-<div class="demos">""" + demo("press", "Tilt: press it") + """</div>
-
-<h2 id="small">Small things <span class="tag">libzrnui</span></h2>
-<div class="table-wrap"><table>
-<tr><th>What</th><th>Numbers</th><th>Source</th></tr>
-<tr><td>Switch block</td><td>180 ms, <code>zui_ease_out</code></td><td><code>zui_set_on</code>, <code>core.c</code></td></tr>
-<tr><td>Pivot</td><td>240 ms from where the finger left it, <code>zui_ease_out</code>. Past a quarter of a screen a swipe goes on to the next tab</td><td><code>zui_tabs_select</code>, <code>extras.c</code>; <code>core.c</code></td></tr>
-<tr><td>Toast</td><td>2600 ms: in over 200, out over the last 300. A bar drops 60 pt from the top</td><td><code>core.c</code>, <code>toast</code> in <code>style-metro.c</code></td></tr>
-<tr><td>Busy, unknown progress</td><td>five 4 pt dots every 2600 ms, each 7.5 % later, on <code>0.5 + 4 (p - 0.5)^3</code> across the width</td><td><code>dots</code>, <code>style-metro.c</code></td></tr>
-<tr><td>Fling</td><td>speed times <code>0.9972^ms</code>, a further <code>0.8^(ms/16)</code> past an end, stop under 0.02 pt/ms, then back to the end with a 70 ms time constant</td><td><code>core.c</code></td></tr>
-<tr><td>Glide to the end of a chat</td><td>a 45 ms time constant, for up to 600 ms</td><td><code>zui_page_scroll_end</code>, <code>core.c</code></td></tr>
-</table></div>
-<p>A field's box turns from grey to white the moment it has focus. That change is not animated.</p>
-<div class="demos">""" + demo("knob", "Switch") + demo("pivot", "Pivot") + demo("toast", "Toast") + demo("busy", "Busy") + demo("fling", "Fling at 3.2 pt/ms") + """</div>
-
-<h2 id="old">Older Python SDK: where its numbers differ <span class="tag dashed">older</span></h2>
-<p><code>ztos.animate(widget, name, repeat=False, on_done=None)</code> plays a named transition over any Qt widget. Its table is <code>TRANSITIONS</code> in <code>sdk/runtime/ztos/__init__.py</code>. Most entries match the list above, but <b>its swivel predates the firmware decode now in <code>zrnboard.h</code></b>:</p>
-<div class="table-wrap"><table>
-<tr><th></th><th>ZrnMetroCore (firmware)</th><th>Older Python SDK</th></tr>
-<tr><td><code>swivel-in</code></td><td>-45 to 0, 300 ms, Log 200, no fade</td><td>-60 to 0, 300 ms, Log 200, fades 0 to 1</td></tr>
-<tr><td><code>swivel-out</code></td><td>0 to 60, 200 ms, Exp 150, no fade</td><td>0 to 60, 199 ms, Exp 60, fades 1 to 0</td></tr>
-<tr><td>Press in, out</td><td>90, 200 ms</td><td>70, 160 ms, divided by the menu speed setting</td></tr>
-<tr><td>Row out</td><td>128 ms</td><td>110 ms, divided by the menu speed setting</td></tr>
-</table></div>
-<p>Everything else that moves in that SDK is also scaled by <code>ANIM_SPEED</code>, which comes from a user setting, so its real durations vary.</p>
-"""
 
 PAGES = {
-"index": ("ztOS SDK wiki", "How to make apps for ztOS: C, C++, Rust and Python, every UI element with real renders, every animation running live, and how to publish.", """
+"index": ("ztOS SDK wiki", "How to make apps for ztOS with zrnSDK v2: Windows Phone 8.1 controls in C23, every element rendered in Dark and Light, and how to build and run on a phone.", """
 <h1>Make apps for ztOS</h1>
-<p class="lead">ztOS apps are written in C, C++, Rust or Python against one small GPU toolkit, <b>libzrnui</b>. <b>ztCoolStyle</b> is the name of that UI system. It draws in <b>Metro</b> or <b>DotMatrix</b>, whichever the system is set to. Apps ship as one signed <code>.zexec</code> file, and the store builds them from your source.</p>
-<p><b>Requires ztOS BETA-1.1 or later.</b> Apps made with this SDK run on BETA-1.1 and newer; earlier versions of ztOS cannot run them.</p>
+<p class="lead">ztOS apps are written in <b>C</b> against <b>zrnSDK v2</b>. It gives you the controls of Windows Phone 8.1: pages, a Pivot and a Hub, buttons, lists, pickers, app bars and dialogs. C++ apps include the same headers.</p>
+<div class="gap"><b>This site documents SDK v2</b><p>SDK v1 (<code>zui_*</code>, <code>zrn render</code>, four languages) is gone. Nothing here works with v1, and v1 code does not build against v2. What is not committed yet is on <a href="/next">Coming next</a>.</p></div>
 <pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
-cd zrn-sdk && export PATH="$PWD/tools:$PATH"
-zrn doctor
-zrn new "Notes" --lang c
-cd notes && zrn build && zrn render out.png</code></pre>
-{{SHOTS:item}}
+cd zrn-sdk/examples/helloworld
+cmake --preset host-debug
+cmake --build --preset host-debug
+./build/host-debug/helloworld          <span class="c"># inside a Wayland session</span></code></pre>
+{{SHOTS:pivot}}
 <div class="cards">
-<a href="/start"><b>Getting started</b><span>Install, first app, first picture</span></a>
-<a href="/apps"><b>Ways to make an app</b><span>Each language, the CLI, the older SDK</span></a>
-<a href="/project"><b>Project and permissions</b><span>zrnapp.toml, ids, the manifest</span></a>
+<a href="/start"><b>Getting started</b><span>Build, first app, the life cycle</span></a>
+<a href="/apps"><b>Ways to make an app</b><span>C, C++, or zrnui inside your own shell</span></a>
+<a href="/project"><b>Project layout</b><span>CMake, presets, app id, licences</span></a>
 <a href="/elements"><b>UI elements</b><span>Each one, rendered, with its code</span></a>
-<a href="/layout"><b>Layout and styles</b><span>How pages fit, Metro and DotMatrix</span></a>
-<a href="/animations"><b>Animations</b><span>Swivel, turnstile, fade, tilt, running live</span></a>
-<a href="/shipping"><b>Package and publish</b><span>Test, sign, submit, update, revoke</span></a>
+<a href="/layout"><b>Layout and theme</b><span>Panels, Dark and Light, accents, fonts</span></a>
+<a href="/animations"><b>Animations</b><span>Turnstile, pivot slide, tilt, easing</span></a>
+<a href="/shipping"><b>Build and ship</b><span>Phone builds, tools/zrn run, packages</span></a>
+<a href="/publish"><b>Publish to the store</b><span>zrnapp.toml, submitting, updates</span></a>
 <a href="/troubleshooting"><b>Troubleshooting</b><span>Real errors and their fixes</span></a>
 <a href="/status"><b>Status and gaps</b><span>What is missing or unproven</span></a>
+<a href="/next"><b>Coming next</b><span>Work that is not committed yet</span></a>
 </div>
 <h2>How the code on this site was checked</h2>
-<p>Each element's snippet is <b>compiled in every language that has it</b> and rendered with <code>zrn render</code>, using the phone's own fonts from the ztOS tree. The renders are then compared pixel by pixel across languages. They match exactly, except the progress page, whose moving dots are caught at a different instant each time. The generator and report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>. Animation numbers are read out of the C source and each one names its file.</p>
+<p>Each element's snippet is put into a small C program and <b>compiled against zrnui: the pinned commit plus the uncommitted working tree</b> (app bar measurements, Segoe WP lookup), with <code>-Wall -Wextra -Werror</code>. The program draws it with zrnui's <b>GLES2 renderer</b> (<code>Z_RENDERER_GPU</code>), offscreen through Mesa, once in Dark and once in Light, with the default Cobalt accent, in Segoe WP from a Windows Phone 8.1 firmware (read at render time; the font is Microsoft's and is not served by this site). The page is 360 points wide, as ztOS lays an app out on the S9, and shown here at that size.</p>
+<p>The <a href="/animations">animation clips</a> are recorded the same way: <code>Zroot_tick</code> in steps of 1/60 s, each frame read back. Nothing is drawn by hand. The generator and its report are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site">this site's repository</a>.</p>
 """),
 
-"start": ("Getting started: ztOS SDK", "Install the zrn CLI and libzrnui's build dependencies, make a first app, and see it without a phone.", """
+"start": ("Getting started: ztOS SDK", "Build zrnSDK v2 with CMake, run the hello world, and learn handles, the root, pages, events and time.", """
 <h1>Getting started</h1>
-<p class="lead">You can write an app and see it without a phone. This takes a few minutes on a Linux computer.</p>
-<div class="gap"><b>What you cannot do yet</b><p>Install on a phone from here with one command. <code>zrn install</code> installs for the user on the computer it runs on. Every build made on a laptop so far is x86_64 (or <code>any</code> for Python). See <a href="/status">Status and gaps</a>.</p></div>
+<p class="lead">You can write and run an app on a Linux computer with a Wayland session. A phone is only needed to check touch, scale and speed.</p>
 <h2 id="need">What you need</h2>
 <ul>
-<li>Python 3.11 or newer, a C compiler, <code>make</code>, <code>pkg-config</code>.</li>
-<li>Development files for Wayland, Mesa (EGL, GLES2, GBM), FreeType, HarfBuzz, fontconfig, libpng and xkbcommon. <code>libzrnui/Makefile</code> asks pkg-config for <code>wayland-client wayland-egl egl glesv2 freetype2 harfbuzz fontconfig libpng xkbcommon gbm</code>.</li>
-<li>A C++ compiler for C++ apps, <code>cargo</code> for Rust apps.</li>
-<li>For <code>zrn run</code> with no Wayland session: <code>kwin_wayland</code> or <code>weston</code>. Only <code>kwin_wayland</code> has been tried for this site.</li>
+<li>A C23 compiler: GCC 13 or newer, or Clang 19 or newer.</li>
+<li><code>cmake</code> 3.21 or newer (for presets), <code>ninja</code>, <code>pkgconf</code>, <code>freetype2</code>, <code>libpng</code>.</li>
+<li>For the window: <code>wayland</code>, <code>libxkbcommon</code>, <code>wayland-protocols</code>. For the GPU renderer: <code>mesa</code> (EGL, GLES2).</li>
+<li><code>fontconfig</code>, optional. Without it only the Latin letters of the bundled Selawik fonts are drawn.</li>
 </ul>
-<h2 id="install">Install</h2>
-<pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
-cd zrn-sdk
-export PATH="$PWD/tools:$PATH"     <span class="c"># zrn and zrn-exec</span>
-zrn doctor                         <span class="c"># what is missing, and the command that fixes it</span></code></pre>
-<p>A healthy <code>zrn doctor</code>, from the machine that built this site:</p>
-<pre><code>ok   python               3.14
-ok   cc                   /usr/sbin/cc
-ok   pkg-config           /usr/sbin/pkg-config
-ok   make                 /usr/sbin/make
-ok   c++                  /usr/sbin/c++
-ok   cargo                /usr/sbin/cargo
-ok   libraries            all present
-ok   libzrnui             .../libzrnui/build
-ok   fonts                .../libzrnui/fonts
-ok   crypto               python-cryptography
-opt  dev key              ~/.config/zrn/keys/dev.key
-     fix: zrn keygen (zrn pack also makes one)
-ok   headless compositor  kwin_wayland
-ok   offscreen GPU        /dev/dri/renderD*</code></pre>
-<p><code>zrn build</code> builds libzrnui from the tree the first time if it is not installed. To install it for the whole system: <code>make -C libzrnui &amp;&amp; sudo make -C libzrnui install PREFIX=/usr</code>.</p>
+<pre><code>sudo pacman -S --needed base-devel cmake ninja pkgconf freetype2 libpng fontconfig mesa wayland libxkbcommon wayland-protocols</code></pre>
 <h2 id="first">Your first app</h2>
-<pre><code>zrn new "Notes" --lang c --id io.github.you.notes   <span class="c"># or cpp, python, rust</span>
-cd notes
-zrn build
-zrn render out.png                                  <span class="c"># no phone, no display</span></code></pre>
-<p>It writes <code>zrnapp.toml</code>, <code>icon.svg</code>, <code>main.c</code>, <code>AGENTS.md</code> and <code>.gitignore</code>. A cut-down version of what each template holds:</p>
-{{TAB:hello}}
-<h2 id="see">Look at it</h2>
-<pre><code>zrn render out.png                          <span class="c"># first page, 360x740 points at scale 2</span>
-zrn render --page 1 out.png                 <span class="c"># by creation order</span>
-zrn render --page "Wi-Fi" --scroll 300 out.png
-zrn render --style dotmatrix out.png
-zrn render --scale 4 out.png                <span class="c"># the S9's 1440x2960</span>
-zrn run                                     <span class="c"># a phone-sized window</span>
-zrn run --headless --script "wait 500; tap 180 170; wait 600; snap after.png; quit"</code></pre>
-<p>The style flag is only for looking. An app cannot pick its style: the system does. <code>zrn render</code> draws through the same GLES2 path as a running app, using Mesa's surfaceless EGL. <code>--page</code> counts pages in the order your code <b>creates</b> them, which is not the order they open.</p>
+<p>There is no top-level <code>CMakeLists.txt</code>. Each part is its own CMake project. An example pulls in <code>../../zrnapp</code>, and zrnapp pulls in <code>../zrnui</code>.</p>
+<pre><code>git clone https://github.com/Zerone-Laboratories/zrn-sdk
+cd zrn-sdk/examples/helloworld
+cmake --preset host-debug             <span class="c"># configure first</span>
+cmake --build --preset host-debug
+./build/host-debug/helloworld</code></pre>
+<p>This is <code>examples/helloworld/hello.c</code>:</p>
+<pre><code>{{HELLO}}</code></pre>
+<p><code>examples/demoapp</code> is a tour of the controls, with pages for buttons, text, a Pivot and a Hub.</p>
+<h2 id="handles">Handles</h2>
+<p>Every object is a <code>Zid</code>, a 32-bit handle. A handle holds an index and a generation, so a handle of a destroyed object is caught and reported, not a crash. <code>Z_INVALID_ID</code> (0) is never valid. A create function returns it on failure. The reason is in <code>Zget_error()</code> and <code>Zget_error_message()</code>.</p>
+<p>A parent owns its children. <code>Zelement_destroy</code> destroys an element and everything under it. Nothing in the library is thread-safe: use it from one thread.</p>
+<h2 id="life">The life cycle</h2>
+<pre><code>if (!Zinit()) return 1;           <span class="c">// fonts, theme, $ZRNUI_* settings</span>
+Zid root = Zroot_create();        <span class="c">// a root hosts one visual tree</span>
+Zroot_set_visual(root, frame);    <span class="c">// the root owns it</span>
+Zwindow_run_ex(root, &amp;options);   <span class="c">// zrnapp: window and event loop</span>
+Zroot_destroy(root);
+Zshutdown();</code></pre>
+<p><code>Zinit</code> returns false when the fonts cannot be loaded. <code>Zinit</code> and <code>Zshutdown</code> are counted. A root has a size, a theme, an accent and a renderer.</p>
+<h2 id="tree">Building a tree</h2>
+<p>Create with <code>Z&lt;class&gt;_create</code>, set properties with <code>Z&lt;class&gt;_set_&lt;property&gt;</code>, and add to a parent.</p>
+<div class="table-wrap"><table>
+<tr><th>Parent</th><th>How to add a child</th></tr>
+<tr><td>A panel: StackPanel, Grid, Canvas</td><td><code>Zpanel_add(panel, child)</code></td></tr>
+<tr><td>A content control: Button, Page, ScrollViewer</td><td><code>Z..._set_content(control, child)</code></td></tr>
+<tr><td>An items control: ListView, ComboBox</td><td><code>Zitems_control_add</code>, <code>Zitems_control_add_text</code></td></tr>
+</table></div>
+<p>Sizes are logical pixels on a 480 x 800 grid. The shell's scale enlarges the picture, not the grid.</p>
+<h2 id="pages">Pages and Back</h2>
+<p>An app is normally a <code>Frame</code> that shows <code>Page</code>s. A page is made by a factory function, so the frame can build it again on the way back: <code>Zframe_navigate(frame, factory, parameter)</code>, then <code>Zframe_go_back(frame)</code>. The shell already places the window below its status bar, so a Frame starts at the top (set <code>ZRNUI_SAFE_AREA_TOP</code> to reserve room yourself).</p>
+<p>Back (Escape on a keyboard) closes the top popup, flyout or dialog, else an open app bar, else goes back in the Frame. On the first page zrnapp closes the window.</p>
+<h2 id="events">Events</h2>
+<p>Use the typed helper when there is one, such as <code>Zbutton_on_click</code>, or <code>Zelement_on(element, Z_EVENT_..., callback, user_data)</code>. A callback is <code>void callback(Zid sender, void* user_data)</code>. Read the new state from the sender. A handler may destroy its own control or navigate away.</p>
+<pre><code>static void on_click(const Zid sender, void* const user_data) {
+    Zroot_back((Zid)(uintptr_t)user_data);
+}
+Zbutton_on_click(button, on_click, (void*)(uintptr_t)root);</code></pre>
+<h2 id="time">Time</h2>
+<p>Animations, the caret, repeat buttons, scrolling inertia and tooltips move only through <code>Zroot_tick(root, dt_ms)</code>. zrnapp calls it about every 16 ms.</p>
 <h2 id="next">Next</h2>
-<p><a href="/elements">UI elements</a> shows what you can put on a page. <a href="/shipping">Package and publish</a> shows how it reaches people.</p>
+<p><a href="/elements">UI elements</a> shows what you can put on a page. <a href="/shipping">Build and ship</a> shows how to run it on a phone.</p>
 """),
 
-"apps": ("Ways to make an app: ztOS SDK", "Every way to make a ztOS app: C, C++, Rust, Python with libzrnui, the zrn commands, coding agents, and the older Python and Qt SDK.", """
+"apps": ("Ways to make an app: ztOS SDK", "C, C++, or zrnui embedded in your own shell: the ways to use zrnSDK v2, and the older Python and Qt SDK.", """
 <h1>Ways to make an app</h1>
-<p class="lead"><b>Use libzrnui</b>, in whichever of its four languages you like. The older Python and Qt SDK is what the current phone image can already run, so it stays documented, but new work belongs on libzrnui.</p>
+<p class="lead"><b>Write C against zrnui and zrnapp.</b> That is the only supported way in SDK v2.</p>
 <div class="table-wrap"><table>
-<tr><th>Way</th><th>Status</th><th>Draws with</th><th>Ships as</th></tr>
-<tr><td>C, <code>zrnui.h</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>C++, <code>zrnui.hpp</code></td><td>Laptop only so far</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Rust, crate <code>zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2</td><td><code>.zexec</code></td></tr>
-<tr><td>Python, <code>import zrnui</code></td><td>Laptop only so far. Lacks pictures, long lists, pivots, footer, bubbles</td><td>libzrnui, GLES2, no Qt</td><td><code>.zexec</code>, any CPU</td></tr>
-<tr><td>Older Python SDK, <code>ztos</code></td><td>Older. Runs on the phone</td><td>Qt, with a GPU layer for motion</td><td>An aarch64 ELF launcher plus a zip</td></tr>
-<tr><td>ZrnMetroCore, <code>ztmetro/core</code></td><td>The ztOS apps themselves. Not an SDK</td><td>Cairo and Pango, GPU quads</td><td>Part of the system</td></tr>
+<tr><th>Way</th><th>Links</th><th>Status</th></tr>
+<tr><td>C23, an ordinary Wayland app</td><td>zrnui and zrnapp</td><td>Supported. Runs on a laptop and on a phone</td></tr>
+<tr><td>C++, including the C headers</td><td>zrnui and zrnapp</td><td>Works. No C++ wrapper</td></tr>
+<tr><td>zrnui inside your own shell</td><td>zrnui only</td><td>Supported. You drive input, time and frames</td></tr>
+<tr><td>Python, Rust</td><td>-</td><td>No bindings in v2</td></tr>
+<tr><td>Older Python SDK, <code>ztos</code></td><td>Qt</td><td>Older. Part of the ztOS tree, not of zrn-sdk</td></tr>
 </table></div>
-<h2 id="same">One library, four languages</h2>
-<p>One C library sits under all of them. Bindings pass handles and closures and draw nothing themselves, so what they share produces the same pixels. <b>Pictures, long lists, pivots, the footer and bubbles are in C and C++ only at this commit.</b></p>
-{{TAB:hello}}
+<h2 id="libs">The two libraries</h2>
 <div class="table-wrap"><table>
-<tr><th>Language</th><th>Memory and callbacks</th><th>Differences to know</th></tr>
-<tr><td>C</td><td>One callback shape: <code>void cb(zui_node *node, void *data)</code>. <code>zui_event(node)</code> says why it ran. <code>zui_set_handler</code> takes a <code>free_data</code></td><td>Names start <code>zui_</code></td></tr>
-<tr><td>C++</td><td>Header only, namespace <code>zrn::ui</code>. <code>App</code> frees everything. <code>Node</code> is a handle you can copy</td><td><code>toggle</code>, not <code>switch</code>. No <code>watch_fd</code>: use <code>zui_watch_fd(app.get(), ...)</code></td></tr>
-<tr><td>Rust</td><td>Every <code>Node&lt;'a&gt;</code> is tied to its <code>App</code> by lifetime. Closures are boxed and dropped with the node</td><td>Handlers: <code>on_click</code>, <code>on_change</code>, <code>on_slide</code>, <code>on_edit</code>, <code>on_event</code>. Other threads use <code>app.poster()</code>. No <code>watch_fd</code> wrapper</td></tr>
-<tr><td>Python</td><td><code>ctypes</code>, with callbacks kept until the node is freed. An exception in a callback prints and does not cross into C</td><td>Keyword handlers and properties: <code>.detail=</code>, <code>.value=</code>, <code>.on=</code>, <code>.icon=</code></td></tr>
+<tr><th>Library</th><th>What it is</th></tr>
+<tr><td><b>zrnui</b></td><td>The element tree, layout, every control, theme, text, and two painters: software and OpenGL ES 2. It opens no window and has no event loop.</td></tr>
+<tr><td><b>zrnapp</b></td><td>A Wayland window on top of zrnui: the event loop, pointer, touch and keyboard, the shell's scale, and frames to the compositor.</td></tr>
+<tr><td><b>zrnkit</b></td><td>A metapackage that installs both.</td></tr>
 </table></div>
-<h2 id="pages">Pages and moving between them</h2>
-<p>An app is a set of pages. Back on the first page closes the app. The hardware Back, Escape and a tap on the title all go back.</p>
-{{TAB:nav}}
-<h2 id="loop">The main loop</h2>
-<p>All calls come from one thread, the one that called <code>run</code>. <code>post</code> is the only way in from another. There is one app per process.</p>
-{{TAB:loop}}
-<h2 id="zrn">The zrn commands</h2>
+<p>There is no umbrella <code>zrnui.h</code>. Include what you use: <code>zrnui/controls.h</code>, <code>zrnui/host.h</code>, and <code>zrnapp.h</code>. Each header includes the one it builds on.</p>
+<h2 id="cpp">From C++</h2>
+<p>The headers are plain C. A C++ program includes them as they are. C23 <code>nullptr</code> and <code>constexpr</code> are inside the library, not in the headers you call.</p>
+<pre><code>#include &lt;zrnapp.h&gt;
+#include &lt;zrnui/controls.h&gt;
+#include &lt;zrnui/host.h&gt;</code></pre>
+<p>A callback is a plain function pointer. A capturing lambda does not convert to one: pass state through <code>user_data</code>.</p>
+<h2 id="embed">Inside your own shell</h2>
+<p>Link zrnui alone. Your loop injects input, ticks time and takes frames.</p>
+<pre><code>ZConfig config;
+Zconfig_default(&amp;config);
+config.font_directory = "/usr/share/fonts/zrnui/selawik";
+if (!Zinit_ex(&amp;config)) return 1;
+
+const Zid root = Zroot_create();
+Zroot_set_size(root, 480, 800);
+Zroot_set_visual(root, page);
+
+for (;;) {
+    Zroot_inject_pointer(root, Z_POINTER_DOWN, x, y);
+    Zroot_tick(root, dt_ms);
+    ZFrame frame = {0};
+    if (Zroot_render(root, &amp;frame)) present(frame.pixels, frame.width, frame.height, frame.stride);
+}</code></pre>
+<p>A frame is 8-bit RGBA, top row first, owned by the root until the next render. This is how the pictures on this site are made. <code>zrnui/docs/embedding.md</code> has the GPU target and input details.</p>
+<h2 id="old">The older Python SDK <span class="tag dashed">older</span></h2>
+<p>In the ztOS repository at <code>sdk/</code>: Python with Qt (PySide6), Metro look only, run with <code>ztos-sdk run</code> and put on the phone with <code>ztos-sdk deploy</code>. It is not part of zrn-sdk and is not covered here.</p>
+"""),
+
+"project": ("Project layout: ztOS SDK", "How a zrnSDK v2 app is laid out: CMake, the four presets, the app id, installing, and the licences.", """
+<h1>Project layout</h1>
+<p class="lead">An app is <b>a CMake project</b> with a <code>CMakePresets.json</code>. The store reads <code>zrnapp.toml</code> (app id, version, permissions, <code>[build] sdk = 2</code>); see <a href="/publish">Publish to the store</a>.</p>
+<h2 id="cmake">CMakeLists.txt</h2>
+<p>This is the whole of <code>examples/helloworld/CMakeLists.txt</code>:</p>
+<pre><code>cmake_minimum_required(VERSION 3.16)
+project(helloworld C)
+
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+add_subdirectory(../../zrnapp ${CMAKE_BINARY_DIR}/zrnapp)
+
+add_executable(helloworld hello.c)
+target_link_libraries(helloworld PRIVATE zrnapp::zrnapp zrnui::zrnui)</code></pre>
+<p>Outside the checkout, point <code>add_subdirectory</code> at your copy of <code>zrn-sdk/zrnapp</code>. With an installed SDK use pkg-config instead:</p>
+<pre><code>cc -std=c23 app.c $(pkg-config --cflags --libs zrnapp zrnui) -o app</code></pre>
+<p>Or in CMake: <code>pkg_check_modules(ZRN REQUIRED IMPORTED_TARGET zrnapp zrnui)</code> and link <code>PkgConfig::ZRN</code>. There is no CMake package file.</p>
+<h2 id="presets">Presets</h2>
+<div class="table-wrap"><table>
+<tr><th>Preset</th><th>For</th><th>Build directory</th></tr>
+<tr><td><code>host-debug</code>, <code>host-release</code></td><td>This computer</td><td><code>build/host-&lt;type&gt;</code></td></tr>
+<tr><td><code>phone-debug</code>, <code>phone-release</code></td><td>A phone (aarch64 Arch Linux ARM), cross build with clang and a sysroot. zrnui and zrnapp are linked statically, no tests</td><td><code>build/phone-&lt;type&gt;</code></td></tr>
+</table></div>
+<p>Copy <code>CMakePresets.json</code> from an example. Its phone presets point at <code>../../cmake/toolchain-aarch64.cmake</code>, so fix that path if your app lives elsewhere. Your own presets go in <code>CMakeUserPresets.json</code>. CLion, VS Code, Qt Creator and Visual Studio read the presets.</p>
+<h2 id="id">The app id</h2>
+<p>The shell matches a window to its <code>.desktop</code> file by app id. zrnapp takes it from <code>ZWindowOptions.app_id</code>, else <code>$ZRNAPP_APP_ID</code>, else the file name of the executable. The title in <code>ZWindowOptions.title</code> is for people.</p>
+<pre><code>const ZWindowOptions window = { .title = "Notes", .app_id = "zrn-notes" };
+Zwindow_run_ex(root, &amp;window);</code></pre>
+<h2 id="install">Installing the SDK</h2>
+<pre><code>cmake --install zrnui/build --prefix /usr/local
+cmake --install zrnapp/build --prefix /usr/local     <span class="c"># configured with -DZRNAPP_SYSTEM_ZRNUI=ON</span></code></pre>
+<p>On Arch Linux each part has a <code>PKGBUILD</code>. Build <code>zrnui</code> first, then <code>zrnapp</code>.</p>
+<h2 id="licence">Licences</h2>
+<div class="table-wrap"><table>
+<tr><th>What</th><th>Licence</th></tr>
+<tr><td>zrnui, zrnapp, zrnkit</td><td>LGPL-2.1-or-later: apps under any licence can link them</td></tr>
+<tr><td><code>tools/</code></td><td>GPL-2.0-or-later</td></tr>
+<tr><td><code>examples/</code></td><td>MIT: copy them into your app</td></tr>
+<tr><td>Selawik fonts</td><td>SIL Open Font License 1.1</td></tr>
+</table></div>
+"""),
+
+"elements": ("UI elements: ztOS SDK", "Every zrnSDK v2 control on this site, drawn by zrnui's GLES2 renderer at phone size in Dark and Light, with the C that drew it.", """
+<h1>UI elements</h1>
+<p class="lead">Each picture below was drawn by the C under it. It ran against zrnui (the pinned commit plus the uncommitted working tree), with the GLES2 renderer, on a page 360 points wide: the S9's width under the ztOS shell. Each picture is shown at that size.</p>
+<p>The snippets are the body of <code>build(root, page, stack)</code>. <code>stack</code> is a vertical StackPanel, already the page's content, with the margin 19, 32, 19, 0. The full programs are in <a href="https://github.com/Zerone-Laboratories/zrn-sdk-site/tree/main/proof">proof/</a>.</p>
+<p>The pictures are still: motion is on <a href="/animations">Animations</a>. Pictures are cut below the content. More controls exist than are pictured: RichTextBlock, Image, RepeatButton, AutoSuggestBox, GridView, FlipView, SemanticZoom, Flyout, MenuFlyout, ToolTip, ScrollViewer and the panels. Their pages are in <code>zrnui/docs/</code>.</p>
+{{ELEMENTS}}
+"""),
+
+"layout": ("Layout and theme: ztOS SDK", "zrnui's XAML layout, panels, Dark and Light themes, the 20 accents, theme.ini, theme resources, fonts and renderers.", """
+<h1>Layout and theme</h1>
+<p class="lead">Layout is the one of XAML: <b>measure, then arrange</b>. Colours come from the theme and the accent, as on Windows Phone 8.1.</p>
+<h2 id="layout">Layout</h2>
+<p>Every element has <code>Margin</code>, <code>Width</code>, <code>Height</code>, minimum and maximum sizes, and horizontal and vertical alignment. <code>Zthickness(left, top, right, bottom)</code> makes a margin.</p>
+<div class="table-wrap"><table>
+<tr><th>Panel</th><th>What it does</th></tr>
+<tr><td>StackPanel</td><td>One child after another, vertical or horizontal</td></tr>
+<tr><td>VirtualizingStackPanel, ItemsWrapGrid</td><td>The panels of long lists and grids</td></tr>
+<tr><td>WrapPanel</td><td>Children in lines that wrap</td></tr>
+<tr><td>Grid</td><td>Rows and columns: Auto, pixels, or star shares</td></tr>
+<tr><td>Canvas</td><td>Children at fixed positions</td></tr>
+<tr><td>Border</td><td>A background, an edge and padding around one child</td></tr>
+<tr><td>Viewbox</td><td>Scales one child to fit</td></tr>
+<tr><td>Popup</td><td>Shows above the tree</td></tr>
+</table></div>
+<p>The actual size of an element is known after a layout. Call <code>Zroot_update_layout(root)</code> if you need it before the first frame.</p>
+<h2 id="theme">Theme and accent</h2>
+{{SHOTS:toggles}}
+<pre><code>Zroot_set_theme(root, Z_THEME_LIGHT);
+Zroot_set_accent(root, Z_ACCENT_ORANGE);
+Zroot_set_accent_color(root, Zcolor_argb(0xFF1BA1E2));   <span class="c">// or any colour</span></code></pre>
+<p>Dark is the default. The 20 accents are Lime, Green, Emerald, Teal, Cyan, <b>Cobalt</b> (the default), Indigo, Violet, Pink, Magenta, Crimson, Red, Orange, Amber, Yellow, Brown, Olive, Steel, Mauve and Taupe. A theme change cross-fades over a quarter of a second when animations run.</p>
+<h2 id="ini">theme.ini</h2>
+<p>The colours of both themes live in <code>zrnui/theme/theme.ini</code>, as <code>Name = #AARRGGBB</code> in the sections <code>[accent]</code>, <code>[dark]</code> and <code>[light]</code>. A missing key keeps the built-in value. The file is looked for in <code>ZConfig.theme_file</code> or <code>$ZRNUI_THEME</code>, then next to the binary, then the compiled-in path.</p>
+<h2 id="res">Theme resources</h2>
+<p><code>resources.h</code> lists the 491 keys of Windows Phone 8.1's <code>themeresources.xaml</code>, such as <code>Z_RES_PHONE_FOREGROUND_BRUSH</code>. Read them with <code>Zroot_get_theme_color</code> and friends. Override one with <code>Zroot_set_resource_color</code>. Make a property follow a key with a <code>_bind_</code> call, so it changes with the theme.</p>
+<pre><code>Zborder_bind_background(tile, Z_RES_PHONE_ACCENT_BRUSH);   <span class="c">// follows the accent</span></code></pre>
+<h2 id="fonts">Fonts</h2>
+<p>The bundled Selawik fonts stand in for Segoe WP. They hold Latin only. With fontconfig, other scripts are drawn with a system font that has the character. The font directory is <code>ZConfig.font_directory</code> or <code>$ZRNUI_FONT_DIR</code>, then <code>Zset_font_directory</code>, then the compiled-in path.</p>
+<h2 id="renderer">Renderers</h2>
+<div class="table-wrap"><table>
+<tr><th>Setting</th><th>Values</th><th>Notes</th></tr>
+<tr><td><code>Zroot_set_renderer</code>, <code>$ZRNUI_RENDERER</code></td><td>auto, software, gpu</td><td>Auto uses OpenGL ES 2 when it can. Software never touches the GPU</td></tr>
+<tr><td><code>Zroot_set_animations</code>, <code>$ZRNUI_ANIMATIONS</code></td><td>auto, on, off</td><td>Auto runs animations only with the GPU renderer</td></tr>
+<tr><td><code>$ZRNUI_ANIMATION_SPEED</code></td><td>a number</td><td>0.5 is half as fast, 2 twice as fast</td></tr>
+<tr><td><code>Zroot_set_scale</code>, <code>$ZRNAPP_SCALE</code></td><td>a number</td><td>720 x 1280 at 1.5 is laid out as 480 x 800</td></tr>
+</table></div>
+<p>Only <code>Zinit</code> reads the <code>ZRNUI_*</code> variables. <code>Zinit_ex</code> with your own <code>ZConfig</code> ignores them.</p>
+"""),
+
+"animations": ("Animations: ztOS SDK", "The animations in zrnSDK v2: the turnstile page transition, the pivot slide, tilt, app bar and switch motion, and Zelement_animate with its easing curves.", """
+<h1>Animations</h1>
+<p class="lead">Animations run only with the <b>GPU renderer</b>, unless <code>Zroot_set_animations</code> forces them. With the software renderer every change happens at once. Time moves only through <code>Zroot_tick</code>.</p>
+<p>Each clip below is a <b>recording of zrnui itself</b>, from the working tree on top of the pinned commit: the GLES2 renderer offscreen, time moved by <code>Zroot_tick</code> in steps of 1/60 s, every frame read back, input injected as a finger. The program is <code>gen/anim.c</code>. Clips loop with a short pause.</p>
+<h2 id="turnstile">Turnstile: forward, then back</h2>
+{{CLIP:turnstile}}
+<h2 id="pivot">Pivot slide</h2>
+<p>Taps on the headers. Each slide takes 300 ms.</p>
+{{CLIP:pivot}}
+<h2 id="tilt">Tilt</h2>
+<p>A finger held on a list item near its left edge, then near its right edge. The item leans toward it.</p>
+{{CLIP:tilt}}
+<h2 id="appbar">App bar</h2>
+{{CLIP:appbar}}
+<h2 id="toggle">Toggle switch</h2>
+{{CLIP:toggle}}
+<h2 id="theme-change">Theme change</h2>
+<p><code>Zroot_set_theme</code> to the other theme and back. The colours cross-fade.</p>
+{{CLIP:theme}}
+<h2 id="hub">Hub parallax</h2>
+<p>Two drags to the left, then <code>Zhub_scroll_to_section(hub, 0)</code>. The header moves at half the speed of the sections.</p>
+{{CLIP:hub}}
+<h2 id="frost">zrn-frosted-diffusion <span class="tag dashed">uncommitted</span></h2>
+<p>Recorded from the uncommitted zrn-sdk working tree, like the other clips; the pinned commit does not have it. A frosted bar over scrolling rows, in NORMAL, then ASCENDING, then DESCENDING. See <a href="/next#frost">Coming next</a>.</p>
+{{CLIP:frost}}
+<p>Continuum and slide-up transitions are not in the pinned commit, so there is no clip of them.</p>
+<h2 id="numbers">The numbers</h2>
+<div class="table-wrap"><table>
+<tr><th>Animation</th><th>What it does</th><th>Numbers</th><th>Where</th></tr>
+<tr><td>Turnstile</td><td>The leaving page's rows turn away round the left edge, one after another. Then the new page's rows swing in</td><td>706 ms in all. The old page goes at about 330 ms</td><td><code>zrnui/docs/navigation.md</code></td></tr>
+<tr><td>Pivot slide</td><td>Pages and headers move together. Release past a fifth of a page, or a flick, goes on</td><td>300 ms</td><td><code>zrnui/docs/navigation.md</code></td></tr>
+<tr><td>Tilt</td><td>A pressed element leans toward the finger</td><td>14 degrees, in 90 ms, out 160 ms</td><td><code>zrnui/src/anim.c</code></td></tr>
+<tr><td>App bar</td><td>Opens over the page and shows labels</td><td>167 ms</td><td><code>zrnui/docs/app-bars-and-icons.md</code></td></tr>
+<tr><td>Toggle switch</td><td>The knob slides</td><td>180 ms</td><td><code>zrnui/docs/buttons.md</code></td></tr>
+<tr><td>Theme change</td><td>Colours cross-fade</td><td>A quarter of a second</td><td><code>zrnui/include/zrnui/host.h</code></td></tr>
+<tr><td>Hub</td><td>The header moves at half the speed of the sections</td><td>Parallax 0.5</td><td><code>zrnui/include/zrnui/controls.h</code></td></tr>
+</table></div>
+<h2 id="frame">Page transitions</h2>
+<pre><code>Zframe_set_transition(frame, Z_TRANSITION_TURNSTILE);   <span class="c">// the default</span>
+Zframe_set_transition(frame, Z_TRANSITION_NONE);</code></pre>
+<p>It takes effect from the next navigation. A Navigate or GoBack during a transition ends it at once. <code>Zframe_is_transitioning</code> says whether one runs.</p>
+<h2 id="animate">Animate an element</h2>
+<pre><code>void fade_in(Zid element) {
+    Zelement_set_opacity(element, 0.0f);
+    Zelement_animate(element, Z_PROP_OPACITY, 1.0f, 300.0f, Z_EASE_OUT, 0.0f);
+}</code></pre>
+<p><code>Zelement_animate(element, property, to, duration_ms, easing, delay_ms)</code> moves a property from where it is now. A new animation of the same property replaces the running one. With animations off, the property jumps.</p>
+<p>Properties: <code>Z_PROP_OPACITY</code>, <code>Z_PROP_ROTATION_X</code>, <code>Z_PROP_ROTATION_Y</code> (degrees), <code>Z_PROP_SCALE</code>, <code>Z_PROP_TRANSLATE_X</code>, <code>Z_PROP_TRANSLATE_Y</code>.</p>
+<div class="table-wrap"><table>
+<tr><th>Easing</th><th>Curve</th></tr>
+<tr><td><code>Z_EASE_LINEAR</code></td><td>Linear</td></tr>
+<tr><td><code>Z_EASE_OUT</code></td><td>Cubic: quick start, soft end</td></tr>
+<tr><td><code>Z_EASE_IN</code></td><td>Cubic: slow start</td></tr>
+<tr><td><code>Z_EASE_EMPHASIZED</code></td><td>Cubic Bezier (0.2, 0.8, 0.2, 1): quick start, long soft settle</td></tr>
+</table></div>
+<h2 id="transform">Render transforms</h2>
+<p><code>Zelement_set_projection</code> (a PlaneProjection), <code>Zelement_set_render_scale</code> and <code>Zelement_set_translate</code> change how an element is drawn, not its layout. Only the GPU renderer draws them. A transformed element is still hit where layout put it.</p>
+<p><code>Zelement_set_tilt(element, on)</code> turns tilt on or off. It is on by default for list and grid items, group headers, hyperlinks, check boxes, radio buttons and menu items. It is off for Button.</p>
+"""),
+
+"shipping": ("Build and ship: ztOS SDK", "Cross build a zrnSDK v2 app for an aarch64 phone with the phone-release preset, run it with tools/zrn, and install it. The store's .zexec format 2 is coming.", """
+<h1>Build and ship</h1>
+<p class="lead">Build on your computer for aarch64, then upload and run on the phone with one script, <b><code>tools/zrn</code></b>. It is <code>cmake</code>, <code>podman</code>, <code>rsync</code> and <code>ssh</code>, nothing more.</p>
+<div class="gap"><b>Store packages are coming</b><p>The store's <code>.zexec</code> format 2 for v2 apps is <b>not committed yet</b>. v1's <code>zrn pack</code>, <code>zrn submit</code> and <code>zrn verify</code> are gone. Today a v2 app reaches a phone through <code>tools/zrn run</code>, or as a system package. How the store will take it: <a href="/publish">Publish to the store</a>.</p></div>
+<h2 id="once">One time on the computer</h2>
+<p>Needs <code>podman</code>, <code>qemu-user-static</code> with binfmt for aarch64, <code>clang</code>, <code>lld</code>, <code>cmake</code>, <code>ninja</code>, <code>rsync</code> and <code>ssh</code>.</p>
+<pre><code>tools/zrn sysroot          <span class="c"># an Arch Linux ARM container, exported to ~/.cache/zrn/sysroot</span></code></pre>
+<p>It takes some minutes, because the container runs under qemu. The cross build links against this sysroot, so the libraries match the phone's.</p>
+<h2 id="key">One time per phone</h2>
+<pre><code>tools/zrn -p - setup-key 192.168.7.2     <span class="c"># asks for the password, copies your ssh key</span></code></pre>
+<p>The user is <code>alarm</code> unless you give <code>-u</code>. <code>-i</code> picks a key. Nothing is stored: not the password, the user or the host. Use <code>-p -</code> or <code>ZRN_PASSWORD</code>, not a password on the command line.</p>
+<h2 id="run">Every time</h2>
+<pre><code>tools/zrn run 192.168.7.2 examples/helloworld</code></pre>
+<p>This builds with the <code>phone-release</code> preset, uploads the changed bytes, and starts the app over ssh with its output in your terminal. <code>Ctrl-C</code> stops it.</p>
 <div class="table-wrap"><table>
 <tr><th>Command</th><th>What it does</th></tr>
-<tr><td><code>zrn new NAME --lang c|cpp|python|rust [--id ID] [--dir D]</code></td><td>A project from a template. The default id is <code>io.github.$USER.name</code></td></tr>
-<tr><td><code>zrn build [--arch A]</code></td><td>C and C++ against the system's or the SDK's libzrnui. Rust with cargo. Python is syntax-checked</td></tr>
-<tr><td><code>zrn render OUT.png [--page N|TITLE] [--style metro|dotmatrix] [--size WxH] [--scale S] [--scroll Y]</code></td><td>Draws a page, no display needed</td></tr>
-<tr><td><code>zrn run [--headless] [--script S] [--style] [--size] [--scale] [--timeout T]</code></td><td>In your Wayland session, else a nested compositor. <code>--headless</code>: a virtual one</td></tr>
-<tr><td><code>zrn pack [--arch] [--out D] [--key K] [--no-sign] [--bundle-zrnui]</code></td><td>Makes <code>dist/&lt;id&gt;-&lt;version&gt;-&lt;arch&gt;.zexec</code> and <code>.minisig</code></td></tr>
-<tr><td><code>zrn verify FILE [--sig S] [--key K]</code></td><td>Exit 0 good, 1 broken, 2 not trusted</td></tr>
-<tr><td><code>zrn install FILE [--key K]</code>, <code>zrn uninstall ID</code></td><td>For this user, on this computer</td></tr>
-<tr><td><code>zrn info FILE</code></td><td>The manifest and the files inside</td></tr>
-<tr><td><code>zrn exec FILE</code></td><td>What <code>zrn-exec</code> does: verify, unpack once, run</td></tr>
-<tr><td><code>zrn keygen [--name N] [--output O] [--force] [--no-trust]</code></td><td>A signing key. <code>zrn pack</code> makes one if you have none</td></tr>
-<tr><td><code>zrn submit [--repo R] [--commit C] [--contact C] [--notes N] [--send]</code></td><td>Shows the store entry for HEAD. Only <code>--send</code> sends it</td></tr>
-<tr><td><code>zrn doctor</code></td><td>The toolchain, and how to fix what is missing</td></tr>
-<tr><td><code>zrn init-agents [--agent a,b] [--all] [--list] [--force]</code></td><td>Instruction files and the <code>zrnui</code> skill for coding agents</td></tr>
+<tr><td><code>tools/zrn build &lt;dir&gt;</code></td><td>Cross build into <code>&lt;dir&gt;/build/phone-release/</code></td></tr>
+<tr><td><code>tools/zrn push &lt;host&gt; &lt;dir&gt;</code></td><td>Upload to <code>~/zrn-dev/&lt;name&gt;/</code>, with the fonts and theme in <code>~/zrn-dev/share/</code></td></tr>
+<tr><td><code>tools/zrn run &lt;host&gt; &lt;dir&gt; [args]</code></td><td>Build, push and run. Arguments after the directory go to the app</td></tr>
+<tr><td><code>tools/zrn watch &lt;host&gt; &lt;dir&gt;</code></td><td>Run again when a source changes. Needs <code>inotify-tools</code></td></tr>
 </table></div>
-<p>Every command takes <code>--json</code>, which prints one object on stdout. Errors look like <code>{"ok": false, "error": {"code", "message", "hint"}}</code>. Exit 3 is a usage error. <code>-C DIR</code> runs in another project folder.</p>
-<h2 id="agents">With a coding agent</h2>
-<pre><code>zrn init-agents --list
-claude       CLAUDE.md                            .claude/skills/zrnui
-codex        AGENTS.md                            .agents/skills/zrnui
-gemini       GEMINI.md                            .gemini/skills/zrnui
-cursor       .cursor/rules/zrnui.mdc              .cursor/skills/zrnui
-copilot      .github/copilot-instructions.md      .github/skills/zrnui
-opencode     AGENTS.md                            .opencode/skills/zrnui
-antigravity  .agent/rules/zrnui.md                .agent/skills/zrnui
-windsurf     .windsurf/rules/zrnui.md             .windsurf/skills/zrnui</code></pre>
-<p>It only writes into an app's own folder, one with <code>zrnapp.toml</code>. An agent can check its own work with <code>zrn render</code> and read the picture. The paths for Cursor, Windsurf and Gemini are the least certain, as <code>DESIGN.md</code> says.</p>
-<h2 id="old">The older Python SDK <span class="tag dashed">older</span></h2>
-<p>In the ztOS repository at <code>sdk/</code>. Apps are Python with Qt (PySide6), in the Metro look only. A built app is a small aarch64 ELF launcher with a zip behind it. No screenshots here: nothing from this SDK was rendered for this site.</p>
-<pre><code>ztos-sdk new "Notes"     <span class="c"># a new app in ./notes</span>
-ztos-sdk run             <span class="c"># a 360x640 window; Escape is back</span>
-ztos-sdk designer        <span class="c"># draw pages in Qt Designer</span>
-ztos-sdk deploy          <span class="c"># build, install on the phone over SSH, open it</span>
-ztos-sdk logs -f
-ztos-sdk doctor          <span class="c"># also: build, install, launch, uninstall, list</span></code></pre>
-<pre><code>import ztos
-
-app = ztos.App()
-
-class Home(ztos.Page):
-    def __init__(self):
-        super().__init__("notes")
-        self.entry("new note", "start writing", lambda: app.push(Editor()))
-        self.toggle("Sync", on=True, on_change=self.sync)
-
-    def sync(self, on):
-        ztos.notify("Notes", "sync on" if on else "sync off")
-
-app.run(Home())</code></pre>
-<p>It has things libzrnui lacks at this commit: <code>menu</code>, <code>Dialog</code>, <code>message</code>, <code>notify</code>, <code>store</code>, <code>battery</code>, <code>performance</code> and <code>animate</code>. The project file is <code>ztos.toml</code>, not <code>zrnapp.toml</code>, and its ids reserve both <code>zt</code> and <code>zrn</code>. The full reference is <a href="https://github.com/Zerone-Laboratories/ztOS/blob/main/sdk/README.md">sdk/README.md</a>.</p>
-<h2 id="core">ZrnMetroCore <span class="tag dashed">not an SDK</span></h2>
-<p>The C toolkit behind ztOS's own apps (<code>ztmetro/core</code>). It builds inside the ztOS tree and has no packaging or stable interface for outside apps. It appears here because its <a href="/animations">animations</a> are the reference for Metro's motion. <code>DESIGN.md</code> plans to move those apps to libzrnui one at a time.</p>
+<p><code>ZRN_HOST</code> makes the host optional. <code>ZRN_PRESET=phone-debug</code> builds a debug binary.</p>
+<h2 id="static">Static linking</h2>
+<p>The <code>phone-*</code> presets turn off the shared libraries. The app is linked <b>statically</b> with zrnui and zrnapp, so one file goes up. The phone needs only its system libraries: wayland, freetype, mesa. The fonts and <code>theme.ini</code> are passed with <code>ZRNUI_FONT_DIR</code> and <code>ZRNUI_THEME</code>.</p>
+<h2 id="pkg">As a system package</h2>
+<p>zrnui, zrnapp, zrnkit and demoapp each have a <code>PKGBUILD</code>. <code>makepkg -si</code> in <code>zrnui</code>, then <code>zrnapp</code>, installs the libraries. An app can follow the demoapp <code>PKGBUILD</code>.</p>
+<h2 id="zexec">.zexec format 2 <span class="tag dashed">coming</span></h2>
+<p>A signed store package for v2 apps. Its layout, signing and submission flow are not in the pinned commit, so this site does not describe them yet.</p>
 """),
 
-"project": ("Project file and permissions: ztOS SDK", "zrnapp.toml field by field, id rules, permissions, and the .zexec manifest.", """
-<h1>Project file and permissions</h1>
-<p class="lead"><code>zrnapp.toml</code> says who the app is and how to build it. <b>Permissions are declarations only for now: nothing enforces them.</b></p>
-<h2 id="toml">zrnapp.toml</h2>
-<p>This is what <code>zrn new "Notes" --lang python</code> writes:</p>
+"publish": ("Publish to the store: ztOS SDK", "Put a zrnSDK v2 app in the ztOS store: zrnapp.toml, the store's CMake build, submitting on Discord, what CI checks and signs, updates, and what people see.", """
+<h1>Publish to the store</h1>
+<p class="lead">You never build, sign or upload a package. The store <b>builds your app from your public source</b> at the commit you name, signs it with the store's key and lists it. Nobody merges a pull request to add an app.</p>
+<div class="gap"><b>Not live for v2 apps yet</b><p>This page follows the store's working tree (<a href="https://github.com/Zerone-Laboratories/ztOS-apprepo">ztOS-apprepo</a>), not a pinned commit. The store builds v2 apps only once zrn-sdk's v2 work is committed and pinned as <code>commit_v2</code> in its <code>sdk.lock</code>. Today that is all zeros, and a v2 build stops with <code>sdk.lock: no SDK v2 pinned yet</code>.</p></div>
+<p>You need <b>no signing key</b>. <code>tools/zrn setup-key</code> copies your <b>ssh</b> key to a phone for <code>tools/zrn run</code>. It has nothing to do with the store.</p>
+<h2 id="run">1. Make it work on the phone</h2>
+<pre><code>tools/zrn sysroot                              <span class="c"># one time</span>
+tools/zrn -p - setup-key 192.168.7.2           <span class="c"># one time per phone: your ssh key</span>
+tools/zrn run 192.168.7.2 path/to/your-app     <span class="c"># phone-release build, upload, run</span></code></pre>
+<p>See <a href="/shipping">Build and ship</a>. The <code>phone-release</code> preset links zrnui and zrnapp statically.</p>
+<h2 id="cmake">2. Let the store build it</h2>
+<p>The store does not use the presets. On arm64, inside Arch Linux ARM with only the ztOS image's packages, it runs:</p>
+<pre><code>cmake -S &lt;app&gt; -B &lt;app&gt;/build/store -G Ninja -DCMAKE_BUILD_TYPE=Release \\
+      -DZRN_SDK_DIR=&lt;zrn-sdk at sdk.lock commit_v2&gt; \\
+      -DZRNUI_BUILD_SHARED=OFF -DZRNAPP_BUILD_SHARED=OFF \\
+      -DZRNUI_BUILD_TESTS=OFF -DZRNAPP_BUILD_TESTS=OFF
+cmake --build &lt;app&gt;/build/store</code></pre>
+<ol>
+<li>Take the SDK from <code>ZRN_SDK_DIR</code>. The examples use a fixed <code>../../zrnapp</code>. A store app does this instead (below).</li>
+<li>Put the program at the top of the build folder, named as <code>[build] target</code> says.</li>
+<li>Link only what the image has. <code>ci/check-linkage.py</code> fails on any library <code>ldd</code> cannot find, and on a shared <code>libzrnui</code> or <code>libzrnapp</code>.</li>
+<li>Download nothing during the build.</li>
+</ol>
+<pre><code>set(ZRN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../zrn-sdk" CACHE PATH "zrn-sdk checkout")
+add_subdirectory(${ZRN_SDK_DIR}/zrnapp ${CMAKE_BINARY_DIR}/zrnapp)
+add_executable(notes main.c)
+target_link_libraries(notes PRIVATE zrnapp::zrnapp zrnui::zrnui)</code></pre>
+<h2 id="toml">3. Write zrnapp.toml</h2>
+<p>In the app folder. The store reads it at the commit you submit.</p>
 <pre><code>[app]
-id = "io.github.you.notes"
+id = "io.github.alice.notes"     <span class="c"># never changes</span>
 name = "Notes"
-version = "0.1.0"
-summary = "Notes for ztOS"
-author = ""
-licence = "MIT"
+version = "1.0.0"                <span class="c"># semantic, higher than any listed</span>
+summary = "Short notes"
+author = "Alice"
+licence = "MIT"                  <span class="c"># an SPDX id</span>
 icon = "icon.svg"
 categories = ["Utility"]
-permissions = []
+permissions = ["network"]
+data_dirs = ["notes"]            <span class="c"># optional: removed on uninstall</span>
 
 [build]
-lang = "python"
-entry = "main.py"
-include = ["*.py"]</code></pre>
-<p>For C and C++ <code>[build]</code> has <code>lang</code> and <code>sources = ["main.c"]</code>. Rust has <code>lang = "rust"</code> and its <code>Cargo.toml</code>, whose <code>zrnui</code> dependency is a path into your copy of the SDK.</p>
-<div class="table-wrap"><table>
-<tr><th>Field</th><th>Rule</th></tr>
-<tr><td><code>id</code></td><td>Reverse-DNS with three or more parts, lower case. Never changes. Also the Wayland app_id and desktop id. Pass the same id to <code>App</code> in your code</td></tr>
-<tr><td><code>version</code></td><td>Semantic. Higher than any version already in the store</td></tr>
-<tr><td><code>name</code>, <code>summary</code>, <code>author</code>, <code>licence</code>, <code>icon</code></td><td>All needed by the store. Licence is an SPDX id</td></tr>
-<tr><td><code>homepage</code>, <code>categories</code></td><td>Shown in the app list and the store</td></tr>
-<tr><td><code>permissions</code></td><td>See below</td></tr>
-</table></div>
-<p>A bad id stops the build and tells you the fix:</p>
-<pre><code>zrn: error: .../zrnapp.toml: id 'badid' is not valid
-zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-name for Zerone Laboratories' apps</code></pre>
-<h2 id="perms">Permissions</h2>
-<div class="gap"><b>Gap: declared, not enforced</b><p>An app can do what its user can do, whatever this list says. Moderators read the list and ask about each one. Enforcing it with bubblewrap or Landlock is planned in <code>DESIGN.md</code>'s Round 2. Declare honestly now, because that is what gets reviewed.</p></div>
-<div class="table-wrap"><table>
-<tr><th>Name</th><th>Means</th></tr>
-<tr><td><code>network</code>, <code>audio</code>, <code>camera</code>, <code>location</code>, <code>bluetooth</code></td><td>The hardware or network</td></tr>
-<tr><td><code>notifications</code>, <code>background</code></td><td>Showing notifications, running when not in front</td></tr>
-<tr><td><code>phone</code>, <code>contacts</code>, <code>messages</code></td><td>Personal data and calls</td></tr>
-<tr><td><code>files.music</code>, <code>files.pictures</code>, <code>files.documents</code>, <code>files.downloads</code></td><td>Those folders</td></tr>
-</table></div>
-<h2 id="manifest">What goes in the package</h2>
-<p><code>zrn pack</code> turns the project into a manifest, <code>zexec.json</code>. From <code>zrn info</code> on the app above:</p>
-<pre><code>{
- "arch": "any",
- "built": { "by": "zrn 0.1.0", "lang": "python" },
- "categories": [ "Utility" ],
- "entry": "app/main.py",
- "icon": "icon.svg",
- "id": "io.github.you.notes",
- "licence": "MIT",
- "min_ztos": "0.1",
- "name": "Notes",
- "permissions": [],
- "runtime": "python3",
- "summary": "Notes for ztOS",
- "version": "0.1.0",
- "zexec": 1,
- "zrnui": "0.1"
-}
-        417  zexec.json
-        345  app/main.py
-        207  icon.svg</code></pre>
-<p>The store's CI adds <code>source</code>, which holds the repo and commit. <code>bundles</code> is set when libzrnui is inside. <code>arch</code> is <code>aarch64</code>, <code>x86_64</code> or <code>any</code>.</p>
-<h2 id="licence">Licences</h2>
-<p>libzrnui and the bindings are <b>LGPL-2.1-or-later</b>, so an app under any licence can link them. The <code>zrn</code> tools are GPL-2.0-or-later. Examples and templates are MIT, so what <code>zrn new</code> gives you is yours. The bundled fallback font, Selawik, is SIL OFL 1.1. Segoe UI and Segoe MDL2 Assets come from the system and are not in the SDK or on this site.</p>
-"""),
-
-"elements": ("UI elements: ztOS SDK", "Every libzrnui element, rendered in Metro and DotMatrix, with code in C, C++, Rust and Python where each has it.", """
-<h1>UI elements</h1>
-<p class="lead">Every element libzrnui has at commit <code>""" + COMMIT + """</code>, rendered by <code>zrn render</code> from the code beside it.</p>
-<p>The language tab you pick is remembered. Each snippet is the body of a function that has <code>app</code> and <code>page</code>, and every language shown compiled and rendered the same pixels, except that the moving progress dots differ. Pictures use the phone's Segoe fonts.</p>
-<div class="gap"><b>Not in this commit</b>
-<p>Dialogs, menus and pickers. <a href="/status">Status and gaps</a> has the full list.</p></div>
-<div class="cards">
-<a href="#text"><b>Text</b></a><a href="#button"><b>Buttons</b></a><a href="#item"><b>List rows</b></a><a href="#switch"><b>Switches</b></a><a href="#slider"><b>Sliders</b></a><a href="#progress"><b>Progress</b></a><a href="#field"><b>Text fields</b></a><a href="#section"><b>Sections and cards</b></a><a href="#layout"><b>Rows, columns, space</b></a><a href="#round"><b>Round buttons</b></a><a href="#picture"><b>Pictures</b></a><a href="#list"><b>Long lists</b></a><a href="#pivot"><b>Pivots</b></a><a href="#bubble"><b>Bubbles</b></a><a href="#footer"><b>Footer</b></a><a href="#icons"><b>Icons</b></a><a href="#busy"><b>Busy</b></a><a href="#toast"><b>Toast</b></a><a href="#changing"><b>Changing things</b></a>
-</div>
-{{ELEMENTS}}
-<h2 id="busy">Busy</h2>
-<p><code>zui_busy(app, true)</code>, or <code>app.busy(True)</code> in Python, shows that something is loading: dots crossing the top of the screen. These pictures come from a running app in a virtual compositor, one instant of the movement. <a href="/animations#small">See it move</a>.</p>
-{{SHOTS:busy}}
-<h2 id="toast">Toast</h2>
-<p><code>zui_toast(app, "Saved")</code>, or <code>app.toast("Saved")</code> in the other languages, shows a short message for 2.6 seconds, on an accent bar from the top.</p>
-{{SHOTS:toast}}
-<h2 id="changing">Changing things after they are made</h2>
-<p>The tree stays. Keep the node and change it: the app redraws only when something changed.</p>
-<div class="table-wrap"><table>
-<tr><th>C</th><th>C++, Rust</th><th>Python</th><th>Does</th></tr>
-<tr><td><code>zui_set_text</code>, <code>zui_get_text</code></td><td><code>set_text</code>, C++ <code>text_value</code>, Rust <code>get_text</code></td><td><code>set_text()</code>, <code>.text_value</code></td><td>Label, title or field text</td></tr>
-<tr><td><code>zui_set_detail</code></td><td><code>set_detail</code></td><td><code>.detail=</code></td><td>An item's value on the right; a switch's second line</td></tr>
-<tr><td><code>zui_set_subtitle</code></td><td><code>set_subtitle</code></td><td><code>.subtitle=</code></td><td>The line under a title</td></tr>
-<tr><td><code>zui_set_value</code>, <code>zui_get_value</code></td><td><code>set_value</code>, <code>value</code></td><td><code>.value</code></td><td>Slider or progress, 0 to 1</td></tr>
-<tr><td><code>zui_set_on</code>, <code>zui_get_on</code></td><td><code>set_on</code>, <code>is_on</code></td><td><code>.on</code></td><td>A switch</td></tr>
-<tr><td><code>zui_set_enabled</code></td><td><code>set_enabled</code></td><td><code>.enabled=</code></td><td>40 % opacity, no touch</td></tr>
-<tr><td><code>zui_set_visible</code></td><td><code>set_visible</code></td><td><code>.visible=</code></td><td>Hidden nodes take no room</td></tr>
-<tr><td><code>zui_clear</code>, <code>zui_destroy</code></td><td><code>clear</code>, C++ <code>destroy</code></td><td><code>clear()</code>, <code>destroy()</code></td><td>Remove what is in it, or it. Do not use old handles after</td></tr>
-</table></div>
-"""),
-
-"layout": ("Layout and styles: ztOS SDK", "How libzrnui lays out pages, ztCoolStyle's two styles Metro and DotMatrix, palettes, fonts and accent colours.", """
-<h1>Layout and styles</h1>
-<p class="lead"><b>You say what is on a page; the system decides how it looks.</b> Everything is in points on a 360 point wide phone, and the same code draws in either style.</p>
-<h2 id="layout">How a page is laid out</h2>
-<ul>
-<li>A page is a column. Things appear in the order you add them.</li>
-<li><code>section</code> and <code>card</code> group things. Prefer these to manual spacing.</li>
-<li><code>row</code> sets things side by side. <code>set_flex</code> shares spare width by proportion.</li>
-<li>Pages scroll by themselves when they outgrow the screen. A hidden node takes no room.</li>
-<li>A <code>list</code> goes last in its page or tab. A <code>footer</code> stays at the bottom over the list.</li>
-<li>Scale: <code>ZUI_SCALE</code>, else the shell's <code>ZTMETRO_SCALE</code> (4 on the S9, so 1440x2960 pixels is 360x740 points), else the compositor's.</li>
-</ul>
-<h2 id="pick">ztCoolStyle and who picks the style</h2>
-<p><b>ztCoolStyle</b> is the name of this UI system. Its only styles are <b>Metro</b> and <b>DotMatrix</b>. <b>An app cannot pick one</b>, so it never differs from what is around it, and the two never mix. In order (<code>pick_style</code> in <code>core.c</code>):</p>
+sdk = 2
+target = "notes"                 <span class="c"># default: the id</span>
+data = ["data/*.png"]            <span class="c"># optional, packed under share/</span></code></pre>
+<p><b>The id</b> is reverse DNS you control, at least three parts, lower case. <code>zrn-</code> ids are for Zerone Laboratories' own repositories. The app list matches your window by <code>StartupWMClass=&lt;id&gt;</code>, so give the window the same id: <code>{ .title = "Notes", .app_id = "io.github.alice.notes" }</code>.</p>
+<p><b>Permissions</b>: <code>network</code>, <code>audio</code>, <code>camera</code>, <code>location</code>, <code>notifications</code>, <code>bluetooth</code>, <code>phone</code>, <code>contacts</code>, <code>messages</code>, <code>background</code>, <code>files.music</code>, <code>files.pictures</code>, <code>files.documents</code>, <code>files.downloads</code>. Ask for what you use, nothing else. Login services are <code>[[service]]</code> tables and need <code>background</code>. Never write systemd units yourself.</p>
+<h2 id="version">4. Raise the version</h2>
+<p>Each submission needs a version that is not in the store yet. The relay refuses a version it already has. The build stops if <code>zrnapp.toml</code> at the commit names another id or version.</p>
+<h2 id="check">5. Check the package (optional)</h2>
+<p>Run the store's own build with a ledger entry of your own, from a checkout of ztOS-apprepo. Write <code>/tmp/ledger/io.github.alice.notes.toml</code>:</p>
+<pre><code>id = "io.github.alice.notes"
+source = "https://github.com/alice/notes"
+subdir = ""
+[[release]]
+version = "1.0.0"
+commit = "&lt;the 40-hex SHA&gt;"
+status = "approved"
+approved_by = "discord:0"
+approved_at = "2026-01-01T00:00:00Z"</code></pre>
+<p>Then build and look at the package:</p>
+<pre><code>STORE_LEDGER=/tmp/ledger ZRN_SDK2=/path/to/zrn-sdk \\
+  python3 tools/store.py build --id io.github.alice.notes --version 1.0.0 --out out \\
+  --source-override "https://github.com/alice/notes=/path/to/your/clone"
+python3 client/zrn info out/*.zexec      <span class="c"># manifest and files</span>
+python3 client/zrn verify out/*.zexec    <span class="c"># structure; no signature is expected</span></code></pre>
+<p>The package is built for your CPU (x86_64 on a laptop; the store builds aarch64) and is <b>not signed</b>, so the phone's <code>zrn install</code> refuses it. Test on the phone with <code>tools/zrn run</code>.</p>
+<h2 id="submit">6. Submit</h2>
 <ol>
-<li><code>ZUI_STYLE</code> in the environment, for renders and tests only. This is what <code>--style</code> sets.</li>
-<li>The session's <code>ZTRF_SHELL_STYLE</code>.</li>
-<li><code>style =</code> in <code>~/.config/ztmetro/config</code>.</li>
-<li>Metro.</li>
+<li>Commit and push to a <b>public GitHub repository</b>.</li>
+<li>On the ztOS Mobile Discord: <code>/submit-app repo:https://github.com/alice/notes commit:&lt;40-hex SHA&gt; [subdir:app]</code>. The relay checks the repository is public, the commit exists and <code>zrnapp.toml</code> agrees, then opens a post in <b>#ztos-app-submissions</b>. SDK v1's <code>zrn submit</code> is not in v2.</li>
+<li>A moderator reads the source at that commit and presses <b>Accept</b> or <b>Reject</b>.</li>
 </ol>
-<p><code>zui_app_set_style</code> and <code>zui_app_set_theme</code> are kept for the ABI and change nothing for a user: both styles are black, and there is no light theme.</p>
-{{SHOTS:section}}
-<h2 id="metro">Metro</h2>
-<p>The same widgets as ZrnMetroCore draws them: black, white Segoe UI, the app's name in capitals over a 48 pt lowercase title fixed at the top, pivots whose next titles run grey off the edge, rectangular toggles, outlined buttons that fill when pressed, round buttons with a word under them, Messaging's thread rows and bubbles, the tilt on press and the turnstile between pages.</p>
-<h2 id="dotmatrix">DotMatrix</h2>
-<p>The same widgets in the same places. Everything filled is drawn by one fragment shader as dots 2.3 pt apart on one lattice, lit where the shape covers the cell's centre. Text is a 3x5 dot type drawn for this library, in upper case with no shaping, so <b>scripts other than Latin come out as <code>?</code></b>, as in ztMETRO. Pictures are dots of the palette's main colour at their brightness. Compared with the shell's own DotMatrix it lacks the ghost field and the glow.</p>
-<p><code>dotmatrix_palette =</code> in the same config file picks one of six palettes, by number or by name: Mono, Amber, Green, Ice, White, Red. The accent is the palette's, so <code>set_accent</code> is ignored.</p>
-<div class="strip" tabindex="0"><img src="/img/palettes.webp" alt="The same page in DotMatrix's six palettes" loading="lazy"></div>
-<h2 id="numbers">The numbers</h2>
-<p>From <code>.m</code> in <code>style-metro.c</code>, in points, the same for both styles.</p>
-<div class="table-wrap"><table>
-<tr><th>What</th><th>Value</th></tr>
-<tr><td>Page margin, gap</td><td>16, 12</td></tr>
-<tr><td>Title, header</td><td>48, fixed, in a 108 pt header</td></tr>
-<tr><td>Body, heading, caption</td><td>16, 25.5, 13</td></tr>
-<tr><td>Row height, with a second line</td><td>52, 66</td></tr>
-<tr><td>Row title, second line</td><td>21, 13</td></tr>
-<tr><td>Button height</td><td>40, or 72 round with its word</td></tr>
-<tr><td>Field height</td><td>44, plus a 22 pt caption outside a footer</td></tr>
-<tr><td>Corners, card padding</td><td>0</td></tr>
-<tr><td>Line spacing</td><td>1.25</td></tr>
-</table></div>
-<h2 id="fonts">Fonts and colour</h2>
-<ul>
-<li><b>Text:</b> Segoe UI from the system. Selawik, its open metric twin, is bundled and used only where Segoe is absent.</li>
-<li><b>Icons:</b> Segoe MDL2 Assets from the system. Strokes under DotMatrix or without the font.</li>
-<li><b>Metro colours:</b> black <code>#000000</code>, white text, grey <code>#999999</code> second lines, red <code>#E51400</code> for danger, the accent for what is on.</li>
-<li><b>Accent:</b> <code>ZUI_ACCENT</code>, else <code>accent =</code> in the config (a ztmetro colour name or <code>#rrggbb</code>), else cobalt <code>#0050EF</code>. Leave it to the system.</li>
-</ul>
-{{TAB:accent}}
-<h2 id="rules">Style rules</h2>
-<ul>
-<li>One primary button a page at most. Others tonal or plain, and danger for what destroys.</li>
-<li>Short noun titles. Metro shows them in lower case.</li>
-<li>Leave the accent to the system.</li>
-<li>Check both styles before you publish: <code>zrn render --style dotmatrix</code>.</li>
-<li>Do not imitate system UI. Moderators reject it.</li>
-</ul>
-<h2 id="scripts">Other scripts</h2>
-<p>In Metro, HarfBuzz shapes Sinhala, Tamil, Greek and Cyrillic, and CJK comes from fontconfig fallback. <b>Bidirectional text is not reordered</b>, so Arabic and Hebrew will not read correctly yet. DotMatrix shows Latin only.</p>
-"""),
-
-"animations": ("Animations: ztOS SDK", "Swivel with its domino stagger, turnstile, fade, tilt and every other ztOS animation, running live with the real durations, curves and angles.", ANIMATIONS),
-
-"shipping": ("Package and publish: ztOS SDK", "Testing without a phone, packing a signed .zexec, submitting to the ztOS store, updates and revocation.", """
-<h1>Package and publish</h1>
-<p class="lead">Test with pictures, pack a signed <code>.zexec</code>, push your source, and the store builds that exact commit. <b>You never upload a binary.</b></p>
-<div class="gap"><b>Warning: this path is not proven end to end</b>
-<p>The submission Worker, bot and publishing workflow are deployed, and the publish run produced an empty signed index. <b>No real app has yet gone from submit through Accept to a listed build.</b> The phone's store app cannot show these apps yet. Expect rough edges, and tell the moderators on Discord what you hit.</p></div>
-<h2 id="test">Test</h2>
-<pre><code>zrn render out.png
-zrn render --style metro out.png
-zrn run --headless --script "wait 500; tap 180 170; type hi; wait 600; snap after.png; back; quit"
-make check          <span class="c"># in the SDK: C, tool and Rust tests</span></code></pre>
-<p>Script steps are <code>wait MS</code>, <code>tap X Y</code>, <code>drag X Y POINTS</code> (a finger moving that far up over 200 ms), <code>type TEXT</code>, <code>snap FILE</code>, <code>back</code> and <code>quit</code>, separated by semicolons. A snapshot takes a while, so use one per run when timing matters.</p>
-<p>In C tests, <code>zui_layout</code>, <code>zui_inject_touch</code> and <code>zui_inject_text</code> work with no display. Python has <code>app.layout()</code> and <code>app.tap()</code>, and <code>Node.frame()</code> says where something landed. <code>ZUI_PERFLOG=1</code> prints what each frame costs the CPU.</p>
-<h2 id="pack">Pack</h2>
-<pre><code>$ zrn pack
-zrn: made signing key A90978EBF45FDFE2 (~/.config/zrn/keys/dev.key); this user now trusts it
-packed dist/io.github.you.notes-0.1.0-any.zexec (1120 bytes, sha256 ef4693336d58fd18...), signed by A90978EBF45FDFE2
-$ zrn verify dist/io.github.you.notes-0.1.0-any.zexec
-good: io.github.you.notes 0.1.0 (any), signed by A90978EBF45FDFE2
-$ zrn install dist/io.github.you.notes-0.1.0-any.zexec
-installed io.github.you.notes 0.1.0 -> ~/.local/share/zrn/apps/io.github.you.notes/io.github.you.notes.zexec
-  app list: ~/.local/share/applications/io.github.you.notes.desktop</code></pre>
-<p>Output above is real, with paths shortened. A native package holds a program for one CPU, so one built on a laptop runs only on x86_64. Python packages are <code>any</code>. Until libzrnui ships in the system image, <code>zrn pack --bundle-zrnui</code> puts it inside the package.</p>
-<h3>What a .zexec is</h3>
-<pre><code>#!/usr/bin/env zrn-exec\\n      <span class="c"># chmod +x and run it</span>
-&lt;zip archive&gt;
-  zexec.json                    <span class="c"># the manifest, first</span>
-  icon.svg | icon.png
-  bin/&lt;id&gt;                      <span class="c"># native: the program</span>
-  lib/  share/                  <span class="c"># optional libraries and data</span>
-  app/                          <span class="c"># python3: the sources</span>
-&lt;file&gt;.zexec.minisig            <span class="c"># detached minisign-format signature</span></code></pre>
-<p><code>zrn-exec</code> checks structure and signature before anything inside runs, unpacks once to <code>~/.cache/zrn/apps/&lt;id&gt;/&lt;sha256&gt;</code>, and logs what the app prints to <code>~/.local/state/zrn/&lt;id&gt;.log</code>. Packing is reproducible: the same commit gives the same bytes. Trusted keys live in <code>/etc/zrn/trusted-keys</code>, <code>/usr/share/zrn/trusted-keys</code> and <code>~/.config/zrn/trusted-keys</code>. The format has not been cross-checked against the real <code>minisign</code> program.</p>
-<h2 id="submit">Submit to the store</h2>
+<h2 id="ci">7. After Accept</h2>
 <ol>
-<li>Your app builds from a clean checkout. Rust crates are the only downloads allowed in a build.</li>
-<li><code>zrnapp.toml</code> is complete, and the id is one you control.</li>
-<li>Push to a <b>public GitHub repository</b>. Other hosts are planned.</li>
-<li><code>zrn submit</code> shows the entry for HEAD, which must be clean. <code>zrn submit --send</code> sends it.</li>
+<li>The bot adds an approved <code>[[release]]</code> to <code>ledger/&lt;id&gt;.toml</code> and starts <code>publish.yml</code>.</li>
+<li><b>plan</b>: approved releases with nothing published.</li>
+<li><b>build</b>, on arm64, with no secrets: your exact commit, zrn-sdk at <code>sdk.lock</code>, the CMake build, the linkage check.</li>
+<li><b>publish</b>, the only job with the store key: checks each package against the ledger, signs it (<code>.zexec.minisig</code>), uploads both to the release <code>&lt;id&gt;-&lt;version&gt;</code>, and writes a signed <code>index.json</code> on the <code>store-index</code> branch.</li>
 </ol>
-<p>Or on the ztOS Mobile Discord: <code>/submit-app repo:https://github.com/you/notes commit:&lt;40-digit SHA&gt; [subdir:app]</code>.</p>
-<h3>What happens next</h3>
-<ol>
-<li>The Worker checks the commit exists and reads <code>zrnapp.toml</code> at that commit.</li>
-<li>The bot opens a post in <b>#ztos-app-submissions</b> with the manifest, the permissions, and a link to the exact tree.</li>
-<li>A moderator reads the source and presses <b>Accept</b> or <b>Reject</b>, with a reason.</li>
-<li>Accept records the release in <code>ledger/&lt;id&gt;.toml</code>: the commit, who approved it and when.</li>
-<li>CI builds that commit with no secrets and no token, for aarch64 (Python once, for any CPU). A separate job signs it without running anything from the package, then publishes it to the signed index.</li>
-</ol>
-<h3>What gets you rejected</h3>
+<p>A failed build leaves that release out and fails the run.</p>
+<h2 id="updates">8. Updates</h2>
+<p>Raise <code>version</code>, commit, push, <code>/submit-app</code> the new commit. Moderators see a compare link from your last approved commit. The store never follows a branch.</p>
+<h2 id="users">9. What people see</h2>
 <ul>
-<li>Doing what the permissions do not say, or asking for permissions the app does not use.</li>
-<li>Obfuscated code, code that downloads and runs code, or an app that is not what its name says.</li>
-<li>A build that fails from a clean checkout.</li>
-<li>Unreadable text or fake system UI.</li>
+<li>The store lists the app from the signed index. A higher listed version shows as an update.</li>
+<li>Install or update checks the signature, the sha256 and the id, version and arch, then puts the package at <code>~/.local/share/zrn/apps/&lt;id&gt;/&lt;id&gt;.zexec</code> and adds the app to the list. <b>An update never deletes the app's data.</b></li>
+<li>Uninstall asks first, then removes the app, its services and its data, unless <code>--keep-data</code>.</li>
+<li>A revoked release is disabled on phones, with the reason shown.</li>
 </ul>
-<h2 id="update">Updates</h2>
-<p>An update is a new submission: raise <code>version</code>, commit, push, <code>zrn submit --send</code>. Moderators see a compare link from your last approved commit. The store never follows a branch, so changing or force-pushing your repository does nothing to what is listed. If that removes the commit, the build fails rather than changes.</p>
-<h2 id="revoke">Revocation</h2>
-<p>A moderator can revoke a release for a security problem, abuse or a licence problem, with <b>Revoke</b> on the post or <code>/revoke-app id version reason</code>. The ledger records who, when and why, and the release leaves the index. The design says phones then disable it and show the reason, <b>but the phone client for this does not exist yet</b>. To recover, fix it and submit a new version.</p>
-<p>Full rules: <a href="https://github.com/Zerone-Laboratories/ztOS-apprepo/blob/main/CONTRIBUTING.md">the store's CONTRIBUTING.md</a>. Threat model: <a href="https://github.com/Zerone-Laboratories/zrn-sdk/blob/main/DESIGN.md#threat-model">DESIGN.md</a>.</p>
+<p>The full write-up, with file references, is <code>docs/publishing.md</code> in zrn-sdk.</p>
 """),
-
-"troubleshooting": ("Troubleshooting: ztOS SDK", "Real zrn errors and what to do about them.", """
+"troubleshooting": ("Troubleshooting: ztOS SDK", "Real zrnSDK v2 build and run errors and what to do about them.", """
 <h1>Troubleshooting</h1>
-<p class="lead"><b>Start with <code>zrn doctor</code>.</b> Every <code>zrn</code> error names the file or value and a fix. The errors quoted here were produced for real.</p>
-<h2 id="id">"id ... is not valid"</h2>
-<pre><code>zrn: error: .../zrnapp.toml: id 'badid' is not valid
-zrn: fix: use reverse-DNS with at least three parts (io.github.you.app) or zrn-name for Zerone Laboratories' apps</code></pre>
-<p>Use something like <code>io.github.you.notes</code>. Do not use <code>zrn-</code>, which is reserved for Zerone Laboratories.</p>
-<h2 id="page">"the app did not draw"</h2>
-<pre><code>zrn: error: the app did not draw .../x.png (exit 0)
-zrnui: no page "nope" (the app has 1 pages: 0="Notes")
-zrn: fix: the app must call zui_run()/app.run() with its first page; offscreen drawing needs Mesa's EGL (surfaceless) or a /dev/dri render node</code></pre>
-<p><b>Read the middle line.</b> It lists the pages that exist. The "fix" line is generic, and here the cause is the wrong <code>--page</code>. Otherwise check that your program reaches <code>run</code>, and that <code>zrn doctor</code> shows "offscreen GPU".</p>
-<h2 id="git">"not in a git repository"</h2>
-<pre><code>zrn: error: .../notes is not in a git repository
-zrn: fix: the store builds from a public git repository: push the app to one first</code></pre>
-<p><code>zrn submit</code> needs a repository, a clean HEAD and a pushed commit.</p>
-<h2 id="verify">zrn verify exits 2</h2>
-<p>The package is sound but no key you trust signed it. Trust the signer in <code>~/.config/zrn/trusted-keys</code>, or pass <code>--key FILE</code>. Exit 1 means broken: rebuild it. The same check stops <code>zrn install</code> and <code>zrn-exec</code>.</p>
-<h2 id="rust">A Rust project will not build elsewhere</h2>
-<p><code>zrn new --lang rust</code> writes an absolute path to your SDK copy in <code>Cargo.toml</code>. <b>If you move the SDK or share the project, change that path.</b> How the store's CI handles it is decided by its build tooling, so test a clean checkout.</p>
-<h2 id="render">The render looks different from the window</h2>
-<ul>
-<li><code>ZUI_STYLE</code>, <code>ZTRF_SHELL_STYLE</code> and <code>style =</code> in your <code>~/.config/ztmetro/config</code> decide the style, whatever your code does. <code>--style</code> overrides them for a run.</li>
-<li>Moving dots are drawn at whichever instant the render happens, so two renders of them differ.</li>
-<li>Without Segoe UI on your computer, renders use Selawik. Without Segoe MDL2 Assets, icons are the stroke versions.</li>
-</ul>
-<h2 id="icon">My icon does not appear</h2>
-<p>Check the name against the <a href="/elements#icons">twenty-one that exist</a>: an unknown name draws nothing. If an icon looks like thin lines in Metro, your system lacks Segoe MDL2 Assets.</p>
-<h2 id="slow">A callback did nothing, or the app froze</h2>
-<ul>
-<li>Everything runs on one thread. Do long work on another and come back through <code>post</code>.</li>
-<li>Python: an exception in a callback prints a traceback and goes no further. Look at the terminal or <code>~/.local/state/zrn/&lt;id&gt;.log</code>.</li>
-<li>Rust: a closure that outlives its <code>App</code> will not compile, by design.</li>
-</ul>
-<h2 id="old">The older SDK</h2>
-<p><code>ztos-sdk doctor --fix</code> installs what the phone needs for that SDK, over SSH to <code>alarm@172.16.42.1</code>. A package with compiled code cannot be bundled there: install it on the phone with pacman.</p>
+<p class="lead">Errors as the tools print them, and the fix.</p>
+<div class="table-wrap"><table>
+<tr><th>You see</th><th>Do this</th></tr>
+<tr><td><code>cmake --build --preset ...</code> says the build directory does not exist</td><td>Configure first: <code>cmake --preset host-debug</code></td></tr>
+<tr><td>Errors about <code>nullptr</code>, <code>constexpr</code> or <code>auto</code></td><td>The compiler is too old for C23. Use GCC 13+ or Clang 19+</td></tr>
+<tr><td><code>zrn: which project? e.g. examples/helloworld</code></td><td>Give the project folder after the host</td></tr>
+<tr><td><code>zrn: ... has no CMakePresets.json</code></td><td>Copy <code>CMakePresets.json</code> from an example into your project</td></tr>
+<tr><td><code>zrn: which device? ...</code></td><td>Give the phone's address, or set <code>ZRN_HOST</code></td></tr>
+<tr><td><code>no aarch64 sysroot at ...</code></td><td>Run <code>tools/zrn sysroot</code></td></tr>
+<tr><td><code>exec format error</code> while the sysroot builds</td><td>Register binfmt for aarch64 (<code>qemu-user-static-binfmt</code>)</td></tr>
+<tr><td><code>Permission denied (publickey)</code></td><td><code>tools/zrn -p - setup-key &lt;host&gt;</code></td></tr>
+<tr><td><code>REMOTE HOST IDENTIFICATION HAS CHANGED</code></td><td>The phone was reflashed: <code>ssh-keygen -R &lt;host&gt;</code></td></tr>
+<tr><td><code>Permission denied</code> when the app starts on the phone</td><td>Home is mounted <code>noexec</code>: set <code>ZRN_REMOTE_DIR</code> elsewhere</td></tr>
+<tr><td><code>no Wayland socket in /run/user/...</code></td><td>Log in on the phone, or set <code>ZRN_WAYLAND_DISPLAY</code></td></tr>
+<tr><td>Text shows as boxes</td><td>The fonts were not found. Check <code>ZRNUI_FONT_DIR</code>, or <code>~/zrn-dev/share/fonts</code> on the phone</td></tr>
+<tr><td>Only Latin letters draw</td><td>Build with fontconfig</td></tr>
+<tr><td><code>Zinit</code> returns false</td><td>The fonts could not load. Print <code>Zget_error_message()</code></td></tr>
+<tr><td><code>Zwindow_run_ex</code> returns false at once</td><td>No Wayland session, or an invalid root. Print <code>Zget_error_message()</code></td></tr>
+<tr><td>Nothing animates</td><td>The software renderer is in use. Animations need the GPU renderer, or <code>ZRNUI_ANIMATIONS=on</code></td></tr>
+<tr><td>A rotation or slide is ignored</td><td>Render transforms are drawn only by the GPU renderer</td></tr>
+</table></div>
 """),
 
-"status": ("Status and gaps: ztOS SDK", "What the ztOS SDK does not do yet, and what has not been proven.", """
+"status": ("Status and gaps: ztOS SDK", "What zrnSDK v2 does not do yet, and what this site has not proven.", """
 <h1>Status and gaps</h1>
-<p class="lead"><b>This page lists what libzrnui does not do yet</b>, as of commit <code>""" + COMMIT + """</code>, so that nobody has to discover it the hard way.</p>
-<h2 id="unproven">Not proven</h2>
+<p class="lead">What v2 does not do at the pinned commit, and what this site did not check.</p>
+<h2 id="sdk">The SDK</h2>
 <ul>
-<li><b>Nothing from zrn-sdk has been reported running on a phone</b> by <code>DESIGN.md</code> at this commit. Frame times on the Mali-G72 are inferred, not measured. CPU cost was measured on a 2012 laptop: about 0.78 ms a frame in Metro at the S9's resolution.</li>
-<li><b>No aarch64 build on a laptop.</b> There is no local cross compiler. The store's CI is meant to build aarch64 on an ARM runner.</li>
-<li><b>The store has not carried a real app end to end.</b></li>
-<li><code>zrn run</code> as a visible window has not been tried: only <code>--headless</code> in <code>kwin_wayland</code>. Weston has not been tried here either.</li>
-<li>The signature format has not been checked against the real <code>minisign</code> program.</li>
+<li><b>C only.</b> No Python or Rust bindings, no C++ wrapper.</li>
+<li><b>No store package yet.</b> <code>.zexec</code> format 2 is coming. There is no <code>zrn pack</code>, <code>verify</code>, <code>install</code> or <code>submit</code>.</li>
+<li><b>No picture tool.</b> v1's <code>zrn render</code> is gone. Draw offscreen with <code>Zroot_render</code>, as this site does.</li>
+<li>Not included from WP 8.1, as the headers list them: dialog Closing, FullSizeDesired, TitleTemplate; hub background parallax, section header templates, DefaultSectionIndex.</li>
+<li>Selawik is Latin only. Other scripts need fontconfig and a system font.</li>
 </ul>
-<h2 id="missing">Missing from libzrnui</h2>
+<h2 id="site">This site</h2>
 <ul>
-<li>Dialogs, menus, pickers, date and time, pull to refresh.</li>
-<li><b>Pictures, long lists, pivots, the footer and bubbles in Rust and Python.</b> Those bindings have no call for them yet, though C and C++ do.</li>
-<li>Any app-level animation call or custom drawing. An app cannot pick or add a style.</li>
-<li>Password or multi-line fields, and your own icon files.</li>
-<li>Bidirectional text, screen reader names and other accessibility.</li>
-<li>Notifications, stored settings, and the battery and performance calls that the older SDK has.</li>
-<li>In DotMatrix: the shell's ghost field and glow, and any script other than Latin.</li>
+<li>The pictures and clips come from zrnui's GLES2 renderer through <b>Mesa on a laptop</b>, not from a phone's GPU. Small differences are possible.</li>
+<li>Pictures are drawn at 3 device pixels a point, clips at 2. The S9 draws at 4.</li>
+<li>The table of animation numbers is read from source and docs, not measured on a phone.</li>
+<li><code>tools/zrn run</code> was not run for this site: no phone was used.</li>
 </ul>
-<h2 id="platform">Missing from the platform</h2>
-<ul>
-<li><b>Permissions are not enforced.</b></li>
-<li><b>The phone's store app does not list these apps yet</b>, so it cannot install, update or disable them. That includes acting on a revocation.</li>
-<li>libzrnui and <code>zrn-exec</code> are not in the system image. Until they are, use <code>--bundle-zrnui</code>, though <code>zrn-exec</code> itself still has to be present.</li>
-<li>Only GitHub is accepted as a source host.</li>
-</ul>
-<h2 id="site">About this site</h2>
-<ul>
-<li>The element pictures came from <code>zrn render</code> on a laptop's GPU with the phone's fonts from the ztOS tree, and busy, toast and the page-change frames from <code>kwin_wayland</code>'s virtual backend. None came from a phone.</li>
-<li>The older Python SDK and ZrnMetroCore were read from source, and were not run for this site.</li>
-<li>The animation demos are web ports of the formulas. <a href="/animations#how">The differences are listed there</a>.</li>
-</ul>
+"""),
+
+"next": ("Coming next: ztOS SDK", "Work on zrnSDK that is not committed yet: live theme following, Holding and flyouts, new transitions, keyboard inset, cached rows, colour emoji and more.", """
+<h1>Coming next</h1>
+<p class="lead">This work is in progress in zrn-sdk but <b>not in the pinned commit</b>. Names and behaviour may change. Nothing on this page is documented elsewhere on the site.</p>
+<div class="table-wrap"><table>
+<tr><th>What</th><th>In short</th></tr>
+<tr><td>Live theme following</td><td>Apps follow the system's Dark or Light theme and accent while they run</td></tr>
+<tr><td>Holding and flyouts</td><td>A press and hold raises Holding, and can open a flyout</td></tr>
+<tr><td>Continuum and slide-up transitions</td><td>More page transitions beside the turnstile</td></tr>
+<tr><td>Keyboard inset</td><td>Pages make room for the on-screen keyboard</td></tr>
+<tr><td>Cached rows, <code>Z_CACHE_BITMAP</code></td><td>List rows drawn once and reused while scrolling</td></tr>
+<tr><td>Colour emoji</td><td>Emoji drawn in colour</td></tr>
+<tr><td>Scroll anchoring</td><td>The view stays put when content above it changes</td></tr>
+<tr><td>Swipes</td><td>Swipe gestures on list items</td></tr>
+<tr><td>zrn-frosted-diffusion</td><td>A frosted, blurred backdrop: NONE, NORMAL, ASCENDING, DESCENDING, and a system-wide switch. <a href="#frost">Pictures below</a></td></tr>
+<tr><td><code>.zexec</code> format 2</td><td>Signed store packages for v2 apps</td></tr>
+</table></div>
+<h2 id="frost">zrn-frosted-diffusion</h2>
+<p>What lies behind an element shows through it, blurred and grainy, under a theme tint at 75 %. The element's own text and icons stay sharp on top. App bars, headers and composers are the use.</p>
+<pre><code>Zelement_set_frosted_diffusion(bar, Z_FROSTED_DIFFUSION_NORMAL, Z_RES_PHONE_CHROME_BRUSH);
+Zset_frosted_diffusion_enabled(false);   <span class="c">// the system-wide switch</span></code></pre>
+<p>A <a href="/animations#frost">clip of it over scrolling content</a> is on Animations. These pictures were drawn by zrnui's <b>GLES2 renderer</b>, offscreen through Mesa on a laptop, from the <b>uncommitted working tree</b> on top of 71a5ace. The program is <code>gen/frost.c</code>. A bar 150 px tall lies over the top of coloured rows.</p>
+{{FROST}}
+<p>The software renderer does not blur: it fills the element with the tint. When the system-wide switch is off (ztOS Settings, theme, frosted diffusion, or <code>frost = 0</code> in <code>~/.config/ztmetro/config</code>), every frosted element paints only its tint, opaque, and nothing is blurred. zrnapp windows follow that switch live. At most 16 elements have the effect at a time.</p>
 """),
 
 "404": ("Not found: ztOS SDK", "That page does not exist.", """

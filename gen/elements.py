@@ -1,453 +1,295 @@
-"""Every UI element the site documents, as real code in four languages.
+"""Every UI element the site documents, as real C against zrnui (SDK v2).
 
-gen/render.py compiles these into four programs, renders each page with
-`zrn render`, and compares the four languages pixel by pixel. What the site
-shows is what compiled.
+gen/render.py puts each snippet into a small program, compiles it against
+zrnui, draws it with zrnui's GLES2 renderer offscreen (Mesa, surfaceless
+EGL) in Dark and in Light, crops it to the content, and saves the pictures. What the site shows is what compiled.
 
-Each snippet is the body of a function that has `app` and `page`.
+Each snippet is the body of
+
+    static void build(Zid root, Zid page, Zid stack)
+
+where `page` is a Page and `stack` is a vertical StackPanel that is already
+the page's content, with the margin 19, 32, 19, 0. A snippet may replace the
+page's content (a Pivot, a Hub). `h` is the height of the picture in logical
+pixels before the crop; the width is 360 points, the S9's
+logical width under the ztOS shell (1440 px at scale 4).
 """
 
-ICONS = ["wifi", "bluetooth", "bell", "moon", "sun", "lock", "volume", "battery",
-         "info", "search", "plus", "check", "close", "more", "back", "chevron",
-         "music", "person", "gear", "phone", "send"]
-
 ELEMENTS = [
-    dict(id="text", title="Text", h=360, api="zui_text, zui_heading, zui_caption",
-         blurb="Three sizes of words. Long text wraps by itself. Change it later with <code>set_text</code>.",
-         c='''zui_heading(page, "A heading");
-zui_text(page, "Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.");
-zui_caption(page, "A caption: small and quiet.");''',
-         cpp='''page.heading("A heading");
-page.text("Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.");
-page.caption("A caption: small and quiet.");''',
-         rs='''page.heading("A heading");
-page.text("Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.");
-page.caption("A caption: small and quiet.");''',
-         py='''page.heading("A heading")
-page.text("Body text. It wraps at the page's width, and HarfBuzz shapes it, so Sinhala and Tamil come out right.")
-page.caption("A caption: small and quiet.")'''),
+    dict(id="text", title="Text", h=420,
+         api="Ztext_block_create, Ztext_block_set_style, Ztext_block_set_text_wrapping",
+         blurb="A TextBlock is one run of text. The styles are the ones of Windows Phone 8.1: <code>Z_TEXT_STYLE_TITLE</code>, <code>_BODY</code>, the <code>Z_TEXT_STYLE_PHONE_*</code> set and more. Wrapping is off until you turn it on.",
+         c='''const Zid title = Ztext_block_create("settings");
+Ztext_block_set_style(title, Z_TEXT_STYLE_PHONE_TITLE1);
+Zpanel_add(stack, title);
 
-    dict(id="button", title="Buttons", h=480, api="zui_button, zui_set_variant, zui_set_enabled",
-         blurb="Four variants: primary (the default, filled with the accent), tonal and plain (outlined), and danger (a red edge in Metro). Use one primary button a page at most. A disabled node draws at 40 % opacity and takes no touch.",
-         c='''zui_button(page, "Primary", NULL, NULL);
-zui_set_variant(zui_button(page, "Tonal", NULL, NULL), ZUI_TONAL);
-zui_set_variant(zui_button(page, "Plain", NULL, NULL), ZUI_PLAIN);
-zui_set_variant(zui_button(page, "Danger", NULL, NULL), ZUI_DANGER);
-zui_set_enabled(zui_button(page, "Disabled", NULL, NULL), false);''',
-         cpp='''using zrn::ui::Variant;
-page.button("Primary");
-page.button("Tonal").set_variant(Variant::Tonal);
-page.button("Plain").set_variant(Variant::Plain);
-page.button("Danger").set_variant(Variant::Danger);
-page.button("Disabled").set_enabled(false);''',
-         rs='''use zrnui::Variant;
-page.button("Primary");
-page.button("Tonal").set_variant(Variant::Tonal);
-page.button("Plain").set_variant(Variant::Plain);
-page.button("Danger").set_variant(Variant::Danger);
-page.button("Disabled").set_enabled(false);''',
-         py='''page.button("Primary")
-page.button("Tonal", variant=zrnui.TONAL)
-page.button("Plain", variant=zrnui.PLAIN)
-page.button("Danger", variant=zrnui.DANGER)
-page.button("Disabled").enabled = False'''),
+const Zid body = Ztext_block_create("Body text wraps at the width of its parent when wrapping is on.");
+Ztext_block_set_style(body, Z_TEXT_STYLE_BODY);
+Ztext_block_set_text_wrapping(body, Z_WRAP);
+Zpanel_add(stack, body);
 
-    dict(id="item", title="List rows", h=400, api="zui_item, zui_set_detail, zui_set_icon",
-         blurb="An item is a title, an optional line under it, an optional value and an optional icon. In these styles the value is the accent-coloured second line, as ztMETRO's choices are. There is no arrow on a row: a handler makes it tappable, and it tilts under the finger.",
-         ctop='static void row_tapped(zui_node *row, void *data) { zui_toast(zui_node_app(row), "Tapped"); }',
-         c='''zui_node *list = zui_section(page, "Rows");
-zui_item(list, "Title only", NULL, NULL, NULL);
-zui_item(list, "With a second line", "Under the title", NULL, NULL);
-zui_item(list, "Takes a tap", NULL, row_tapped, NULL);
-zui_node *wifi = zui_item(list, "Wi-Fi", NULL, row_tapped, NULL);
-zui_set_icon(wifi, "wifi");
-zui_set_detail(wifi, "Home-5G");''',
-         cpp='''auto list = page.section("Rows");
-list.item("Title only");
-list.item("With a second line", "Under the title");
-list.item("Takes a tap", "", [&app] { app.toast("Tapped"); });
-list.item("Wi-Fi", "", [&app] { app.toast("Tapped"); }).set_icon("wifi").set_detail("Home-5G");''',
-         rs='''let list = page.section("Rows");
-list.item("Title only", None);
-list.item("With a second line", Some("Under the title"));
-list.item("Takes a tap", None).on_click(move || app.toast("Tapped"));
-list.item("Wi-Fi", None).on_click(move || app.toast("Tapped")).set_icon("wifi").set_detail("Home-5G");''',
-         py='''rows = page.section("Rows")
-rows.item("Title only")
-rows.item("With a second line", "Under the title")
-rows.item("Takes a tap", on_click=lambda: app.toast("Tapped"))
-rows.item("Wi-Fi", on_click=lambda: app.toast("Tapped"), icon="wifi", detail="Home-5G")'''),
+const Zid subtle = Ztext_block_create("A subtle line");
+Ztext_block_set_style(subtle, Z_TEXT_STYLE_PHONE_SUBTLE);
+Zpanel_add(stack, subtle);
 
-    dict(id="switch", title="Switches", h=340, api="zui_switch, zui_get_on, zui_set_on, zui_set_detail",
-         blurb="A row with an on/off control, and On or Off as its second line unless you set one. In C the handler reads <code>zui_get_on</code>; the other languages pass the new state. The block slides over 180 ms. <code>set_detail</code> sets the second line. C++ calls it <code>toggle</code> because <code>switch</code> is a keyword.",
-         ctop='''static void wifi_changed(zui_node *sw, void *data) {
-	zui_set_detail(sw, zui_get_on(sw) ? "Connected" : "Off");
+const Zid accent = Ztext_block_create("In the accent colour");
+Ztext_block_set_style(accent, Z_TEXT_STYLE_PHONE_ACCENT);
+Zpanel_add(stack, accent);'''),
+
+    dict(id="button", title="Buttons", h=360,
+         api="Zbutton_create, Zbutton_on_click, Zhyperlink_button_create, Zelement_set_enabled",
+         blurb="A Button is a white-edged rectangle. It fills with the accent while pressed. A HyperlinkButton is text in the accent colour. Both raise Click.",
+         ctop='static void clicked(const Zid sender, void* const user_data) { (void)sender; (void)user_data; }',
+         c='''const Zid ok = Zbutton_create("save");
+Zbutton_on_click(ok, clicked, nullptr);
+Zpanel_add(stack, ok);
+
+const Zid off = Zbutton_create("disabled");
+Zelement_set_enabled(off, false);
+Zpanel_add(stack, off);
+
+const Zid link = Zhyperlink_button_create("open the website");
+Zhyperlink_button_set_uri(link, "https://ztos.online");
+Zpanel_add(stack, link);'''),
+
+    dict(id="toggles", title="Check boxes and radio buttons", h=380,
+         api="Zcheck_box_create, Zradio_button_create, Ztoggle_button_create, Ztoggle_button_set_is_checked",
+         blurb="CheckBox, RadioButton and ToggleButton share the ToggleButton calls. Radio buttons with the same group name exclude each other.",
+         c='''const Zid wifi = Zcheck_box_create("Wi-Fi");
+Ztoggle_button_set_is_checked(wifi, true);
+Zpanel_add(stack, wifi);
+Zpanel_add(stack, Zcheck_box_create("Bluetooth"));
+
+const Zid dark = Zradio_button_create("dark", "theme");
+Ztoggle_button_set_is_checked(dark, true);
+Zpanel_add(stack, dark);
+Zpanel_add(stack, Zradio_button_create("light", "theme"));
+
+const Zid bold = Ztoggle_button_create("bold");
+Ztoggle_button_set_is_checked(bold, true);
+Zpanel_add(stack, bold);'''),
+
+    dict(id="switch", title="Toggle switch", h=260,
+         api="Ztoggle_switch_create, Ztoggle_switch_set_header, Ztoggle_switch_set_is_on, Ztoggle_switch_on_toggled",
+         blurb="A header, the On or Off text, and the switch at the right. The knob slides for 180 ms when animations run.",
+         c='''const Zid on = Ztoggle_switch_create();
+Ztoggle_switch_set_header(on, "Location");
+Ztoggle_switch_set_is_on(on, true);
+Zpanel_add(stack, on);
+
+const Zid off = Ztoggle_switch_create();
+Ztoggle_switch_set_header(off, "Airplane mode");
+Zpanel_add(stack, off);'''),
+
+    dict(id="range", title="Slider and progress", h=380,
+         api="Zslider_create, Zrange_base_set_range, Zrange_base_set_value, Zprogress_bar_create, Zprogress_ring_create",
+         blurb="Slider and ProgressBar are RangeBase controls: a minimum, a maximum and a value. A ProgressBar can be indeterminate, and a ProgressRing spins while it is active. The moving dots only move with <code>Zroot_tick</code>.",
+         c='''const Zid volume = Zslider_create(Z_HORIZONTAL);
+Zslider_set_header(volume, "Ringer volume");
+Zrange_base_set_range(volume, 0, 10);
+Zrange_base_set_value(volume, 6);
+Zpanel_add(stack, volume);
+
+const Zid bar = Zprogress_bar_create();
+Zrange_base_set_value(bar, 40);
+Zpanel_add(stack, bar);
+
+const Zid ring = Zprogress_ring_create();
+Zprogress_ring_set_is_active(ring, true);
+Zpanel_add(stack, ring);'''),
+
+    dict(id="input", title="Text input", h=420,
+         api="Ztext_box_create, Ztext_box_set_header, Ztext_box_set_placeholder_text, Zpassword_box_create",
+         blurb="A TextBox takes text from the keyboard through <code>Zroot_inject_text</code>. A PasswordBox shows dots. Both have a header and a placeholder. AutoSuggestBox adds a list of suggestions.",
+         c='''const Zid name = Ztext_box_create("");
+Ztext_box_set_header(name, "Name");
+Ztext_box_set_placeholder_text(name, "your name");
+Zpanel_add(stack, name);
+
+const Zid city = Ztext_box_create("London");
+Ztext_box_set_header(city, "City");
+Zpanel_add(stack, city);
+
+const Zid pass = Zpassword_box_create();
+Zpassword_box_set_header(pass, "Password");
+Zpassword_box_set_password(pass, "secret");
+Zpanel_add(stack, pass);'''),
+
+    dict(id="list", title="List view", h=460,
+         api="Zlist_view_create, Zlist_view_item_create, Zitems_control_add, Zlist_view_add_group_header",
+         blurb="A ListView shows its items in a ScrollViewer. Items tilt under the finger. Group headers split the list. A GridView does the same in a grid.",
+         ctop='''static void add_row(const Zid list, const char* const name) {
+	const Zid row = Zlist_view_item_create(nullptr);
+	const Zid text = Ztext_block_create(name);
+	Ztext_block_set_style(text, Z_TEXT_STYLE_PHONE_EXTRA_LARGE);
+	Zcontent_control_set_content(row, text);
+	Zitems_control_add(list, row);
 }''',
-         c='''zui_node *card = zui_section(page, "Connections");
-zui_switch(card, "Wi-Fi", true, wifi_changed, NULL);
-zui_switch(card, "Bluetooth", false, NULL, NULL);
-zui_set_enabled(zui_switch(card, "Roaming", false, NULL, NULL), false);''',
-         cpp='''auto card = page.section("Connections");
-auto wifi = card.toggle("Wi-Fi", true);
-wifi.on([](zrn::ui::Node sw, int) { sw.set_detail(sw.is_on() ? "Connected" : "Off"); });
-card.toggle("Bluetooth", false);
-card.toggle("Roaming", false).set_enabled(false);''',
-         rs='''let card = page.section("Connections");
-let wifi = card.switch("Wi-Fi", true);
-wifi.on_change(move |on| { wifi.set_detail(if on { "Connected" } else { "Off" }); });
-card.switch("Bluetooth", false);
-card.switch("Roaming", false).set_enabled(false);''',
-         py='''card = page.section("Connections")
-wifi = card.switch("Wi-Fi", True)
-wifi.on_event(lambda sw, event: setattr(wifi, "detail", "Connected" if wifi.on else "Off"))
-card.switch("Bluetooth", False)
-card.switch("Roaming", False).enabled = False'''),
+         c='''const Zid list = Zlist_view_create();
+Zlist_view_add_group_header(list, "a");
+add_row(list, "Alice");
+add_row(list, "Amy");
+Zlist_view_add_group_header(list, "b");
+add_row(list, "Ben");
+add_row(list, "Bob");
+Zelement_set_height(list, 400);
+Zpanel_add(stack, list);'''),
 
-    dict(id="slider", title="Sliders", h=300, api="zui_slider, zui_get_value, zui_event",
-         blurb="A value from 0 to 1. <code>CHANGE</code> fires while the finger moves and <code>SUBMIT</code> when it lifts, so save on submit.",
-         ctop='''static void level_moved(zui_node *s, void *data) {
-	if (zui_event(s) == ZUI_EVENT_SUBMIT) printf("saved %.2f\\n", zui_get_value(s));
-}''',
-         c='''zui_node *card = zui_section(page, "Display");
-zui_slider(card, "Brightness", 0.6, level_moved, NULL);
-zui_slider(page, "Outside a card", 0.25, NULL, NULL);''',
-         cpp='''auto card = page.section("Display");
-card.slider("Brightness", 0.6, [](double v, bool done) { if (done) printf("saved %.2f\\n", v); });
-page.slider("Outside a card", 0.25);''',
-         rs='''let card = page.section("Display");
-card.slider("Brightness", 0.6).on_slide(|v, done| { if done { println!("saved {v:.2}"); } });
-page.slider("Outside a card", 0.25);''',
-         py='''card = page.section("Display")
-card.slider("Brightness", 0.6, on_release=lambda v: print("saved %.2f" % v))
-page.slider("Outside a card", 0.25)'''),
+    dict(id="combo", title="Combo box", h=260,
+         api="Zcombo_box_create, Zcombo_box_set_header, Zitems_control_add_text, Zselector_set_selected_index",
+         blurb="A header over the chosen item. A tap opens the list in place, or a full-screen picker when there are many items.",
+         c='''const Zid level = Zcombo_box_create();
+Zcombo_box_set_header(level, "Brightness");
+Zitems_control_add_text(level, "low");
+Zitems_control_add_text(level, "medium");
+Zitems_control_add_text(level, "high");
+Zselector_set_selected_index(level, 1);
+Zpanel_add(stack, level);'''),
 
-    dict(id="progress", title="Progress", h=270, api="zui_progress, zui_set_value",
-         blurb="Give it 0 to 1, or a value below 0 when you cannot say how long it will take. Below 0 it shows the dots crossing by themselves, and the picture is one instant of them.",
-         c='''zui_text(page, "Copying 7 of 10");
-zui_progress(page, 0.7);
-zui_text(page, "No idea how long");
-zui_progress(page, -1);''',
-         cpp='''page.text("Copying 7 of 10");
-page.progress(0.7);
-page.text("No idea how long");
-page.progress(-1);''',
-         rs='''page.text("Copying 7 of 10");
-page.progress(0.7);
-page.text("No idea how long");
-page.progress(-1.0);''',
-         py='''page.text("Copying 7 of 10")
-page.progress(0.7)
-page.text("No idea how long")
-page.progress(-1)''', animated=True),
+    dict(id="pickers", title="Date and time pickers", h=300,
+         api="Zdate_picker_create, Zdate_picker_set_date, Ztime_picker_create, Ztime_picker_set_time",
+         blurb="A header over a button with the value. A tap shows a full-screen flyout of looping selectors, with done and cancel.",
+         c='''const Zid date = Zdate_picker_create();
+Zdate_picker_set_header(date, "Date");
+Zdate_picker_set_date(date, (ZDate){ 2026, 11, 20 });
+Zpanel_add(stack, date);
 
-    dict(id="field", title="Text fields", h=300, api="zui_field, zui_get_text, zui_set_text",
-         blurb="A box to type into. Tapping it asks the shell for the on-screen keyboard. The placeholder is the caption above the box; inside a footer it is a hint in the box. <code>CHANGE</code> fires per edit and <code>SUBMIT</code> on Enter. There is no password mode or multi-line field in this commit.",
-         ctop='''static void search_typed(zui_node *f, void *data) {
-	if (zui_event(f) == ZUI_EVENT_SUBMIT) printf("search: %s\\n", zui_get_text(f));
-}''',
-         c='''zui_field(page, "Search", search_typed, NULL);
-zui_set_text(zui_field(page, "Name", NULL, NULL), "Already filled in");''',
-         cpp='''page.field("Search", [](const std::string &t, bool submitted) {
-	if (submitted) printf("search: %s\\n", t.c_str());
-});
-page.field("Name").set_text("Already filled in");''',
-         rs='''page.field("Search").on_edit(|t, submitted| { if submitted { println!("search: {t}"); } });
-page.field("Name").set_text("Already filled in");''',
-         py='''page.field("Search", on_submit=lambda t: print("search:", t))
-page.field("Name").set_text("Already filled in")'''),
+const Zid time = Ztime_picker_create();
+Ztime_picker_set_header(time, "Alarm");
+Ztime_picker_set_time(time, (ZTimeOfDay){ 7, 30 });
+Zpanel_add(stack, time);'''),
 
-    dict(id="section", head="Sections and cards", title="Sections", h=430, api="zui_section, zui_card",
-         blurb="<code>section</code> adds a heading and returns the card under it, so add rows to what it returns. A bare <code>card</code> is the same group with no heading. Cards are flat in both styles: the rows just sit on black, with no dividers drawn.",
-         c='''zui_item(zui_section(page, "A section"), "In its card", NULL, NULL, NULL);
-zui_node *card = zui_card(page);
-zui_text(card, "A card with no heading can hold anything.");
-zui_button(card, "Like this", NULL, NULL);''',
-         cpp='''page.section("A section").item("In its card");
-auto card = page.card();
-card.text("A card with no heading can hold anything.");
-card.button("Like this");''',
-         rs='''page.section("A section").item("In its card", None);
-let card = page.card();
-card.text("A card with no heading can hold anything.");
-card.button("Like this");''',
-         py='''page.section("A section").item("In its card")
-card = page.card()
-card.text("A card with no heading can hold anything.")
-card.button("Like this")'''),
+    dict(id="pivot", title="Pivot", h=300, crop=False,
+         api="Zpivot_create, Zpivot_set_title, Zpivot_item_create, Zpivot_add_item",
+         blurb="A title over a strip of big headers, with one page under each. A finger drags pages and headers together. The slide takes 300 ms with animations.",
+         c='''const Zid pivot = Zpivot_create();
+Zpivot_set_title(pivot, "SETTINGS");
 
-    dict(id="layout", head="Rows, columns, space", title="Rows", h=380, api="zui_row, zui_column, zui_space, zui_set_flex",
-         blurb="A page is already a column. A <code>row</code> sets things side by side, and <code>set_flex</code> shares out the spare width. <code>space</code> adds fixed points. Do not fake layout with space: use sections.",
-         c='''zui_node *row = zui_row(page);
-zui_set_flex(zui_button(row, "1 share", NULL, NULL), 1);
-zui_node *wide = zui_button(row, "2 shares", NULL, NULL);
-zui_set_variant(wide, ZUI_TONAL);
-zui_set_flex(wide, 2);
-zui_space(page, 40);
-zui_node *col = zui_column(page);
-zui_text(col, "A column keeps things together");
-zui_caption(col, "and can be hidden as one.");''',
-         cpp='''auto row = page.row();
-row.button("1 share").set_flex(1);
-row.button("2 shares").set_variant(zrn::ui::Variant::Tonal).set_flex(2);
-page.space(40);
-auto col = page.column();
-col.text("A column keeps things together");
-col.caption("and can be hidden as one.");''',
-         rs='''let row = page.row();
-row.button("1 share").set_flex(1.0);
-row.button("2 shares").set_variant(zrnui::Variant::Tonal).set_flex(2.0);
-page.space(40.0);
-let col = page.column();
-col.text("A column keeps things together");
-col.caption("and can be hidden as one.");''',
-         py='''row = page.row()
-row.button("1 share").flex = 1
-row.button("2 shares", variant=zrnui.TONAL).flex = 2
-page.space(40)
-col = page.column()
-col.text("A column keeps things together")
-col.caption("and can be hidden as one.")'''),
+const Zid sound = Zpivot_item_create("sound");
+const Zid ring = Ztoggle_switch_create();
+Ztoggle_switch_set_header(ring, "Vibrate");
+Zcontent_control_set_content(sound, ring);
+Zpivot_add_item(pivot, sound);
 
-    dict(id="round", head="Round buttons", title="Round", h=300, api="zui_button, zui_set_icon",
-         blurb="A button with an icon becomes a round button with its word under it, as on an app bar. Put them in a row and share the width with flex.",
-         c='''zui_node *bar = zui_row(page);
-const char *names[] = { "plus", "search", "send", "more" };
-for (int i = 0; i < 4; i++) {
-	zui_node *b = zui_button(bar, names[i], NULL, NULL);
-	zui_set_icon(b, names[i]);
-	zui_set_flex(b, 1);
-}''',
-         cpp='''auto bar = page.row();
-for (const char *name : { "plus", "search", "send", "more" })
-	bar.button(name).set_icon(name).set_flex(1);''',
-         rs='''let bar = page.row();
-for name in ["plus", "search", "send", "more"] {
-    bar.button(name).set_icon(name).set_flex(1.0);
-}''',
-         py='''bar = page.row()
-for name in ["plus", "search", "send", "more"]:
-    b = bar.button(name)
-    b.icon = name
-    b.flex = 1'''),
+const Zid display = Zpivot_item_create("display");
+Zcontent_control_set_text(display, "Brightness and colour");
+Zpivot_add_item(pivot, display);
 
-    dict(id="picture", title="Pictures", h=560, api="zui_pixmap_load, zui_pixmap_decode, zui_pixmap_rgba, zui_image, zui_set_image, zui_set_monogram, zui_set_badge, zui_set_emphasis, zui_set_radius, zui_set_image_sharp",
-         blurb="Decode a JPEG or PNG on any thread with <code>zui_pixmap_load</code> or <code>zui_pixmap_decode</code>, then show it on the UI thread. Nodes keep their own reference, so you may free yours. An item with a picture or a monogram becomes a thread row: a tile, a title, a line, a time and a count. Under DotMatrix a picture is dots of the palette's main colour. The picture here is made in code.",
-         c='''static uint8_t px[64 * 64 * 4];
-for (int i = 0; i < 64 * 64; i++) {
-	px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
-}
-zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  /* or zui_pixmap_load("photo.jpg", 1024) */
-zui_image(page, pix, 0, 140);                   /* width 0: all there is */
-zui_node *card = zui_section(page, "Thread rows");
-zui_node *a = zui_item(card, "Ada", "A picture as the tile", NULL, NULL);
-zui_set_image(a, pix);
-zui_set_detail(a, "09:41");
-zui_node *b = zui_item(card, "Ben", "A monogram, a count, unread", NULL, NULL);
-zui_set_monogram(b, "B");
-zui_set_tint(b, 0xd9486e);
-zui_set_badge(b, "3");
-zui_set_emphasis(b, true);
-zui_pixmap_free(pix);''',
-         cpp='''static uint8_t px[64 * 64 * 4];
-for (int i = 0; i < 64 * 64; i++) {
-	px[i * 4] = i % 64 * 4; px[i * 4 + 1] = i / 64 * 4; px[i * 4 + 2] = 200; px[i * 4 + 3] = 255;
-}
-zui_pixmap *pix = zui_pixmap_rgba(64, 64, px);  // or zui_pixmap_load("photo.jpg", 1024)
-page.image(pix, 0, 140);
-auto card = page.section("Thread rows");
-card.item("Ada", "A picture as the tile").set_image(pix).set_detail("09:41");
-card.item("Ben", "A monogram, a count, unread").set_monogram("B").set_tint(0xd9486e)
-	.set_badge("3").set_emphasis(true);
-zui_pixmap_free(pix);'''),
+Zpage_set_content(page, pivot);'''),
 
-    dict(id="list", title="Long lists", h=560, api="zui_list, zui_list_append, zui_list_prepend, zui_list_refresh, zui_list_set_count, zui_page_scroll_end, zui_page_at_end",
-         blurb="Thousands of rows of differing heights. <code>bind</code> fills a row when it comes near the screen, and <code>height</code> is only a guess, corrected once the row is made. The list must be the last thing in its page or tab. Its handler gets <code>CHANGE</code> near the start, which is your chance to <code>zui_list_prepend</code> older rows and then <code>zui_list_allow_more</code>. <code>zui_page_scroll_end</code> keeps a chat at its end as it grows.",
-         ctop='''static double row_height(int row, void *data) { return 66; }
-static void row_bind(int row, zui_node *node, void *data) {
-	char title[32];
-	snprintf(title, sizeof(title), "Row %d", row + 1);
-	zui_item(node, title, row % 3 ? "Made when it came near" : "Of 5000", NULL, NULL);
-}''',
-         c='''zui_list(page, 5000, row_height, row_bind, NULL);''',
-         cpp='''page.list(5000, [](int) { return 66.0; }, [](int row, zrn::ui::Node node) {
-	node.item("Row " + std::to_string(row + 1), row % 3 ? "Made when it came near" : "Of 5000");
-});'''),
+    dict(id="hub", title="Hub", h=420,
+         api="Zhub_create, Zhub_set_header, Zhub_section_create, Zhub_add_section",
+         blurb="A big header over sections side by side. Sections scroll sideways with the finger. The header moves at half their speed.",
+         c='''const Zid hub = Zhub_create();
+Zhub_set_header(hub, "music");
 
-    dict(id="pivot", title="Pivots", h=520, api="zui_tabs, zui_tab, zui_tabs_select, zui_tabs_current",
-         blurb="Tabs under the app's name that swipe. The tab in front has its title white and the next ones run grey off the edge. Each tab is a column with its own scroll place, and the handler of the tabs gets <code>CHANGE</code> when the tab changes.",
-         c='''zui_node *tabs = zui_tabs(page);
-zui_node *one = zui_tab(tabs, "chats");
-zui_item(one, "Ada", "See you soon", NULL, NULL);
-zui_item(one, "Ben", "Thanks", NULL, NULL);
-zui_item(zui_tab(tabs, "status"), "Nothing yet", NULL, NULL, NULL);
-zui_item(zui_tab(tabs, "starred"), "Nothing yet", NULL, NULL, NULL);''',
-         cpp='''auto tabs = page.tabs();
-auto one = tabs.tab("chats");
-one.item("Ada", "See you soon");
-one.item("Ben", "Thanks");
-tabs.tab("status").item("Nothing yet");
-tabs.tab("starred").item("Nothing yet");'''),
+const Zid recent = Zhub_section_create("recent");
+const Zid lines = Zstack_panel_create(Z_VERTICAL);
+const Zid a = Ztext_block_create("Morning");
+Ztext_block_set_style(a, Z_TEXT_STYLE_PHONE_TITLE2);
+Zpanel_add(lines, a);
+const Zid b = Ztext_block_create("Drive home");
+Ztext_block_set_style(b, Z_TEXT_STYLE_PHONE_TITLE2);
+Zpanel_add(lines, b);
+Zcontent_control_set_content(recent, lines);
+Zhub_add_section(hub, recent);
 
-    dict(id="bubble", head="Bubbles and compact titles", title="Ada Lane", h=460, api="zui_bubble, zui_page_set_compact, zui_set_subtitle, zui_set_align",
-         blurb="A speech bubble is as wide as what is in it, and sits on the end if it is yours. A compact page shows its title as given and smaller, with a line under it, for a person's name. <code>zui_set_align</code> sets text to start (0), end (1) or centre (2).",
-         c='''zui_page_set_compact(page, true);
-zui_set_subtitle(page, "Last seen today");
-zui_node *in = zui_bubble(page, false);
-zui_text(in, "Are you coming tonight?");
-zui_caption(in, "18:02");
-zui_node *me = zui_bubble(page, true);
-zui_text(me, "Yes, on my way");
-zui_caption(me, "18:03");''',
-         cpp='''page.set_compact(true);
-page.set_subtitle("Last seen today");
-auto in = page.bubble(false);
-in.text("Are you coming tonight?");
-in.caption("18:02");
-auto me = page.bubble(true);
-me.text("Yes, on my way");
-me.caption("18:03");'''),
+const Zid albums = Zhub_section_create("albums");
+Zcontent_control_set_text(albums, "12 albums");
+Zhub_add_section(hub, albums);
 
-    dict(id="footer", title="Footer", h=500, api="zui_footer",
-         blurb="A row fixed at the bottom of a page, over its list. A field in it shows its hint inside the box, and asks the shell to lift the window with the keyboard.",
-         c='''zui_text(page, "The page scrolls under the bar.");
-zui_node *bar = zui_footer(page);
-zui_node *field = zui_field(bar, "Type a message", NULL, NULL);
-zui_set_flex(field, 1);
-zui_button(bar, "Send", NULL, NULL);''',
-         cpp='''page.text("The page scrolls under the bar.");
-auto bar = page.footer();
-bar.field("Type a message").set_flex(1);
-bar.button("Send");'''),
+Zpage_set_content(page, hub);'''),
 
-    dict(id="icons", title="Icons", h=700, api="zui_set_icon", grid=True, scale=3,
-         blurb="Twenty-one icons by name. <b>In Metro these are Segoe MDL2 Assets glyphs from the system's font</b>, the same font the phone has; the site does not host it. Under DotMatrix, or on a system without the font, libzrnui draws its own strokes instead, which land on the lattice as dots. An unknown name draws nothing. You cannot supply your own icon file: use a picture.",
-         c='''const char *names[] = { %s };
-for (int i = 0; i < 21; i += 4) {
-	zui_node *row = zui_row(page);
-	for (int k = i; k < i + 4 && k < 21; k++) {
-		zui_node *b = zui_button(row, names[k], NULL, NULL);
-		zui_set_icon(b, names[k]);
-		zui_set_flex(b, 1);
-	}
-}''' % ", ".join('"%s"' % n for n in ICONS),
-         cpp='''const char *names[] = { %s };
-for (int i = 0; i < 21; i += 4) {
-	auto row = page.row();
-	for (int k = i; k < i + 4 && k < 21; k++)
-		row.button(names[k]).set_icon(names[k]).set_flex(1);
-}''' % ", ".join('"%s"' % n for n in ICONS),
-         rs='''for names in [%s].chunks(4) {
-    let row = page.row();
-    for name in names {
-        row.button(name).set_icon(name).set_flex(1.0);
-    }
-}''' % ", ".join('"%s"' % n for n in ICONS),
-         py='''names = [%s]
-for i in range(0, 21, 4):
-    row = page.row()
-    for name in names[i:i + 4]:
-        b = row.button(name)
-        b.icon = name
-        b.flex = 1''' % ", ".join('"%s"' % n for n in ICONS)),
+    dict(id="appbar", title="App bar", h=300, crop=False,
+         api="Zcommand_bar_create, Zapp_bar_button_create, Zsymbol_icon_create, Zcommand_bar_add_primary_command, Zpage_set_bottom_app_bar",
+         blurb="A CommandBar at the bottom of a page: round icon buttons, and a menu of secondary commands behind the three dots. Open, it grows over the page in 167 ms.",
+         c='''const Zid bar = Zcommand_bar_create();
+Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("add", Zsymbol_icon_create(Z_SYMBOL_ADD)));
+Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("edit", Zsymbol_icon_create(Z_SYMBOL_EDIT)));
+Zcommand_bar_add_primary_command(bar, Zapp_bar_button_create("delete", Zsymbol_icon_create(Z_SYMBOL_DELETE)));
+Zcommand_bar_add_secondary_command(bar, Zapp_bar_button_create("settings", Z_INVALID_ID));
+Zpage_set_bottom_app_bar(page, bar);
+
+const Zid title = Ztext_block_create("notes");
+Ztext_block_set_style(title, Z_TEXT_STYLE_PHONE_TITLE1);
+Zpanel_add(stack, title);'''),
+
+    dict(id="dialog", title="Content dialog", h=300, crop=False,
+         api="Zcontent_dialog_create, Zcontent_dialog_set_title, Zcontent_dialog_set_primary_button_text, Zcontent_dialog_show",
+         blurb="A dialog at the top of the screen with up to two buttons. What is under it is dimmed and takes no input. Back closes it. There is no await in C: the result comes to a callback.",
+         ctop='static void done(const Zid dialog, const ZContentDialogResult result, void* const user_data) { (void)dialog; (void)result; (void)user_data; }',
+         c='''const Zid text = Ztext_block_create("A page under the dialog");
+Ztext_block_set_style(text, Z_TEXT_STYLE_BODY);
+Zpanel_add(stack, text);
+
+const Zid dialog = Zcontent_dialog_create();
+Zcontent_dialog_set_title(dialog, "Delete this note?");
+Zcontent_control_set_text(dialog, "It will be gone from every device.");
+Zcontent_dialog_set_primary_button_text(dialog, "delete");
+Zcontent_dialog_set_secondary_button_text(dialog, "cancel");
+Zcontent_dialog_show(dialog, root, done, nullptr);'''),
+
+    dict(id="layout", title="Grid and border", h=300,
+         api="Zgrid_create, Zgrid_add_column, Zgrid_place, Zborder_create, Zborder_set_child",
+         blurb="Layout is the one of XAML: measure, then arrange. A Grid has Auto, pixel and star rows and columns. A Border draws a background and an edge around one child.",
+         c='''const Zid grid = Zgrid_create();
+Zgrid_add_column(grid, Z_GRID_STAR, 1);
+Zgrid_add_column(grid, Z_GRID_STAR, 1);
+Zgrid_add_row(grid, Z_GRID_PIXEL, 100);
+
+const Zid left = Zborder_create();
+Zborder_bind_background(left, Z_RES_PHONE_ACCENT_BRUSH);
+Zborder_set_child(left, Ztext_block_create("one star"));
+Zgrid_place(grid, left, 0, 0);
+
+const Zid right = Zborder_create();
+Zborder_set_border_thickness(right, Zthickness_uniform(2));
+Zborder_bind_border_brush(right, Z_RES_PHONE_FOREGROUND_BRUSH);
+Zborder_set_child(right, Ztext_block_create("one star"));
+Zgrid_place(grid, right, 1, 0);
+
+Zpanel_add(stack, grid);'''),
 ]
 
-LANGS = {
-    "c": "C", "cpp": "C++", "rs": "Rust", "py": "Python",
+
+def program_c(e, theme):
+    """A whole program that draws one element in one theme and writes a PNG."""
+    return '''#include <stdio.h>
+#include <stdint.h>
+#include <zrnui/controls.h>
+#include <zrnui/host.h>
+#include <zrnui/platform.h>
+#include "writepng.h"
+
+%s
+
+static void build(const Zid root, const Zid page, const Zid stack) {
+	(void)root; (void)page; (void)stack;
+%s
 }
 
-
-def program_c(els):
-    out = ['#include <stdio.h>', '#include <stdint.h>', '#include <stddef.h>', '#include <zrnui.h>', '']
-    for e in els:
-        if e.get("ctop"):
-            out += [e["ctop"], '']
-        body = "\n".join("\t" + l for l in e["c"].splitlines())
-        out += ['static void el_%s(zui_app *app, zui_node *page) {' % e["id"], '\t(void)app;', body, '}', '']
-    out += ['int main(void) {', '\tzui_app *app = zui_app_new("zrn-sdk-site-proof", "SDK");']
-    first = None
-    for e in els:
-        v = 'p_' + e["id"]
-        out.append('\tzui_node *%s = zui_page(app, "%s"); el_%s(app, %s);' % (v, e["title"], e["id"], v))
-        first = first or v
-    out += ['\treturn zui_run(app, %s);' % first, '}', '']
-    return "\n".join(out)
-
-
-def program_cpp(els):
-    out = ['#include <cstdio>', '#include <cstdint>', '#include <string>', '#include <zrnui.hpp>', '']
-    for e in els:
-        body = "\n".join("\t" + l for l in e["cpp"].splitlines())
-        out += ['static void el_%s([[maybe_unused]] zrn::ui::App &app, zrn::ui::Node page) {' % e["id"], body, '}', '']
-    out += ['int main() {', '\tzrn::ui::App app("zrn-sdk-site-proof", "SDK");']
-    first = None
-    for e in els:
-        v = 'p_' + e["id"]
-        out.append('\tauto %s = app.page("%s"); el_%s(app, %s);' % (v, e["title"], e["id"], v))
-        first = first or v
-    out += ['\treturn app.run(%s);' % first, '}', '']
-    return "\n".join(out)
-
-
-def program_rs(els):
-    els = [e for e in els if "rs" in e]
-    out = ['#![allow(unused_variables)]', '']
-    for e in els:
-        body = "\n".join("    " + l for l in e["rs"].splitlines())
-        out += ["fn el_%s<'a>(app: &'a zrnui::App, page: zrnui::Node<'a>) {" % e["id"], body, '}', '']
-    out += ['fn main() {', '    let app = zrnui::App::new("zrn-sdk-site-proof", "SDK");']
-    first = None
-    for e in els:
-        v = 'p_' + e["id"]
-        out.append('    let %s = app.page("%s"); el_%s(&app, %s);' % (v, e["title"], e["id"], v))
-        first = first or v
-    out += ['    std::process::exit(app.run(%s));' % first, '}', '']
-    return "\n".join(out)
-
-
-def program_py(els):
-    els = [e for e in els if "py" in e]
-    out = ['import zrnui', '']
-    for e in els:
-        body = "\n".join("    " + l for l in e["py"].splitlines())
-        out += ['def el_%s(app, page):' % e["id"], body, '', '']
-    out += ['app = zrnui.App("zrn-sdk-site-proof", "SDK")']
-    first = None
-    for e in els:
-        v = 'p_' + e["id"]
-        out.append('%s = app.page("%s"); el_%s(app, %s)' % (v, e["title"], e["id"], v))
-        first = first or v
-    out += ['app.run(%s)' % first, '']
-    return "\n".join(out)
-
-
-# A small live app, for what only exists while an app runs: busy, toast, and a
-# page change captured in a real compositor. Driven by `zrn run --headless`.
-LIVE_C = r'''#include <stdlib.h>
-#include <zrnui.h>
-static zui_app *app;
-static zui_node *wifi;
-static void open_wifi(zui_node *row, void *data) { zui_push(wifi); }
-static void toast(void *data) { zui_toast(app, "Saved"); }
-static void busy(void *data) { zui_busy(app, true); }
-int main(void) {
-	app = zui_app_new("zrn-sdk-site-live", "Settings");
-	wifi = zui_page(app, "Wi-Fi");
-	zui_switch(zui_card(wifi), "Wi-Fi", true, NULL, NULL);
-	zui_node *nets = zui_section(wifi, "Networks");
-	zui_item(nets, "Home-5G", "Connected", NULL, NULL);
-	zui_item(nets, "Cafe", "Open", NULL, NULL);
-	zui_item(nets, "Workshop", "Saved", NULL, NULL);
-	zui_node *page = zui_page(app, "Settings");
-	zui_node *c = zui_section(page, "Connections");
-	zui_node *r = zui_item(c, "Wi-Fi", NULL, open_wifi, NULL);
-	zui_set_icon(r, "wifi");
-	zui_set_detail(r, "Home-5G");
-	zui_set_icon(zui_item(c, "Bluetooth", NULL, open_wifi, NULL), "bluetooth");
-	zui_set_icon(zui_item(c, "Sounds", NULL, open_wifi, NULL), "volume");
-	zui_slider(zui_section(page, "Display"), "Brightness", 0.6, NULL, NULL);
-	zui_button(page, "Check for updates", NULL, NULL);
-	if (getenv("LIVE_TOAST")) zui_timer(app, 200, false, toast, NULL);
-	if (getenv("LIVE_BUSY")) zui_timer(app, 100, false, busy, NULL);
-	return zui_run(app, page);
+int main(int argc, char** argv) {
+	if (argc < 2 || !Zinit()) return 1;
+	const Zid root = Zroot_create();
+	Zroot_set_renderer(root, Z_RENDERER_GPU);
+	Zroot_set_animations(root, Z_ANIMATIONS_OFF);
+	Zroot_set_theme(root, %s);
+	/* the S9 as ztOS lays an app out: 360 points across, drawn here at 3 device pixels a point */
+	Zroot_set_size(root, 360, %d);
+	Zroot_set_density(root, 3.0f);
+	const Zid page = Zpage_create();
+	const Zid stack = Zstack_panel_create(Z_VERTICAL);
+	Zelement_set_margin(stack, Zthickness(19, 32, 19, 0));
+	Zpage_set_content(page, stack);
+	Zroot_set_visual(root, page);
+	build(root, page, stack);
+	for (int i = 0; i < 60; i++) Zroot_tick(root, 16);
+	ZFrame frame = {0};
+	Zroot_render(root, &frame);
+	const int ok = write_png(argv[1], frame.pixels, frame.width, frame.height, frame.stride);
+	fprintf(stderr, "renderer %%s, %%dx%%d\\n", Zroot_get_renderer_name(root), frame.width, frame.height);
+	Zroot_destroy(root);
+	Zshutdown();
+	return ok ? 0 : 1;
 }
-'''
+''' % (e.get("ctop", ""), "\n".join("\t" + l for l in e["c"].splitlines()), theme, e["h"])
